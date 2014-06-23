@@ -54,9 +54,14 @@ class UI:
         self.secs = securities
         while True:
             self.main_menu()
-            key = input()
+            try:
+                key = input().lower()
+            except KeyboardInterrupt:
+                key = 'q'
             if key == "s":
                 self.new_stock()
+            elif key == 'q':
+                break
     def menu(self, items):
         x = PrettyTable(["Key", "Item"])
         x.align["Item"] = "l" # Left align city names
@@ -80,9 +85,12 @@ class UI:
         menu.append(["p", "New portfolio"])
         menu.append(["t", "New transaction"])
         menu.append(["l", "List stocks in portfolio"])
+        menu.append(["-", '---'])
+        menu.append(["q", "Quit"])
         self.menu(menu)
     
 if __name__ == "__main__":
     SECS = Securities()
     UI = UI(SECS)
+    print(SECS)
     

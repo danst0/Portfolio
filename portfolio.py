@@ -13,11 +13,25 @@ class Portfolio:
 
 class Security:
     """Class for stocks, bond, cash, everything is a security."""
-    def __init__(self, name):
+    def __init__(self, name, id, type):
         self.name = name
         self.id = id
-        self.type
+        self.type = type
 
+class Securities:
+    """Wrapper for all stored securities"""
+    securities = []
+    keys = ['Name', 'ID', 'Type']
+    def add(self, *args):
+        securities.append(Security(*args))
+    def __str__(self):
+        x = PrettyTable(self.keys)
+        x.align[self.keys[0]] = "l" # Left align city names
+        x.padding_width = 1 # One space between column edges and contents (default)
+        for i in self.securities:
+            x.add_row(i)
+        return x
+        
 class Transaction:
     """Class to store transactions"""
     def __init__(self, id, date, nominal, price, cost):
@@ -36,7 +50,8 @@ class Prices:
     
 class UI:
     """Class to display user interface."""
-    def __init__(self):
+    def __init__(self, securities):
+        self.secs = securities
         while True:
             self.main_menu()
             key = input()
@@ -56,7 +71,9 @@ class UI:
         print "ID ",
         id = input()
         print "Type ",
-        type = input()        
+        type = input()
+        self.secs.add(name, id, type)
+        
     def main_menu(self):
         menu = []
         menu.append(["s", "New stock"])
@@ -66,5 +83,6 @@ class UI:
         self.menu(menu)
     
 if __name__ == "__main__":
-    UI = UI()
+    SECS = Securities()
+    UI = UI(SECS)
     

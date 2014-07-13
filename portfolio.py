@@ -12,6 +12,8 @@ import datetime
 import re
 import pdb
 import sqlite3
+import matplotlib.pyplot as plt
+        
 
 class Analyses:
     """Perform additional analyses on the Portfolios and stocks."""
@@ -98,6 +100,14 @@ class Securities:
     def __iter__(self):
         for x in self.securities:
             yield x
+    def find_stock(self, stock_id_or_name):
+        found = None
+        for item  in self.securities:
+            if (stock_id_or_name.lower() in item.name.lower() or
+                stock_id_or_name.lower() in item.yahoo_id.lower()):
+                found = item.yahoo_id
+                break
+        return found
         
 class Transaction:
     """Class to store transactions"""
@@ -120,26 +130,46 @@ class Prices:
         all = self.data.c.execute('SELECT * FROM prices')
         print('Preise initialisieren')
         for line in all.fetchall():
-#             print(line)
-#             pdb.set_trace()
             id = line[1]
             date = line[2]
             price = line[3]
             if id not in self.numbers.keys():
                 self.numbers[id] = {}
             self.numbers[id][date] = price
-
+    def get_dates_and_prices(self, yahoo_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
+        stock_id = self.get_stock_id_from_yahoo_id(yahoo_id)
+        if from_date == None:
+            from_date = '1900-01-01'
+        result = self.data.c.execute('''SELECT date, price FROM prices WHERE stock_id = ? AND date >= ? AND date <= ? ORDER BY date''', (stock_id, from_date, to_date)).fetchall()
+        # Redo with map function
+        dates = []
+        values = []
+        for item in result:
+            dates.append(datetime.datetime.strptime(item[0], "%Y-%m-%d").date())
+            values.append(item[1])            
+        return dates, values
+    def find_split_date(self, yahoo_id):
+        prices = self.get_prices(yahoo_id)
+        old_price = None
+        last_unsplit_date = None
+        suggested_ratio = None
+        for date in reversed(sorted(prices)):
+            new_price = prices[date]
+            if old_price != None:
+                if new_price/float(old_price) > 1.5:
+                    last_unsplit_date = date
+                    suggested_ratio = int(round(new_price/float(old_price), 0))
+                    break
+            old_price = new_price
+        return last_unsplit_date, suggested_ratio         
     def get_stock_id_from_yahoo_id(self, yahoo_id):
         stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()[0]
         return stock_id
     def row_exists(self, stock_id, date):
         result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
         return False if result == None else True
-
-    def update(self, id, date, price):
-#         pdb.set_trace()
-        id = self.get_stock_id_from_yahoo_id(id)
-#         print(id, date, price)
+    def update(self, yahoo_id, date, price):
+        id = self.get_stock_id_from_yahoo_id(yahoo_id)
         if id not in self.numbers.keys():
             self.numbers[id] = {}
         self.numbers[id][date] = price
@@ -147,8 +177,6 @@ class Prices:
             self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
         else:
             self.data.c.execute('''INSERT INTO prices(stock_id, date, price) VALUES (?, ?, ?)''', (id, date, price))
-#         self.data.conn.commit()
-#         pickle.dump(self.numbers, open('numbers.p', 'wb'))
     def get_price(self, id, date):
         price = None
         try:
@@ -156,7 +184,6 @@ class Prices:
         except:
             pass
         return price
-    
     def get_prices(self, id):
         id = self.get_stock_id_from_yahoo_id(id)
         prices = None
@@ -307,6 +334,48 @@ class UI:
         name = input()
 
         self.portfolio.add(parent, name)
+    def new_graph(self):
+        print('Security',)
+        stock = input()
+        tmp_default = (datetime.date.today() - datetime.timedelta(days=12*30)).strftime('%Y-%m-%d')
+        print('Start date [' + tmp_default + ']',)
+        from_date = input()
+        if from_date == '':
+            from_date = tmp_default
+        from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
+        tmp_default = datetime.date.today().strftime('%Y-%m-%d')
+        print('End date [' + tmp_default + ']',)
+        to_date = input()
+        if to_date == '':
+            to_date = tmp_default
+        to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
+        dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), from_date, to_date)
+        plt.plot(dates, values, 'r')
+#         plt.axis(dates)
+        plt.ylabel(self.secs.find_stock(stock))
+        plt.xlabel('Date')
+        plt.show()
+    def new_split(self):
+        print('Security',)
+        stock = input()
+        last_unsplit_date, suggested_ratio = self.prices.find_split_date(self.secs.find_stock(stock))
+        print('Last unsplit date [' + last_unsplit_date + ']',)
+        split_date = input()
+        if split_date == '':
+            split_date = last_unsplit_date
+        print('Split ratio [' + str(suggested_ratio) + '] for one existing stock')
+        ratio = input()
+        if ratio == '':
+            ratio = suggested_ratio
+        dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), None, split_date)
+        print(dates)
+        print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+        input()
+        for i in range(len(dates)):
+            self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
+            
+        
+        
     def securities_menu(self, inp=''):
         go_on = True
         menu = []
@@ -316,6 +385,8 @@ class UI:
         menu.append(["d", "Delete security"])
         menu.append(['u', 'Update security prices'])
         menu.append(['i', 'Initialize quotes for last 10 years'])
+        menu.append(["g", "New graph"])
+        menu.append(["p", "Stock split"])
         menu.append(["-", '---'])
         menu.append(["q", "Back"])
         key, inp = self.menu(menu, inp)
@@ -333,6 +404,10 @@ class UI:
         elif key == 'u':
             self.update_stocks()
             pprint(self.prices.numbers)
+        elif key == 'g':
+            self.new_graph()
+        elif key == 'p':
+            self.new_split()
         elif key == 'q':
             go_on = False  
         return go_on      

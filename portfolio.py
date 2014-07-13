@@ -120,7 +120,7 @@ class Prices:
         all = self.data.c.execute('SELECT * FROM prices')
         print('Preise initialisieren')
         for line in all.fetchall():
-            print(line)
+#             print(line)
 #             pdb.set_trace()
             id = line[1]
             date = line[2]
@@ -168,7 +168,7 @@ class Prices:
     def get_last_price(self, id):
 #         pdb.set_trace()
         prices = self.get_prices(id)
-        print(prices)
+#         print(prices)
         if prices != None:
             max_key = max(prices.keys())
             return prices[max_key]
@@ -239,11 +239,8 @@ class UI:
                 self.last_update += datetime.timedelta(seconds=-90)
             else:
 #                 print(quote)
-                for key, value in enumerate(quote):
-                    print(key, value)
-                    break
-#                     self.prices.update(sec.yahoo_id, day_str, quote[day_str]['Close'])
-                break
+                for key in quote:
+                    self.prices.update(sec.yahoo_id, key, quote[key]['Close'])
     def update_stocks(self):
         now = datetime.datetime.now()
 #         print(now, self.last_update)
@@ -284,7 +281,23 @@ class UI:
         print ('Type ',)
         type = input()
         self.secs.add(name, id, type)
-
+    def portfolio_menu(self, inp=''):
+        go_on = True
+        menu = []
+        menu.append(["a", "Add portfolio"])
+#         menu.append(["n", "New security"])
+#         menu.append(["e", "Edit security"])
+#         menu.append(["d", "Delete security"])
+#         menu.append(['u', 'Update security prices'])
+#         menu.append(['i', 'Initialize quotes for last 10 years'])
+        menu.append(["-", '---'])
+        menu.append(["q", "Back"])
+        key, inp = self.menu(menu, inp)
+        if key == 'a':
+            self.new_portfolio()
+        elif key == 'q':
+            go_on = False  
+        return go_on      
     def new_portfolio(self):
         print(self.portfolio)
         print('Parent ',) 
@@ -327,7 +340,7 @@ class UI:
         go_on = True
         menu = []
         menu.append(["s", "Securities"])
-        menu.append(["p", "Add portfolio"])
+        menu.append(["p", "Portfolios"])
         menu.append(["t", "New transaction"])
         menu.append(['s', 'Settings (eg. planned savings)'])
         menu.append(['f', 'Forecast'])
@@ -336,9 +349,8 @@ class UI:
         key, inp = self.menu(menu)
         if key == 's':
             self.securities_menu(inp)
-
         elif key == 'p':
-            self.new_portfolio()
+            self.portfolio_menu(inp)
         elif key == 'l':
             self.list_stocks()
         elif key == 'u':
@@ -358,14 +370,14 @@ if __name__ == "__main__":
     PRICES = Prices(DATA)
 
     SECS = Securities(DATA, PRICES)
-    print('PRICES')
-    print(PRICES)
+#     print('PRICES')
+#     print(PRICES)
     print('SECS')
     print(SECS)
     UI = UI(SECS, PORTFOLIO, PRICES)
     pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
-    print('PRICES')
-    print(PRICES)
+#     print('PRICES')
+#     print(PRICES)
     print('SECS')
     print(SECS)
     DATA.close()

@@ -27,14 +27,13 @@ class Database:
         except:
             pass
         else:
-            print('Creating table for stocks')
+            print('Created table for stocks')
         try:
             self.c.execute('''CREATE TABLE prices (id INTEGER PRIMARY KEY, stock_id INTEGER, date TEXT, price REAL)''')
         except:
             pass
         else:
-            print('Creating table for prices')
-
+            print('Created table for prices')
 
     def close(self):
         self.conn.commit()
@@ -74,15 +73,19 @@ class Securities:
     keys = ['Name', 'ID', 'Type', 'Last price']
     def __init__(self, data, prices):
         self.data = data
-        try:
-            self.securities = pickle.load( open( "securities.p", "rb" ) )
-        except:
-            self.securities = []
+        self.securities = []
+        all = self.data.c.execute('SELECT * FROM stocks')
+        for line in all.fetchall():
+
+            self.securities.append(Security(*line[1:]))
+#         print(self.securities)
         self.prices = prices
 
-    def add(self, *args):
-        self.securities.append(Security(*args))
-        pickle.dump( self.securities, open( "securities.p", "wb" ) )
+    def add(self, name, yahoo_id, type):
+        self.securities.append(Security(name, yahoo_id, type))
+        self.data.c.execute('INSERT INTO stocks(name, yahoo_id, type) VALUES (?, ?, ?)', (name, yahoo_id, type))
+
+#         pickle.dump( self.securities, open( "securities.p", "wb" ) )
     def empty(self):
         return False if len(self.securities) > 0 else True
     def __str__(self):
@@ -90,7 +93,7 @@ class Securities:
         x.align[self.keys[0]] = "l" # Left align city names
         x.padding_width = 1 # One space between column edges and contents (default)
         for i in self.securities:
-            x.add_row(i.list() + (self.prices.get_last_price(i.id),))
+            x.add_row(i.list() + (self.prices.get_last_price(i.yahoo_id),))
         return str(x)
     def __iter__(self):
         for x in self.securities:
@@ -113,17 +116,39 @@ class Prices:
     numbers = {}
     def __init__(self, data):
         self.data = data
-        for line in self.data.c.execute('SELECT * FROM stocks'):
+        self.numbers = {}
+        all = self.data.c.execute('SELECT * FROM prices')
+        print('Preise initialisieren')
+        for line in all.fetchall():
             print(line)
+#             pdb.set_trace()
+            id = line[1]
+            date = line[2]
+            price = line[3]
+            if id not in self.numbers.keys():
+                self.numbers[id] = {}
+            self.numbers[id][date] = price
 
-    def update(self,id, date, price):
+    def get_stock_id_from_yahoo_id(self, yahoo_id):
+        stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()[0]
+        return stock_id
+    def row_exists(self, stock_id, date):
+        result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
+        return False if result == None else True
+
+    def update(self, id, date, price):
 #         pdb.set_trace()
-        print(id, date, price)
+        id = self.get_stock_id_from_yahoo_id(id)
+#         print(id, date, price)
         if id not in self.numbers.keys():
             self.numbers[id] = {}
         self.numbers[id][date] = price
-        c.executemany('INSERT INTO prices VALUES (?,?,?)', (id, date, price))
-        pickle.dump(self.numbers, open('numbers.p', 'wb'))
+        if self.row_exists(id, date):
+            self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
+        else:
+            self.data.c.execute('''INSERT INTO prices(stock_id, date, price) VALUES (?, ?, ?)''', (id, date, price))
+#         self.data.conn.commit()
+#         pickle.dump(self.numbers, open('numbers.p', 'wb'))
     def get_price(self, id, date):
         price = None
         try:
@@ -133,6 +158,7 @@ class Prices:
         return price
     
     def get_prices(self, id):
+        id = self.get_stock_id_from_yahoo_id(id)
         prices = None
         try:
             prices = self.numbers[id]
@@ -140,9 +166,14 @@ class Prices:
             pass
         return prices
     def get_last_price(self, id):
+#         pdb.set_trace()
         prices = self.get_prices(id)
-        max_key = max(prices, key=prices.get)
-        return prices[max_key]
+        print(prices)
+        if prices != None:
+            max_key = max(prices.keys())
+            return prices[max_key]
+        else:
+            return None
     def get_quote(self,symbol):
         base_url = 'http://finance.google.com/finance?q='
         content = str(urllib.request.urlopen(base_url + symbol).read())
@@ -152,6 +183,15 @@ class Prices:
         else:
             quote = 'no quote available for: ' + symbol
         return quote
+    def __str__(self):
+        keys = ['ID', 'Date', 'Price']
+        x = PrettyTable(keys)
+        x.align[keys[0]] = "l" # Left align city names
+        x.padding_width = 1 # One space between column edges and contents (default)
+        for key in self.numbers.keys():
+            for dates in self.numbers[key].keys():
+                x.add_row((key, dates, self.numbers[key][dates]))
+        return str(x)
 class UI:
     """Class to display user interface."""
     def __init__(self, securities, portfolio, prices):
@@ -159,34 +199,51 @@ class UI:
         self.portfolio = portfolio
         self.prices = prices
         self.last_update = datetime.datetime.now() + datetime.timedelta(days=-1)
-        while True:
-            self.main_menu()
-            try:
-                inp = input().lower()
-            except KeyboardInterrupt:
-                inp = 'q'
-#                 sys.exit()
-#             print(inp)
-            for key in inp:
-#                 print(key)
-                if key == 's':
-                    self.new_stock()
-                elif key == 'p':
-                    self.new_portfolio()
-                elif key == 'l':
-                    self.list_stocks()
-                elif key == 'u':
-                    self.update_stocks()
-                    pprint(self.prices.numbers)
-                elif key == 'q':
-                    sys.exit()
-    def menu(self, items):
+        go_on = True
+        while go_on:
+            go_on = self.main_menu()
+
+    def menu(self, items, inp=''):
         x = PrettyTable(["Key", "Item"])
         x.align["Item"] = "l" # Left align city names
         x.padding_width = 1 # One space between column edges and contents (default)
         for i in items:
             x.add_row(i)
         print(x)
+        if inp == '':
+            try:
+                inp = input().lower()
+            except KeyboardInterrupt:
+                inp = 'q'
+        key = inp[:1]
+        inp = inp[1:]
+        return key, inp
+    def get_historic_quotes(self):
+        now = datetime.datetime.now()
+#         print(now, self.last_update)
+        if now < self.last_update + datetime.timedelta(seconds=90):
+            print('Please leave at least 30 secs between each update.')
+            return
+        else:
+            self.last_update = now
+        today = datetime.date.today()
+        first_day = datetime.date.today() - datetime.timedelta(days=10*365)
+        today_str = today.strftime('%Y-%m-%d')
+        first_day_str = first_day.strftime('%Y-%m-%d')
+        for sec in self.secs:
+            quote = None
+            try:
+                quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
+            except urllib.error.HTTPError:
+                print('No quotes found for:', sec.name)
+                self.last_update += datetime.timedelta(seconds=-90)
+            else:
+#                 print(quote)
+                for key, value in enumerate(quote):
+                    print(key, value)
+                    break
+#                     self.prices.update(sec.yahoo_id, day_str, quote[day_str]['Close'])
+                break
     def update_stocks(self):
         now = datetime.datetime.now()
 #         print(now, self.last_update)
@@ -200,19 +257,20 @@ class UI:
             today = today + datetime.timedelta(days=4-today.weekday())
         day_str = today.strftime('%Y-%m-%d')
 #         print(day_str)
-        
+#         pdb.set_trace()
         for sec in self.secs:
-#             print(sec.name, sec.id)
+#             print(sec.name, sec.yahoo_id)
             quote = None
 #             quote = self.prices.get_quote('goog')
 #             print(quote)
             try:
-                quote = ystockquote.get_historical_prices(sec.id, day_str, day_str)
+                quote = ystockquote.get_historical_prices(sec.yahoo_id, day_str, day_str)
             except urllib.error.HTTPError:
                 print('No quotes found for:', sec.name)
+                self.last_update += datetime.timedelta(seconds=-30)
             else:
 #                 print(quote)
-                self.prices.update(sec.id, day_str, quote[day_str]['Close'])
+                self.prices.update(sec.yahoo_id, day_str, quote[day_str]['Close'])
     def list_stocks(self):
         if not self.secs.empty():
             print(self.secs)
@@ -236,19 +294,59 @@ class UI:
         name = input()
 
         self.portfolio.add(parent, name)
-        
-    def main_menu(self):
+    def securities_menu(self, inp=''):
+        go_on = True
         menu = []
-        menu.append(["s", "New security"])
+        menu.append(["l", "List securities"])
+        menu.append(["n", "New security"])
+        menu.append(["e", "Edit security"])
+        menu.append(["d", "Delete security"])
+        menu.append(['u', 'Update security prices'])
+        menu.append(['i', 'Initialize quotes for last 10 years'])
+        menu.append(["-", '---'])
+        menu.append(["q", "Back"])
+        key, inp = self.menu(menu, inp)
+        if key == 'n':
+            self.new_stock()
+        elif key == 'e':
+            self.edit_stock()
+        elif key == 'd':
+            self.delete_stock()
+        elif key == 'l':
+            self.list_stocks()
+        elif key == 'i':
+            self.get_historic_quotes()
+            pprint(self.prices.numbers)
+        elif key == 'u':
+            self.update_stocks()
+            pprint(self.prices.numbers)
+        elif key == 'q':
+            go_on = False  
+        return go_on      
+    def main_menu(self):
+        go_on = True
+        menu = []
+        menu.append(["s", "Securities"])
         menu.append(["p", "Add portfolio"])
         menu.append(["t", "New transaction"])
-        menu.append(["l", "List stocks in portfolio"])
         menu.append(['s', 'Settings (eg. planned savings)'])
         menu.append(['f', 'Forecast'])
-        menu.append(['u', 'Update stock prices'])
         menu.append(["-", '---'])
         menu.append(["q", "Quit"])
-        self.menu(menu)
+        key, inp = self.menu(menu)
+        if key == 's':
+            self.securities_menu(inp)
+
+        elif key == 'p':
+            self.new_portfolio()
+        elif key == 'l':
+            self.list_stocks()
+        elif key == 'u':
+            self.update_stocks()
+            pprint(self.prices.numbers)
+        elif key == 'q':
+            go_on = False  
+        return go_on      
     
 if __name__ == "__main__":
     DATA = Database()
@@ -258,8 +356,16 @@ if __name__ == "__main__":
         PORTFOLIO = Portfolio('All')
 #     print(str(PORTFOLIO).strip('\n'))
     PRICES = Prices(DATA)
+
     SECS = Securities(DATA, PRICES)
-    UI = UI(SECS, PORTFOLIO, PRICES)
+    print('PRICES')
+    print(PRICES)
+    print('SECS')
     print(SECS)
+    UI = UI(SECS, PORTFOLIO, PRICES)
     pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
+    print('PRICES')
+    print(PRICES)
+    print('SECS')
+    print(SECS)
     DATA.close()

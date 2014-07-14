@@ -254,7 +254,7 @@ class UI:
         else:
             self.last_update = now
         today = datetime.date.today()
-        first_day = datetime.date.today() - datetime.timedelta(days=10*365)
+        first_day = datetime.date.today() - datetime.timedelta(days=15*365)
         today_str = today.strftime('%Y-%m-%d')
         first_day_str = first_day.strftime('%Y-%m-%d')
         for sec in self.secs:
@@ -384,7 +384,7 @@ class UI:
         menu.append(["e", "Edit security"])
         menu.append(["d", "Delete security"])
         menu.append(['u', 'Update security prices'])
-        menu.append(['i', 'Initialize quotes for last 10 years'])
+        menu.append(['i', 'Initialize quotes for last 15 years'])
         menu.append(["g", "New graph"])
         menu.append(["p", "Stock split"])
         menu.append(["-", '---'])

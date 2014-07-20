@@ -25,6 +25,12 @@ class Database:
         self.c = self.conn.cursor()
         # Create tables    
         try:
+            self.c.execute('''CREATE TABLE transactions (id INTEGER PRIMARY KEY, portfolio TEXT, yahoo_id TEXT, date TEXT, nominal REAL, price REAL, cost REAL)''')
+        except:
+            pass
+        else:
+            print('Created table for transactions')
+        try:
             self.c.execute('''CREATE TABLE stocks (id INTEGER PRIMARY KEY, name TEXT, yahoo_id TEXT, type TEXT)''')
         except:
             pass
@@ -36,29 +42,37 @@ class Database:
             pass
         else:
             print('Created table for prices')
-
+    def commit(self):
+        self.conn.commit()
     def close(self):
         self.conn.commit()
         self.conn.close()
+        
 class Portfolio:
     """Collection of different portfolios or stocks."""
     def __init__(self, name, parent=None):
         self.parent = parent
         self.name = name
         self.children = []
-    def add(self, parent, name):
+        self.child_securities = []
+    def add_security(self, parent, stock_id):
+        if self.name == parent:
+            self.child_securities.append(stock_id)
+        else:
+            for i in self.children:
+                i.add_security(parent, stock_id)
+    def add_portfolio(self, parent, name):
         if self.name == parent:
             self.children.append(Portfolio(name, parent))
         else:
             for i in self.children:
-                i.add(parent, name)
+                i.add_portfolio(parent, name)
     def __str__(self, level=1):
         output = self.name + '\n'
         for i in self.children:
             output += '    '*level + '+-- ' + i.__str__(level+1)
         return output
         
-
 class Security:
     """Class for stocks, bond, cash, everything is a security."""
     def __init__(self, name, yahoo_id, type):
@@ -108,18 +122,14 @@ class Securities:
                 found = item.yahoo_id
                 break
         return found
-        
+
 class Transaction:
     """Class to store transactions"""
-    def __init__(self, id, date, nominal, price, cost):
-        self.id = id
-        self.date = date
-        # number of stocks/nominale
-        self.nominal = nominal
-        self.price = price
-        self.cost = cost
-    
-    
+    def __init__(self, data):
+        self.data = data
+    def add(self, id, date, nominal, price, cost, portfolio):
+        self.data.c.execute('INSERT INTO transactions (portfolio, yahoo_id, date, nominal, price, cost) VALUES (?, ?, ?, ?, ?, ?)', (portfolio, id, date, nominal, price, cost))
+        self.data.commit()
 
 class Prices:
     """Class to store price developments."""
@@ -221,10 +231,11 @@ class Prices:
         return str(x)
 class UI:
     """Class to display user interface."""
-    def __init__(self, securities, portfolio, prices):
+    def __init__(self, securities, portfolio, prices, transaction):
         self.secs = securities
         self.portfolio = portfolio
         self.prices = prices
+        self.transaction = transaction
         self.last_update = datetime.datetime.now() + datetime.timedelta(days=-1)
         go_on = True
         while go_on:
@@ -308,22 +319,30 @@ class UI:
         print ('Type ',)
         type = input()
         self.secs.add(name, id, type)
+    def add_security_to_portfolio(self):
+        print('Parent portfolio')
+        parent = input()
+        print('Security')
+        security = input()
+        self.portfolio.add_security(parent, self.secs.find_stock(security))
     def portfolio_menu(self, inp=''):
-        go_on = True
+        go_on = inp
         menu = []
         menu.append(["a", "Add portfolio"])
-#         menu.append(["n", "New security"])
-#         menu.append(["e", "Edit security"])
-#         menu.append(["d", "Delete security"])
-#         menu.append(['u', 'Update security prices'])
-#         menu.append(['i', 'Initialize quotes for last 10 years'])
+        menu.append(["l", "List portfolios"])
+        menu.append(["s", "Add security to portfolio"])
         menu.append(["-", '---'])
         menu.append(["q", "Back"])
         key, inp = self.menu(menu, inp)
         if key == 'a':
             self.new_portfolio()
+        elif key == 'l':
+            print(self.portfolio)
+        elif key == 's':
+            print(self.portfolio)
+            self.add_security_to_portfolio()
         elif key == 'q':
-            go_on = False  
+            go_on = inp
         return go_on      
     def new_portfolio(self):
         print(self.portfolio)
@@ -372,12 +391,9 @@ class UI:
         print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
         input()
         for i in range(len(dates)):
-            self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
-            
-        
-        
+            self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio)) 
     def securities_menu(self, inp=''):
-        go_on = True
+        go_on = inp
         menu = []
         menu.append(["l", "List securities"])
         menu.append(["n", "New security"])
@@ -409,10 +425,10 @@ class UI:
         elif key == 'p':
             self.new_split()
         elif key == 'q':
-            go_on = False  
+            go_on = inp
         return go_on      
     def main_menu(self):
-        go_on = True
+        go_on = ''
         menu = []
         menu.append(["s", "Securities"])
         menu.append(["p", "Portfolios"])
@@ -421,19 +437,39 @@ class UI:
         menu.append(['f', 'Forecast'])
         menu.append(["-", '---'])
         menu.append(["q", "Quit"])
-        key, inp = self.menu(menu)
-        if key == 's':
-            self.securities_menu(inp)
-        elif key == 'p':
-            self.portfolio_menu(inp)
-        elif key == 'l':
-            self.list_stocks()
-        elif key == 'u':
-            self.update_stocks()
-            pprint(self.prices.numbers)
-        elif key == 'q':
-            go_on = False  
-        return go_on      
+        while True:
+            key, inp = self.menu(menu, go_on)
+            if key == 's':
+                inp = self.securities_menu(inp)
+            elif key == 'p':
+                inp = self.portfolio_menu(inp)
+            elif key == 'l':
+                inp = self.list_stocks()
+            elif key == 'u':
+                self.update_stocks()
+                pprint(self.prices.numbers)
+            elif key == 't':
+                self.new_transaction()
+            elif key == 'q':
+                go_on = ''
+                break
+    def new_transaction(self):
+        print('Portfolio')
+        portfolio = input()
+        print('Security')
+        stock = input()
+        tmp_default = datetime.date.today().strftime('%Y-%m-%d')
+        print('Date [' + tmp_default + ']')
+        date = input()
+        if date == '':
+            date = tmp_default
+        print('Nominale')
+        nom = input()
+        print('Price')
+        price = input()
+        print('Cost')
+        cost = input()
+        self.transaction.add(self.secs.find_stock(stock), date, nom, price, cost, portfolio)
     
 if __name__ == "__main__":
     DATA = Database()
@@ -449,7 +485,8 @@ if __name__ == "__main__":
 #     print(PRICES)
     print('SECS')
     print(SECS)
-    UI = UI(SECS, PORTFOLIO, PRICES)
+    TRANSACTION = Transaction(DATA)
+    UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION)
     pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
 #     print('PRICES')
 #     print(PRICES)

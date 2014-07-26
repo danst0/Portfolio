@@ -12,8 +12,19 @@ import datetime
 import re
 import pdb
 import sqlite3
+import uuid
+
 import matplotlib.pyplot as plt
-        
+# Sample stocks        
+# +--------------------+---------+-------+------------+
+# | Name               |    ID   |  Type | Last price |
+# +--------------------+---------+-------+------------+
+# | Aareal Bank AG     |  ARL.DE | Stock |   32.25    |
+# | Apple Inc.         |  APC.F  | Stock |    72.5    |
+# | Host Marriot       |  HMT.F  |  REIT |   16.72    |
+# | DB TR EU Renten 1C | DBXN.DE |  Bond |   209.37   |
+# | DB MSCI EU M 1C    | DX2I.DE | Stock |    73.7    |
+# +--------------------+---------+-------+------------+
 
 class Analyses:
     """Perform additional analyses on the Portfolios and stocks."""
@@ -21,23 +32,27 @@ class Analyses:
     
 class Database:
     def __init__(self):
+#         sqlite3.register_converter('GUID', lambda b: uuid.UUID(bytes_le=b))
+#         sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
+        conn = sqlite3.connect('test.db', detect_types=sqlite3.PARSE_DECLTYPES)
+
         self.conn = sqlite3.connect('data.sql', detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
         self.c = self.conn.cursor()
         # Create tables    
         try:
-            self.c.execute('''CREATE TABLE transactions (id INTEGER PRIMARY KEY, type, portfolio TEXT, yahoo_id TEXT, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
+            self.c.execute('''CREATE TABLE transactions (id BLOB PRIMARY KEY, type TEXT, portfolio TEXT, yahoo_id TEXT, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
         except:
             pass
         else:
             print('Created table for transactions')
         try:
-            self.c.execute('''CREATE TABLE stocks (id INTEGER PRIMARY KEY, name TEXT, yahoo_id TEXT, type TEXT)''')
+            self.c.execute('''CREATE TABLE stocks (id BLOB PRIMARY KEY, name TEXT, yahoo_id TEXT, type TEXT)''')
         except:
             pass
         else:
             print('Created table for stocks')
         try:
-            self.c.execute('''CREATE TABLE prices (id INTEGER PRIMARY KEY, stock_id INTEGER, date TEXT, price REAL)''')
+            self.c.execute('''CREATE TABLE prices (id BLOB PRIMARY KEY, stock_id BLOB, date TEXT, price REAL)''')
         except:
             pass
         else:
@@ -79,10 +94,15 @@ class Security:
         self.name = name
         self.yahoo_id = yahoo_id
         self.type = type
+        self.keys = ['Name', 'ID', 'Type']
     def list(self):
         return (self.name, self.yahoo_id, self.type)
     def __str__(self):
-        return ' '.join(self.list())
+        x = PrettyTable(self.keys)
+        x.align[self.keys[0]] = "l" # Left align city names
+        x.padding_width = 1 # One space between column edges and contents (default)
+        x.add_row(self.list())
+        return str(x)
 
 class Securities:
     """Wrapper for all stored securities"""
@@ -99,8 +119,26 @@ class Securities:
 
     def add(self, name, yahoo_id, type):
         self.securities.append(Security(name, yahoo_id, type))
-        self.data.c.execute('INSERT INTO stocks(name, yahoo_id, type) VALUES (?, ?, ?)', (name, yahoo_id, type))
+        self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4().bytes(), name, yahoo_id, type))
 
+    def change_stock(self, yahoo_id, sec):
+        found = False
+        for num, item in enumerate(self.securities):
+            if yahoo_id.lower() in item.yahoo_id.lower():
+                found = True
+                self.securities[num] = sec
+                self.data.c.execute('UPDATE stocks set name = ?, yahoo_id = ?, type = ? WHERE yahoo_id = ?', (sec.name, sec.yahoo_id, sec.type, yahoo_id))
+                break
+        return found
+    def delete_stock(self, yahoo_id):
+        found = False
+        for num, item in enumerate(self.securities):
+            if yahoo_id.lower() in item.yahoo_id.lower():
+                found = True
+                self.securities.pop(num)
+                self.data.c.execute('DELETE FROM stocks WHERE yahoo_id = ?', (yahoo_id,))
+                break
+        return found      
 #         pickle.dump( self.securities, open( "securities.p", "wb" ) )
     def empty(self):
         return False if len(self.securities) > 0 else True
@@ -114,14 +152,20 @@ class Securities:
     def __iter__(self):
         for x in self.securities:
             yield x
-    def find_stock(self, stock_id_or_name):
+    def find_stock(self, stock_id_or_name, return_obj=False):
         found = None
+        found_obj = None
         for item  in self.securities:
             if (stock_id_or_name.lower() in item.name.lower() or
                 stock_id_or_name.lower() in item.yahoo_id.lower()):
                 found = item.yahoo_id
+                found_obj = item
                 break
-        return found
+        if return_obj:
+            return found_obj
+        else:
+            return found
+
 
 class Transaction:
     """Class to store transactions"""
@@ -142,7 +186,7 @@ class Transaction:
             total = -1 * price * nominal + cost
         elif type == 'd':
             pass
-        self.data.c.execute('INSERT INTO transactions (type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (type, portfolio, yahoo_id, date, nominal, price, cost, total))
+        self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes(), type, portfolio, yahoo_id, date, nominal, price, cost, total))
         self.data.commit()
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
@@ -163,6 +207,9 @@ class Prices:
             if id not in self.numbers.keys():
                 self.numbers[id] = {}
             self.numbers[id][date] = price
+    def delete_prices(self, yahoo_id):
+        stock_id = self.get_stock_id_from_yahoo_id(yahoo_id)
+        self.data.c.execute('''DELETE FROM prices WHERE stock_id = ?''', (stock_id, ))
     def get_dates_and_prices(self, yahoo_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
         stock_id = self.get_stock_id_from_yahoo_id(yahoo_id)
         if from_date == None:
@@ -190,8 +237,10 @@ class Prices:
             old_price = new_price
         return last_unsplit_date, suggested_ratio         
     def get_stock_id_from_yahoo_id(self, yahoo_id):
-        stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()[0]
-        return stock_id
+#         print(':'+yahoo_id+':')
+        stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()
+#         print(stock_id)
+        return None if stock_id is None else stock_id[0]
     def row_exists(self, stock_id, date):
         result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
         return False if result == None else True
@@ -203,7 +252,7 @@ class Prices:
         if self.row_exists(id, date):
             self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
         else:
-            self.data.c.execute('''INSERT INTO prices(stock_id, date, price) VALUES (?, ?, ?)''', (id, date, price))
+            self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4().bytes(), id, date, price))
     def get_price(self, id, date):
         price = None
         try:
@@ -306,11 +355,13 @@ class UI:
         today = datetime.date.today()
         if today.weekday() >= 5:
             today = today + datetime.timedelta(days=4-today.weekday())
+        yesterday = today + datetime.timedelta(days=-1)
         day_str = today.strftime('%Y-%m-%d')
+        yesterday_str = yesterday.strftime('%Y-%m-%d')
         for sec in self.secs:
             quote = None
             try:
-                quote = ystockquote.get_historical_prices(sec.yahoo_id, day_str, day_str)
+                quote = ystockquote.get_historical_prices(sec.yahoo_id, yesterday_str, day_str)
             except urllib.error.HTTPError:
                 print('No quotes found for:', sec.name)
                 self.last_update += datetime.timedelta(seconds=-30)
@@ -434,7 +485,7 @@ class UI:
             self.list_stocks()
         elif key == 'i':
             self.get_historic_quotes()
-            pprint(self.prices.numbers)
+#             pprint(self.prices.numbers)
         elif key == 'u':
             self.update_stocks()
 #             pprint(self.prices.numbers)
@@ -444,7 +495,30 @@ class UI:
             self.new_split()
         elif key == 'q':
             go_on = inp
-        return go_on      
+        return go_on
+    def edit_stock(self):
+        stock = input('Name of security ')
+        stock_obj = self.secs.find_stock(stock, return_obj=True)
+        print(stock_obj)
+        new_name = input('New name (empty for no change) ')
+        if new_name == '':
+            new_name = stock_obj.name
+        new_id = input('New id (empty for no change) ')
+        if new_id== '':
+            new_id = stock_obj.yahoo_id
+        new_type = input('New Type (empty for no change) ')
+        if new_type == '':
+            new_type = stock_obj.type
+        self.secs.change_stock(stock_obj.yahoo_id, Security(new_name, new_id, new_type))
+    def delete_stock(self):
+        stock = input('Name of security ')
+        stock_obj = self.secs.find_stock(stock, return_obj=True)
+        print(stock_obj)
+        do_delete = input('Delete stock ')
+        if do_delete.lower() == 'yes':
+            self.prices.delete_prices(stock_obj.yahoo_id)
+            self.secs.delete_stock(stock_obj.yahoo_id)            
+            
     def settings_menu(self):
         go_on = inp
         menu = []

@@ -119,7 +119,7 @@ class Securities:
 
     def add(self, name, yahoo_id, type):
         self.securities.append(Security(name, yahoo_id, type))
-        self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4().bytes(), name, yahoo_id, type))
+        self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4().bytes, name, yahoo_id, type))
 
     def change_stock(self, yahoo_id, sec):
         found = False
@@ -186,7 +186,7 @@ class Transaction:
             total = -1 * price * nominal + cost
         elif type == 'd':
             pass
-        self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes(), type, portfolio, yahoo_id, date, nominal, price, cost, total))
+        self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes, type, portfolio, yahoo_id, date, nominal, price, cost, total))
         self.data.commit()
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
@@ -252,7 +252,7 @@ class Prices:
         if self.row_exists(id, date):
             self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
         else:
-            self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4().bytes(), id, date, price))
+            self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4().bytes, id, date, price))
     def get_price(self, id, date):
         price = None
         try:
@@ -484,11 +484,13 @@ class UI:
         elif key == 'l':
             self.list_stocks()
         elif key == 'i':
+            print('Start update')
             self.get_historic_quotes()
-#             pprint(self.prices.numbers)
+            print('Update finished')
         elif key == 'u':
+            print('Start update')
             self.update_stocks()
-#             pprint(self.prices.numbers)
+            print('Update finished')
         elif key == 'g':
             self.new_graph()
         elif key == 'p':

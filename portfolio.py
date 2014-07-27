@@ -34,27 +34,26 @@ class Analyses:
     
 class Database:
     def __init__(self):
-#         sqlite3.register_converter('GUID', lambda b: uuid.UUID(bytes_le=b))
-#         sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
-        conn = sqlite3.connect('test.db', detect_types=sqlite3.PARSE_DECLTYPES)
+        sqlite3.register_converter('GUID', lambda b: uuid.UUID(bytes=b))
+        sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes)
 
         self.conn = sqlite3.connect('data.sql', detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
         self.c = self.conn.cursor()
         # Create tables    
         try:
-            self.c.execute('''CREATE TABLE transactions (id BLOB PRIMARY KEY, type TEXT, portfolio TEXT, yahoo_id TEXT, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
+            self.c.execute('''CREATE TABLE transactions (id GUID PRIMARY KEY, type TEXT, portfolio TEXT, yahoo_id TEXT, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
         except:
             pass
         else:
             print('Created table for transactions')
         try:
-            self.c.execute('''CREATE TABLE stocks (id BLOB PRIMARY KEY, name TEXT, yahoo_id TEXT, type TEXT)''')
+            self.c.execute('''CREATE TABLE stocks (id GUID PRIMARY KEY, name TEXT, yahoo_id TEXT, type TEXT)''')
         except:
             pass
         else:
             print('Created table for stocks')
         try:
-            self.c.execute('''CREATE TABLE prices (id BLOB PRIMARY KEY, stock_id BLOB, date TEXT, price REAL)''')
+            self.c.execute('''CREATE TABLE prices (id GUID PRIMARY KEY, stock_id BLOB, date TEXT, price REAL)''')
         except:
             pass
         else:
@@ -122,7 +121,7 @@ class Securities:
 
     def add(self, name, yahoo_id, type):
         self.securities.append(Security(name, yahoo_id, type))
-        self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4().bytes, name, yahoo_id, type))
+        self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4(), name, yahoo_id, type))
 
     def change_stock(self, yahoo_id, sec):
         found = False
@@ -302,9 +301,15 @@ class Transaction:
                     price = price * nominal
                     nominal = 0
                 cost = 0
-                
-            self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes, type, portfolio, yahoo_id, date, nominal, price, cost, total))
-            return True
+                total = price
+            result = self.data.c.execute('''SELECT id FROM transactions WHERE type = ? AND portfolio = ? AND yahoo_id = ? AND date = ? AND nominal = ? AND price = ? AND cost = ? AND total = ?''', (type, portfolio, yahoo_id, date, nominal, price, cost, total)).fetchall()
+
+            if result == []:
+                self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, yahoo_id, date, nominal, price, cost, total))
+                return True
+            else:
+                print('Transaction already seems to exist!')
+                return False
         else:
             return False
 #         self.data.commit()
@@ -321,7 +326,14 @@ class Transaction:
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
         return result
-
+    def __repr__(self):
+        keys = ['ID', 'Type', 'Date', 'Total']
+        result = self.data.c.execute('''SELECT yahoo_id, type, date, total FROM transactions''').fetchall()
+        x = PrettyTable(keys)
+        x.padding_width = 1 # One space between column edges and contents (default)
+        for item in result:
+            x.add_row(item)
+        return str(x)
 class Prices:
     """Class to store price developments."""
     numbers = {}
@@ -382,7 +394,7 @@ class Prices:
         if self.row_exists(id, date):
             self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
         else:
-            self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4().bytes, id, date, price))
+            self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), id, date, price))
     def get_price(self, id, date):
         price = None
         try:
@@ -761,4 +773,6 @@ if __name__ == "__main__":
 #     print(PRICES)
     print('SECS')
     print(SECS)
+    print('TRANSACTIONS')
+    print(TRANSACTION)
     DATA.close()

@@ -72,6 +72,7 @@ class Portfolio:
         self.name = name
         self.children = []
         self.child_securities = []
+        self.cash = 0.0
     def add_security(self, parent, stock_id):
         if self.name == parent:
             self.child_securities.append(stock_id)
@@ -184,15 +185,15 @@ class Transaction:
             line = lines[line_counter]
             if line.find('Daniel Dumke') != -1:
                 valid = True
-                print('Valid document for Daniel Dumke')
+#                 print('Valid document for Daniel Dumke')
             if valid:
                 if type == '':
                     if line.find('DIVIDENDENGUTSCHRIFT ') != -1:
                         type = 'dividende'
                     elif line.find('ERTRAGSGUTSCHRIFT') != -1:
-                        type = 'ertrag'
+                        type = 'dividende'
                     elif line.find('WERTPAPIERABRECHNUNG') != -1:
-
+#                         print_all = True
                         line_counter += 1 
                         line = lines[line_counter]
                         if line.find('KAUF') != -1:
@@ -201,67 +202,122 @@ class Transaction:
                             type = 'verkauf'
                 else:
                     if line.find('WKN') != -1:
-                        print(line)
-                        line_counter += 1 
-                        line = lines[line_counter]
-                        print(line)
+#                         print(line)
+                        try:
+                            wkn = re.match('.*WKN.*([A-Z0-9]{6}).*', line).group(1)
+                        except:
+                            pass
+                        else:
+#                             print(wkn)
+                            line_counter += 1 
+                            line = lines[line_counter]
+                            name = line.strip(' ')
+#                             print(name)   
                     elif line.find('WERT') != -1:
-                        print(line)
+#                         print(line)
+                        result = re.match('WERT\s*([0-9]{2}\.[0-9]{2}\.[0-9]{4}).*([A-Z]{3})\s*([0-9\.,]*)', line)
+                        date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y").date()
+                        currency = result.group(2)
+                        if currency != 'EUR':
+                            print('Error while importing, currency not EUR')
+                            sys.exit()
+                        value = float(result.group(3).replace('.','').replace(',','.'))
+#                         print(date, currency, value)                   
+#                         print(result)
+
                     elif line.find('Umsatz') != -1:
                     # Nominale when buying
-                        print(line)
+#                         print(line)
                         line_counter += 1 
                         line = lines[line_counter]
-                        print(line)
+#                         print(line)
                         nominale = float(line.replace(',','.'))
+#                         print(nominale)
                     elif line == 'Wertpapier':
                     # Nominale when buying
-                        print(line)
+#                         print(line)
                         line_counter += 1 
                         line = lines[line_counter]
-                        print(line)
+                        name = line.strip(' ')
+#                         print(name)
+                    
+                    elif re.match('AM.*([0-9\.]{10}).*UM.*', line) != None:
+                        date = re.match('AM.*([0-9\.]{10}).*UM.*', line).group(1)
+                        date = datetime.datetime.strptime(date, "%d.%m.%Y").date()
+#                         print(date)
                     elif line == 'Kurs':
                     # Nominale when buying
-                        print(line)
+#                         print(line)
                         line_counter += 2
                         line = lines[line_counter]
-                        print(line)                                       
+#                         print(line)                                       
                         value = float(line.split(' ')[0].replace(',','.'))
+#                         print(value)
                         total_value = value * nominale
-                        print('total value ', total_value)
+#                         print('total value ', total_value)
 #                         print_all = True
                     elif line.replace('.', '').find(str(total_value).replace('.',',')) != -1:
                     # Nominale when buying
-                        print(line)
+#                         print(line)
                         line_counter += 1 
                         line = lines[line_counter]
-                        print(line)
+                        var_charge = float(line.replace('.', '').replace(',', '.'))
+#                         print(var_charge)
                         line_counter += 1 
                         line = lines[line_counter]
-                        print(line)
+                        fixed_charge = float(line.replace('.', '').replace(',', '.'))
+#                         print(fixed_charge)
                         line_counter += 1 
                         line = lines[line_counter]
-                        print(line)
-            if print_all:
-                print(line.replace('.', ''))
+                        total = float(line.replace('.', '').replace(',', '.'))
+                        if total != total_value + var_charge + fixed_charge:
+                            print('Error while importing, totals do not match')
+                            sys.exit()
+#                         print(line)
+#             if print_all:
+#                 print(line.replace('.', ''))
             line_counter += 1 
+        if not valid:
+            return None
+        elif type == 'dividende':
+            return {'type': 'd', 'name': name, 'date': date, 'value': value}
+        elif type == 'kauf':
+            return {'type': 'b', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': fixed_charge + var_charge}  
     def add(self, type, yahoo_id, date, nominal, price, cost, portfolio):
-        if price < 0:
-            price = -1 * price
-        if cost < 0:
-            cost = -1 * cost
-        if type == 'b':
-            if nominal < 0:
-                nominal = -1 * nominal
-            total = -1 * price * nominal - cost
-        elif type == 's':
-            if nominal > 0:
-                nominal = -1 * nominal
-            total = -1 * price * nominal + cost
-        elif type == 'd':
-            pass
-        self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes, type, portfolio, yahoo_id, date, nominal, price, cost, total))
+        if yahoo_id != None:
+            if price < 0:
+                price = -1 * price
+            if cost < 0:
+                cost = -1 * cost
+            if type == 'b':
+                if nominal < 0:
+                    nominal = -1 * nominal
+                total = -1 * price * nominal - cost
+            elif type == 's':
+                if nominal > 0:
+                    nominal = -1 * nominal
+                total = -1 * price * nominal + cost
+            elif type == 'd':
+                if nominal != 0:
+                    price = price * nominal
+                    nominal = 0
+                cost = 0
+                
+            self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes, type, portfolio, yahoo_id, date, nominal, price, cost, total))
+            return True
+        else:
+            return False
 #         self.data.commit()
+    def get_total_invest(self, portfolio):
+        return self.get_total(portfolio, 'b')
+    def get_total_divest(self, portfolio):
+        return self.get_total(portfolio, 's')
+    def get_total_dividend(self, portfolio):
+        return self.get_total(portfolio, 'd')
+    def get_total(self, portfolio, type):
+        result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ?''', (portfolio, type)).fetchall()
+        return result
+
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
         return result
@@ -645,7 +701,21 @@ class UI:
         for file in os.listdir(base_path):
             if file.endswith('.pdf'):
                 print('Import ' + file)
-                self.transaction.get_data_from_text(subprocess.check_output(['/usr/local/bin/pdf2txt.py', base_path + '/' + file]).decode("utf-8"))
+                data = self.transaction.get_data_from_text(subprocess.check_output(['/usr/local/bin/pdf2txt.py', base_path + '/' + file]).decode("utf-8"))
+                if data != None:
+#                     print(data)
+                    if data['type'] in ['b', 's']:
+                        if not self.transaction.add(data['type'], self.secs.find_stock(data['name']), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
+                            print(data['name'] +': could not add transaction (e.g. security not available)')
+                        else:
+                            print('Transaction successful')
+                    elif data['type'] in ['d']:
+                        if not self.transaction.add(data['type'], self.secs.find_stock(data['name']), data['date'], 0, data['value'], 0, 'All'):
+                            print(data['name'] +': could not add transaction (e.g. security not available)')
+                        else:
+                            print('Transaction successful')
+                    
+                
 #                 break
     def new_transaction(self):
         print('Transaction type (Buy/Sell/Dividend)')

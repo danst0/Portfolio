@@ -41,7 +41,7 @@ class Database:
         self.c = self.conn.cursor()
         # Create tables    
         try:
-            self.c.execute('''CREATE TABLE transactions (id GUID PRIMARY KEY, type TEXT, portfolio TEXT, yahoo_id TEXT, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
+            self.c.execute('''CREATE TABLE transactions (id GUID PRIMARY KEY, type TEXT, portfolio TEXT, stock_id BLOB, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
         except:
             pass
         else:
@@ -109,7 +109,7 @@ class Security:
 class Securities:
     """Wrapper for all stored securities"""
     keys = ['Name', 'ID', 'Type', 'Last price']
-    def __init__(self, data, prices):
+    def __init__(self, data):
         self.data = data
         self.securities = []
         all = self.data.c.execute('SELECT * FROM stocks')
@@ -117,12 +117,11 @@ class Securities:
 
             self.securities.append(Security(*line[1:]))
 #         print(self.securities)
-        self.prices = prices
+        self.prices = None
 
     def add(self, name, yahoo_id, type):
         self.securities.append(Security(name, yahoo_id, type))
         self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4(), name, yahoo_id, type))
-
     def change_stock(self, yahoo_id, sec):
         found = False
         for num, item in enumerate(self.securities):
@@ -167,7 +166,9 @@ class Securities:
             return found_obj
         else:
             return found
-
+    def get_stock_id_from_yahoo_id(self, yahoo_id):
+        stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()
+        return None if stock_id is None else stock_id[0]
 
 class Transaction:
     """Class to store transactions"""
@@ -282,8 +283,8 @@ class Transaction:
             return {'type': 'd', 'name': name, 'date': date, 'value': value}
         elif type == 'kauf':
             return {'type': 'b', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': fixed_charge + var_charge}  
-    def add(self, type, yahoo_id, date, nominal, price, cost, portfolio):
-        if yahoo_id != None:
+    def add(self, type, stock_id, date, nominal, price, cost, portfolio):
+        if stock_id != None:
             if price < 0:
                 price = -1 * price
             if cost < 0:
@@ -302,10 +303,10 @@ class Transaction:
                     nominal = 0
                 cost = 0
                 total = price
-            result = self.data.c.execute('''SELECT id FROM transactions WHERE type = ? AND portfolio = ? AND yahoo_id = ? AND date = ? AND nominal = ? AND price = ? AND cost = ? AND total = ?''', (type, portfolio, yahoo_id, date, nominal, price, cost, total)).fetchall()
+            result = self.data.c.execute('''SELECT id FROM transactions WHERE type = ? AND portfolio = ? AND stock_id = ? AND date = ? AND nominal = ? AND price = ? AND cost = ? AND total = ?''', (type, portfolio, stock_id, date, nominal, price, cost, total)).fetchall()
 
             if result == []:
-                self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, yahoo_id, date, nominal, price, cost, total))
+                self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
                 return True
             else:
                 print('Transaction already seems to exist!')
@@ -328,7 +329,7 @@ class Transaction:
         return result
     def __repr__(self):
         keys = ['ID', 'Type', 'Date', 'Total']
-        result = self.data.c.execute('''SELECT yahoo_id, type, date, total FROM transactions''').fetchall()
+        result = self.data.c.execute('''SELECT stock_id, type, date, total FROM transactions''').fetchall()
         x = PrettyTable(keys)
         x.padding_width = 1 # One space between column edges and contents (default)
         for item in result:
@@ -339,6 +340,7 @@ class Prices:
     numbers = {}
     def __init__(self, data):
         self.data = data
+        self.secs = None
         self.numbers = {}
         all = self.data.c.execute('SELECT * FROM prices')
         print('Preise initialisieren')
@@ -378,16 +380,12 @@ class Prices:
                     break
             old_price = new_price
         return last_unsplit_date, suggested_ratio         
-    def get_stock_id_from_yahoo_id(self, yahoo_id):
-#         print(':'+yahoo_id+':')
-        stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()
-#         print(stock_id)
-        return None if stock_id is None else stock_id[0]
+
     def row_exists(self, stock_id, date):
         result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
         return False if result == None else True
     def update(self, yahoo_id, date, price):
-        id = self.get_stock_id_from_yahoo_id(yahoo_id)
+        id = self.secs.get_stock_id_from_yahoo_id(yahoo_id)
         if id not in self.numbers.keys():
             self.numbers[id] = {}
         self.numbers[id][date] = price
@@ -403,7 +401,7 @@ class Prices:
             pass
         return price
     def get_prices(self, id):
-        id = self.get_stock_id_from_yahoo_id(id)
+        id = self.secs.get_stock_id_from_yahoo_id(id)
         prices = None
         try:
             prices = self.numbers[id]
@@ -717,18 +715,23 @@ class UI:
                 if data != None:
 #                     print(data)
                     if data['type'] in ['b', 's']:
-                        if not self.transaction.add(data['type'], self.secs.find_stock(data['name']), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
+                        if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
                             print(data['name'] +': could not add transaction (e.g. security not available)')
                         else:
                             print('Transaction successful')
+                            # Remove successful PDFs
+                            os.remove(base_path + '/' + file)
+
                     elif data['type'] in ['d']:
-                        if not self.transaction.add(data['type'], self.secs.find_stock(data['name']), data['date'], 0, data['value'], 0, 'All'):
+                        if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], 0, data['value'], 0, 'All'):
                             print(data['name'] +': could not add transaction (e.g. security not available)')
                         else:
                             print('Transaction successful')
-                    
-                
-#                 break
+                            # Remove successful PDFs
+                            os.remove(base_path + '/' + file)
+                else:
+                    # Remove invalid PDFs
+                    os.remove(base_path + '/' + file)
     def new_transaction(self):
         print('Transaction type (Buy/Sell/Dividend)')
         type = input()
@@ -750,7 +753,7 @@ class UI:
         price = float(input())
         print('Cost')
         cost = float(input())
-        self.transaction.add(type, self.secs.find_stock(stock), date, nom, price, cost, portfolio)
+        self.transaction.add(type, self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)
     
 if __name__ == "__main__":
     DATA = Database()
@@ -758,10 +761,10 @@ if __name__ == "__main__":
         PORTFOLIO = pickle.load(open('portfolio.p', 'rb'))
     except:
         PORTFOLIO = Portfolio('All')
-#     print(str(PORTFOLIO).strip('\n'))
     PRICES = Prices(DATA)
-
-    SECS = Securities(DATA, PRICES)
+    SECS = Securities(DATA)
+    PRICES.secs = SECS
+    SECS.prices = PRICES
 #     print('PRICES')
 #     print(PRICES)
     print('SECS')

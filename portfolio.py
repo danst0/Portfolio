@@ -3,7 +3,7 @@
 
 import pickle
 from prettytable import PrettyTable
-import sys
+import sys, os
 #from stockquotes import GoogleFinanceAPI
 from pprint import pprint
 import ystockquote
@@ -13,6 +13,8 @@ import re
 import pdb
 import sqlite3
 import uuid
+import subprocess
+
 
 import matplotlib.pyplot as plt
 # Sample stocks        
@@ -171,6 +173,78 @@ class Transaction:
     """Class to store transactions"""
     def __init__(self, data):
         self.data = data
+    def get_data_from_text(self, text):
+        valid = False
+        type = ''
+        line_counter = 0
+        lines = text.split('\n')
+        print_all = False
+        total_value = None
+        while line_counter < len(lines):
+            line = lines[line_counter]
+            if line.find('Daniel Dumke') != -1:
+                valid = True
+                print('Valid document for Daniel Dumke')
+            if valid:
+                if type == '':
+                    if line.find('DIVIDENDENGUTSCHRIFT ') != -1:
+                        type = 'dividende'
+                    elif line.find('ERTRAGSGUTSCHRIFT') != -1:
+                        type = 'ertrag'
+                    elif line.find('WERTPAPIERABRECHNUNG') != -1:
+
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        if line.find('KAUF') != -1:
+                            type = 'kauf'
+                        elif line.find('VERKAUF') != -1:
+                            type = 'verkauf'
+                else:
+                    if line.find('WKN') != -1:
+                        print(line)
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        print(line)
+                    elif line.find('WERT') != -1:
+                        print(line)
+                    elif line.find('Umsatz') != -1:
+                    # Nominale when buying
+                        print(line)
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        print(line)
+                        nominale = float(line.replace(',','.'))
+                    elif line == 'Wertpapier':
+                    # Nominale when buying
+                        print(line)
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        print(line)
+                    elif line == 'Kurs':
+                    # Nominale when buying
+                        print(line)
+                        line_counter += 2
+                        line = lines[line_counter]
+                        print(line)                                       
+                        value = float(line.split(' ')[0].replace(',','.'))
+                        total_value = value * nominale
+                        print('total value ', total_value)
+#                         print_all = True
+                    elif line.replace('.', '').find(str(total_value).replace('.',',')) != -1:
+                    # Nominale when buying
+                        print(line)
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        print(line)
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        print(line)
+                        line_counter += 1 
+                        line = lines[line_counter]
+                        print(line)
+            if print_all:
+                print(line.replace('.', ''))
+            line_counter += 1 
     def add(self, type, yahoo_id, date, nominal, price, cost, portfolio):
         if price < 0:
             price = -1 * price
@@ -187,7 +261,7 @@ class Transaction:
         elif type == 'd':
             pass
         self.data.c.execute('INSERT INTO transactions (id, type, portfolio, yahoo_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4().bytes, type, portfolio, yahoo_id, date, nominal, price, cost, total))
-        self.data.commit()
+#         self.data.commit()
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
         return result
@@ -381,8 +455,10 @@ class UI:
         type = input()
         self.secs.add(name, id, type)
     def list_content(self):
-        print('Portfolio')
-        pf = input()
+
+        pf = input('Portfolio [All] ')
+        if pf == '':
+            pf = 'All'
         transactions = self.transaction.get_total_for_portfolio(pf)
 #         print(transactions)
         
@@ -544,6 +620,7 @@ class UI:
         menu.append(["s", "Securities"])
         menu.append(["p", "Portfolios"])
         menu.append(["t", "New transaction"])
+        menu.append(["i", "Import from PDFs"])
         menu.append(['e', 'Settings (eg. planned savings)'])
         menu.append(['f', 'Forecast'])
         menu.append(["-", '---'])
@@ -558,16 +635,27 @@ class UI:
                 inp = self.settings_menu()
             elif key == 't':
                 self.new_transaction()
+            elif key == 'i':
+                self.import_pdfs()
             elif key == 'q':
                 go_on = ''
                 break
+    def import_pdfs(self):
+        base_path = '/Users/danst/Desktop/PDFs'
+        for file in os.listdir(base_path):
+            if file.endswith('.pdf'):
+                print('Import ' + file)
+                self.transaction.get_data_from_text(subprocess.check_output(['/usr/local/bin/pdf2txt.py', base_path + '/' + file]).decode("utf-8"))
+#                 break
     def new_transaction(self):
         print('Transaction type (Buy/Sell/Dividend)')
         type = input()
         print('Security')
         stock = input()
-        print('Portfolio')
-        portfolio = input()
+
+        portfolio = input('Portfolio [All] ')
+        if portfolio == '':
+            portfolio = 'All'
 
         tmp_default = datetime.date.today().strftime('%Y-%m-%d')
         print('Date [' + tmp_default + ']')

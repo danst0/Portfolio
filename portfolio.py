@@ -28,6 +28,10 @@ import matplotlib.pyplot as plt
 # | DB MSCI EU M 1C    | DX2I.DE | Stock |    73.7    |
 # +--------------------+---------+-------+------------+
 
+# Next todo: get price from specific date, multiply by number of stocks
+
+
+
 class Analyses:
     """Perform additional analyses on the Portfolios and stocks."""
     pass
@@ -41,7 +45,7 @@ class Database:
         self.c = self.conn.cursor()
         # Create tables    
         try:
-            self.c.execute('''CREATE TABLE transactions (id GUID PRIMARY KEY, type TEXT, portfolio TEXT, stock_id BLOB, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
+            self.c.execute('''CREATE TABLE transactions (id GUID PRIMARY KEY, type TEXT, portfolio TEXT, stock_id GUID, date TEXT, nominal REAL, price REAL, cost REAL, total REAL)''')
         except:
             pass
         else:
@@ -53,7 +57,7 @@ class Database:
         else:
             print('Created table for stocks')
         try:
-            self.c.execute('''CREATE TABLE prices (id GUID PRIMARY KEY, stock_id BLOB, date TEXT, price REAL)''')
+            self.c.execute('''CREATE TABLE prices (id GUID PRIMARY KEY, stock_id GUID, date TEXT, price REAL)''')
         except:
             pass
         else:
@@ -322,7 +326,22 @@ class Transaction:
         return self.get_total(portfolio, 'd')
     def get_total(self, portfolio, type):
         result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ?''', (portfolio, type)).fetchall()
+        if result != None:
+            result = result[0]
+            if result != None:
+                result = result[0]
+        if result == None:
+            result = 0.0
         return result
+    def get_portfolio(self, portfolio, date):
+        """Get portfolio contents on that specific date, incl. all transactions from that date"""
+        result = self.data.c.execute("""SELECT stock_id, nominal FROM transactions WHERE portfolio = ? AND type = 'b' OR type = 's' AND date <= ?""", (portfolio, date)).fetchall()
+        stocks = {}
+        for item in result:
+            if item[0] not in stocks.keys():
+                stocks[item[0]] = 0.0
+            stocks[item[0]] = stocks[item[0]] + item[1]
+        return stocks
 
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
@@ -662,8 +681,54 @@ class UI:
         if do_delete.lower() == 'yes':
             self.prices.delete_prices(stock_obj.yahoo_id)
             self.secs.delete_stock(stock_obj.yahoo_id)            
-            
-    def settings_menu(self):
+    def profitability(self):
+        portfolio = input('Portfolio [All] ')
+        if portfolio == '':
+            portfolio = 'All'
+        tmp_default = (datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+        from_date = input('Start date [' + tmp_default + '] ')
+        if from_date == '':
+            from_date = tmp_default
+        from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
+        tmp_default = datetime.date.today().strftime('%Y-%m-%d')
+        to_date = input('End date [' + tmp_default + '] ')
+        if to_date == '':
+            to_date = tmp_default
+        to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
+        print(self.transaction.get_portfolio('All', to_date.strftime("%Y-%m-%d")))
+        invest = self.transaction.get_total_invest('All')
+        divest = self.transaction.get_total_divest('All')
+        dividend = self.transaction.get_total_dividend('All')
+        print('Absolute KPIs')
+        keys = ['Start portfolio', 'Investment', 'Divestment', 'Current portfolio', 'Dividend', 'Profit on books']
+        x = PrettyTable(keys)
+        x.padding_width = 1 # One space between column edges and contents (default)
+        x.add_row([0, invest, divest, invest + divest, dividend, 0])
+        print(str(x))
+        print('Relative KPIs')        
+        keys = ['ROI']
+        x = PrettyTable(keys)
+        x.padding_width = 1 # One space between column edges and contents (default)
+        x.add_row([str(round(-dividend/invest*100,2)) + '%'])
+        print(str(x))
+
+    def analyzes_menu(self, inp=''):
+        go_on = inp
+        menu = []
+        menu.append(['a', 'Profitability'])
+        menu.append(["b", ''])
+        menu.append(["c", ''])
+        menu.append(["d", ''])
+        menu.append(["-", '---'])
+        menu.append(["q", "Back"])
+        key, inp = self.menu(menu, inp)
+        if key == 'a':
+            self.profitability()
+        elif key == 'q':
+            go_on = inp
+        return go_on
+    
+    def settings_menu(self, inp=''):
         go_on = inp
         menu = []
         menu.append(["a", 'Planned saving (p.m.)'])
@@ -683,6 +748,7 @@ class UI:
     def main_menu(self):
         go_on = ''
         menu = []
+        menu.append(['a', 'Analyzes'])
         menu.append(["s", "Securities"])
         menu.append(["p", "Portfolios"])
         menu.append(["t", "New transaction"])
@@ -693,6 +759,8 @@ class UI:
         menu.append(["q", "Quit"])
         while True:
             key, inp = self.menu(menu, go_on)
+            if key == 'a':
+                inp = self.analyzes_menu(inp)
             if key == 's':
                 inp = self.securities_menu(inp)
             elif key == 'p':

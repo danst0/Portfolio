@@ -258,6 +258,7 @@ class Transaction:
                         value = float(line.split(' ')[0].replace(',','.'))
 #                         print(value)
                         total_value = value * nominale
+#                         print(total_value)
 #                         print('total value ', total_value)
 #                         print_all = True
                     elif line.replace('.', '').find(str(total_value).replace('.',',')) != -1:
@@ -274,12 +275,15 @@ class Transaction:
                         line_counter += 1 
                         line = lines[line_counter]
                         total = float(line.replace('.', '').replace(',', '.'))
-                        if total != total_value + var_charge + fixed_charge:
+#                         print(total)
+#                         print(total_value + var_charge + fixed_charge, total)
+#                         print(abs(total - (total_value + var_charge + fixed_charge)))
+                        if abs(total - (total_value + var_charge + fixed_charge)) > 0.01:
                             print('Error while importing, totals do not match')
                             sys.exit()
 #                         print(line)
 #             if print_all:
-#                 print(line.replace('.', ''))
+#             print(line.replace('.', ''))
             line_counter += 1 
         if not valid:
             return None
@@ -318,14 +322,14 @@ class Transaction:
         else:
             return False
 #         self.data.commit()
-    def get_total_invest(self, portfolio):
-        return self.get_total(portfolio, 'b')
-    def get_total_divest(self, portfolio):
-        return self.get_total(portfolio, 's')
-    def get_total_dividend(self, portfolio):
-        return self.get_total(portfolio, 'd')
-    def get_total(self, portfolio, type):
-        result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ?''', (portfolio, type)).fetchall()
+    def get_total_invest(self, portfolio, from_date, to_date):
+        return self.get_total(portfolio, 'b', from_date, to_date)
+    def get_total_divest(self, portfolio, from_date, to_date):
+        return self.get_total(portfolio, 's', from_date, to_date)
+    def get_total_dividend(self, portfolio, from_date, to_date):
+        return self.get_total(portfolio, 'd', from_date, to_date)
+    def get_total(self, portfolio, type, from_date, to_date):
+        result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date >= ? AND date <= ?''', (portfolio, type, from_date, to_date)).fetchall()
         if result != None:
             result = result[0]
             if result != None:
@@ -335,7 +339,7 @@ class Transaction:
         return result
     def get_portfolio(self, portfolio, date):
         """Get portfolio contents on that specific date, incl. all transactions from that date"""
-        result = self.data.c.execute("""SELECT stock_id, nominal FROM transactions WHERE portfolio = ? AND type = 'b' OR type = 's' AND date <= ?""", (portfolio, date)).fetchall()
+        result = self.data.c.execute("""SELECT stock_id, nominal FROM transactions WHERE portfolio = ? AND (type = 'b' OR type = 's') AND date <= ?""", (portfolio, date)).fetchall()
         stocks = {}
         for item in result:
             if item[0] not in stocks.keys():
@@ -354,6 +358,7 @@ class Transaction:
         for item in result:
             x.add_row(item)
         return str(x)
+        
 class Prices:
     """Class to store price developments."""
     numbers = {}
@@ -414,10 +419,12 @@ class Prices:
             self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), id, date, price))
     def get_price(self, id, date):
         price = None
-        try:
-            price = self.numbers[id][date]
-        except:
-            pass
+        for i in range(4):
+            date = (datetime.datetime.strptime(date, '%Y-%m-%d') - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            try:
+                price = self.numbers[id][date]
+            except:
+                pass
         return price
     def get_prices(self, id):
         id = self.secs.get_stock_id_from_yahoo_id(id)
@@ -436,14 +443,48 @@ class Prices:
             return prices[max_key]
         else:
             return None
-    def get_quote(self,symbol):
-        base_url = 'http://finance.google.com/finance?q='
-        content = str(urllib.request.urlopen(base_url + symbol).read())
-        m = re.search('id="ref_694653_l".*?>(.*?)<', content)
-        if m:
-            quote = m.group(1)
+    def get_quote(self, symbol):
+        print(symbol)
+#         http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn=DE0005933998
+
+# <td class="column-datacaption"><b>Letzter Preis</b></td>
+# 					<td class="column-datavalue2 right lastColOfRow">
+# 						<b>
+# 							<span class="arp_703908@12_p_format=security-price_foptiontype=ETF_foptionboerse-id=12_blink_nozero">36,35</span>
+# 							&euro;
+# 						</b>
+# 					</td>
+# 					<td class="column-datavalue1 right">
+# 						<b>
+# 							<span class="arp_703908@1_p_format=security-price_foptiontype=ETF_foptionboerse-id=1_blink_nozero">36,31</span>
+# 							&euro;
+# 						</b>
+# 					</td>
+        base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='
+        content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')#.replace('\n','')
+#         print(content)
+        quote = None
+        if content.find('Disclaimer nicht akzeptiert: kaufen') != -1:
+            m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
+#             m = re.search('Letzter Preis.*?<\/td>.*?([0-9]{1,5},[0-9]{2,5}).*?<\/td>', content, re.DOTALL)
+
+    # <span\sclass="arp_703908.*?>([0-9\.]{4,8})<\/span>
+    #         m = re.search('id="ref_694653_l".*?>(.*?)<', content)
+#             print(m.group(0))
+            if m:
+                quote = float(m.group(1))
+            else:
+                m = re.search("""window\.location\.href='(.*?)';""", content, re.DOTALL)
+                if m:
+                    print('Second try')
+                    print(m.group(1))
+                    content = urllib.request.urlopen(m.group(1)).read().decode('UTF-8')
+                    m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
+                    if m:
+                        quote = float(m.group(1))
+
         else:
-            quote = 'no quote available for: ' + symbol
+            print('Policy has to be accepted first')
         return quote
     def __str__(self):
         keys = ['ID', 'Date', 'Price']
@@ -519,13 +560,12 @@ class UI:
         yesterday_str = yesterday.strftime('%Y-%m-%d')
         for sec in self.secs:
             quote = None
-            try:
-                quote = ystockquote.get_historical_prices(sec.yahoo_id, yesterday_str, day_str)
-            except urllib.error.HTTPError:
+            quote = self.prices.get_quote(sec.yahoo_id)
+            if not quote:
                 print('No quotes found for:', sec.name)
                 self.last_update += datetime.timedelta(seconds=-30)
             else:
-                self.prices.update(sec.yahoo_id, day_str, quote[day_str]['Close'])
+                self.prices.update(sec.yahoo_id, day_str, quote)
     def list_stocks(self):
         if not self.secs.empty():
             print(self.secs)
@@ -685,31 +725,42 @@ class UI:
         portfolio = input('Portfolio [All] ')
         if portfolio == '':
             portfolio = 'All'
-        tmp_default = (datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+        tmp_default = (datetime.date.today() - datetime.timedelta(days=31)).strftime('%Y-%m-%d')
         from_date = input('Start date [' + tmp_default + '] ')
         if from_date == '':
             from_date = tmp_default
         from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
-        tmp_default = datetime.date.today().strftime('%Y-%m-%d')
+        tmp_default = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
         to_date = input('End date [' + tmp_default + '] ')
         if to_date == '':
             to_date = tmp_default
         to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
-        print(self.transaction.get_portfolio('All', to_date.strftime("%Y-%m-%d")))
-        invest = self.transaction.get_total_invest('All')
-        divest = self.transaction.get_total_divest('All')
-        dividend = self.transaction.get_total_dividend('All')
+        stocks_at_start = self.transaction.get_portfolio('All', from_date.strftime("%Y-%m-%d"))
+        print(stocks_at_start)
+        portfolio_value_at_start = 0.0
+        for key in stocks_at_start.keys():
+            portfolio_value_at_start += stocks_at_start[key] * self.prices.get_price(key, from_date.strftime("%Y-%m-%d"))
+        stocks_at_end = self.transaction.get_portfolio('All', to_date.strftime("%Y-%m-%d"))
+        portfolio_value_at_end = 0.0
+        for key in stocks_at_end.keys():
+            portfolio_value_at_end += stocks_at_end[key] * self.prices.get_price(key, to_date.strftime("%Y-%m-%d"))
+
+        invest = self.transaction.get_total_invest('All', from_date, to_date)
+        divest = self.transaction.get_total_divest('All', from_date, to_date)
+        dividend = self.transaction.get_total_dividend('All', from_date, to_date)
+
+        profit_incl_on_books = portfolio_value_at_end + invest - divest - portfolio_value_at_start + dividend
         print('Absolute KPIs')
-        keys = ['Start portfolio', 'Investment', 'Divestment', 'Current portfolio', 'Dividend', 'Profit on books']
+        keys = ['Start portfolio', 'Investment', 'Divestment', 'Current portfolio', 'Dividend', 'Profit (incl. on books)']
         x = PrettyTable(keys)
         x.padding_width = 1 # One space between column edges and contents (default)
-        x.add_row([0, invest, divest, invest + divest, dividend, 0])
+        x.add_row([portfolio_value_at_start, -invest, divest, portfolio_value_at_end, dividend, profit_incl_on_books])
         print(str(x))
         print('Relative KPIs')        
         keys = ['ROI']
         x = PrettyTable(keys)
         x.padding_width = 1 # One space between column edges and contents (default)
-        x.add_row([str(round(-dividend/invest*100,2)) + '%'])
+        x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
         print(str(x))
 
     def analyzes_menu(self, inp=''):

@@ -445,44 +445,14 @@ class Prices:
             return None
     def get_quote(self, symbol):
         print(symbol)
-#         http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn=DE0005933998
-
-# <td class="column-datacaption"><b>Letzter Preis</b></td>
-# 					<td class="column-datavalue2 right lastColOfRow">
-# 						<b>
-# 							<span class="arp_703908@12_p_format=security-price_foptiontype=ETF_foptionboerse-id=12_blink_nozero">36,35</span>
-# 							&euro;
-# 						</b>
-# 					</td>
-# 					<td class="column-datavalue1 right">
-# 						<b>
-# 							<span class="arp_703908@1_p_format=security-price_foptiontype=ETF_foptionboerse-id=1_blink_nozero">36,31</span>
-# 							&euro;
-# 						</b>
-# 					</td>
         base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='
         content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')#.replace('\n','')
-#         print(content)
+
         quote = None
         if content.find('Disclaimer nicht akzeptiert: kaufen') != -1:
             m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
-#             m = re.search('Letzter Preis.*?<\/td>.*?([0-9]{1,5},[0-9]{2,5}).*?<\/td>', content, re.DOTALL)
-
-    # <span\sclass="arp_703908.*?>([0-9\.]{4,8})<\/span>
-    #         m = re.search('id="ref_694653_l".*?>(.*?)<', content)
-#             print(m.group(0))
             if m:
                 quote = float(m.group(1))
-            else:
-                m = re.search("""window\.location\.href='(.*?)';""", content, re.DOTALL)
-                if m:
-                    print('Second try')
-                    print(m.group(1))
-                    content = urllib.request.urlopen(m.group(1)).read().decode('UTF-8')
-                    m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
-                    if m:
-                        quote = float(m.group(1))
-
         else:
             print('Policy has to be accepted first')
         return quote

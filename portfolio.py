@@ -147,6 +147,10 @@ class Securities:
 #         pickle.dump( self.securities, open( "securities.p", "wb" ) )
     def empty(self):
         return False if len(self.securities) > 0 else True
+    def get_name_from_stock_id(self, stock_id):
+        name = self.data.c.execute('''SELECT name FROM stocks WHERE id = ?''', (stock_id,)).fetchone()
+        return None if name is None else name[0]
+
     def __str__(self):
         x = PrettyTable(self.keys)
         x.align[self.keys[0]] = "l" # Left align city names
@@ -733,17 +737,44 @@ class UI:
         x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
         print(str(x))
 
+    def list_portfolio(self):
+        portfolio = input('Portfolio [All] ')
+        if portfolio == '':
+            portfolio = 'All'
+        tmp_default = datetime.date.today().strftime('%Y-%m-%d')
+        my_date = input('Date of state [' + tmp_default + '] ')
+        if my_date == '':
+            my_date = tmp_default
+        my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
+        stocks = self.transaction.get_portfolio('All', my_date.strftime("%Y-%m-%d"))
+#         print(stocks)
+        keys = ['Name', 'Nominal', 'Price', 'Value']        
+        x = PrettyTable(keys)
+        x.padding_width = 1 # One space between column edges and contents (default)
+        prices = []
+        tmp = 0.0
+        for key in stocks.keys():
+            price = self.prices.get_price(key, my_date.strftime("%Y-%m-%d"))
+            value = stocks[key] * price
+            x.add_row([self.secs.get_name_from_stock_id(key), stocks[key], price, value])
+            tmp += value
+        x.add_row(4*['====='])
+        x.add_row(['Total', '----', '----', tmp])
+        print(str(x))
+
     def analyzes_menu(self, inp=''):
         go_on = inp
         menu = []
-        menu.append(['a', 'Profitability'])
-        menu.append(["b", ''])
+        menu.append(["a", 'List portfolio'])
+        menu.append(['b', 'Profitability'])
         menu.append(["c", ''])
         menu.append(["d", ''])
         menu.append(["-", '---'])
         menu.append(["q", "Back"])
         key, inp = self.menu(menu, inp)
         if key == 'a':
+            self.list_portfolio()
+        elif key == 'b':
             self.profitability()
         elif key == 'q':
             go_on = inp

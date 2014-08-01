@@ -481,21 +481,6 @@ class UI:
         while go_on:
             go_on = self.main_menu()
 
-    def menu(self, items, inp=''):
-        x = PrettyTable(["Key", "Item"])
-        x.align["Item"] = "l" # Left align city names
-        x.padding_width = 1 # One space between column edges and contents (default)
-        for i in items:
-            x.add_row(i)
-        print(x)
-        if inp == '':
-            try:
-                inp = input().lower()
-            except KeyboardInterrupt:
-                inp = 'q'
-        key = inp[:1]
-        inp = inp[1:]
-        return key, inp
     def get_historic_quotes(self):
         now = datetime.datetime.now()
 #         print(now, self.last_update)
@@ -569,25 +554,7 @@ class UI:
 #             print(i)
             x.add_row(i[:-1] + (self.prices.get_last_price(i[0],) * i[1],))
         print(x)
-    def portfolio_menu(self, inp=''):
-        go_on = inp
-        menu = []
-        menu.append(["a", "Add portfolio"])
-        menu.append(["l", "List portfolios"])
-        menu.append(["c", "List content of portfolio"])
-        menu.append(["-", '---'])
-        menu.append(["q", "Back"])
-        key, inp = self.menu(menu, inp)
-        if key == 'a':
-            self.new_portfolio()
-        elif key == 'l':
-            print(self.portfolio)
-        elif key == 'c':
-            print(self.portfolio)
-            self.list_content()
-        elif key == 'q':
-            go_on = inp
-        return go_on      
+
     def new_portfolio(self):
         print(self.portfolio)
         print('Parent ',) 
@@ -736,7 +703,6 @@ class UI:
         x.padding_width = 1 # One space between column edges and contents (default)
         x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
         print(str(x))
-
     def list_portfolio(self):
         portfolio = input('Portfolio [All] ')
         if portfolio == '':
@@ -761,71 +727,76 @@ class UI:
         x.add_row(4*['====='])
         x.add_row(['Total', '----', '----', tmp])
         print(str(x))
-
+    def print_portfolio(self):
+        print(self.portfolio)
+    def list_portfolio_contents(self):
+        print(self.portfolio)
+        self.list_content()
     def analyzes_menu(self, inp=''):
-        go_on = inp
-        menu = []
-        menu.append(["a", 'List portfolio'])
-        menu.append(['b', 'Profitability'])
-        menu.append(["c", ''])
-        menu.append(["d", ''])
-        menu.append(["-", '---'])
-        menu.append(["q", "Back"])
-        key, inp = self.menu(menu, inp)
-        if key == 'a':
-            self.list_portfolio()
-        elif key == 'b':
-            self.profitability()
-        elif key == 'q':
-            go_on = inp
-        return go_on
-    
+        return self.new_menu(
+            [   'List portfolio',
+                'Profitability'],
+            [   self.list_portfolio,
+                self.profitability], inp)
     def settings_menu(self, inp=''):
-        go_on = inp
-        menu = []
-        menu.append(["a", 'Planned saving (p.m.)'])
-        menu.append(["b", ''])
-        menu.append(["c", ''])
-        menu.append(["d", ''])
-        menu.append(["-", '---'])
-        menu.append(["q", "Back"])
-        key, inp = self.menu(menu, inp)
-        if key == 'a':
-            self.new_stock()
-        elif key == 'b':
-            self.edit_stock()
-        elif key == 'q':
-            go_on = inp
-        return go_on      
+        return self.new_menu(
+            [   'Planned saving (p.m.)'],
+            [   None], inp)
+    def portfolio_menu(self, inp=''):
+        return self.new_menu(
+            [   'Add portfolio',
+                'List portfolios',
+                'List content of portfolio'],
+            [   self.new_portfolio,
+                self.print_portfolio,
+                self.list_portfolio_contents], inp)
     def main_menu(self):
-        go_on = ''
-        menu = []
-        menu.append(['a', 'Analyzes'])
-        menu.append(["s", "Securities"])
-        menu.append(["p", "Portfolios"])
-        menu.append(["t", "New transaction"])
-        menu.append(["i", "Import from PDFs"])
-        menu.append(['e', 'Settings (eg. planned savings)'])
-        menu.append(['f', 'Forecast'])
-        menu.append(["-", '---'])
-        menu.append(["q", "Quit"])
+        self.new_menu(
+            [   'Analyzes - Menu',
+                'Securities - Menu',
+                'Portfolios - Menu',
+                'New transaction',
+                'Import from PDFs',
+                'Settings (eg. planned savings)',
+                'Forecast'],
+            [   self.analyzes_menu,
+                self.securities_menu,
+                self.portfolio_menu,
+                self.settings_menu,
+                self.new_transaction,
+                self.import_pdfs,
+                None])
+    def new_menu(self, choices, functions, inp=''):
+        letters = 'abcdefghijklmnoprstuvwxyz'
         while True:
-            key, inp = self.menu(menu, go_on)
-            if key == 'a':
-                inp = self.analyzes_menu(inp)
-            if key == 's':
-                inp = self.securities_menu(inp)
-            elif key == 'p':
-                inp = self.portfolio_menu(inp)
-            elif key == 'e':
-                inp = self.settings_menu()
-            elif key == 't':
-                self.new_transaction()
-            elif key == 'i':
-                self.import_pdfs()
-            elif key == 'q':
-                go_on = ''
+            x = PrettyTable(["Key", "Item"])
+            x.align["Item"] = "l"
+            x.padding_width = 1 # One space between column edges and contents (default)
+            for num, choice in enumerate(choices):
+                x.add_row([letters[num], choice])
+#                 i[1] = i[1].replace(' - Menu', '')
+            x.add_row(["-", '---'])
+            x.add_row(["q", "Quit"])
+            print(x)
+            if inp == '':
+                try:
+                    inp = input().lower()
+                except KeyboardInterrupt:
+                    inp = 'q'
+            key = inp[:1]
+            inp = inp[1:]
+            found = False
+            for num, choice in enumerate(choices):
+                if key == letters[num]:
+                    found = True
+                    if choice.find(' - Menu') != -1:
+                        functions[num](inp)
+                    else:
+                        functions[num]()
+                    break
+            if not found and key == 'q':
                 break
+        return inp        
     def import_pdfs(self):
         base_path = '/Users/danst/Desktop/PDFs'
         for file in os.listdir(base_path):

@@ -786,7 +786,8 @@ class UI:
                 break
         return inp        
     def import_pdfs(self):
-        base_path = '~/Desktop/PDFs'
+        base_path = os.path.expanduser('~') + '/Desktop/PDFs'
+        print(base_path)
         for file in os.listdir(base_path):
             if file.endswith('.pdf'):
                 print('Import ' + file)

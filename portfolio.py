@@ -453,12 +453,11 @@ class Prices:
         content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')#.replace('\n','')
 
         quote = None
-        if content.find('Disclaimer nicht akzeptiert: kaufen') != -1:
-            m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
-            if m:
-                quote = float(m.group(1))
+        m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
+        if m:
+            quote = float(m.group(1))
         else:
-            print('Policy has to be accepted first')
+            print('Error: could not retrieve quote')
         return quote
     def __str__(self):
         keys = ['ID', 'Date', 'Price']
@@ -482,6 +481,8 @@ class UI:
             go_on = self.main_menu()
 
     def get_historic_quotes(self):
+        print('Start update')
+            
         now = datetime.datetime.now()
 #         print(now, self.last_update)
         if now < self.last_update + datetime.timedelta(seconds=90):
@@ -504,7 +505,10 @@ class UI:
 #                 print(quote)
                 for key in quote:
                     self.prices.update(sec.yahoo_id, key, quote[key]['Close'])
+        print('Update finished')
+                    
     def update_stocks(self):
+        print('Start update')
         now = datetime.datetime.now()
         if now < self.last_update + datetime.timedelta(seconds=30):
             print('Please leave at least 30 secs between each update.')
@@ -525,6 +529,8 @@ class UI:
                 self.last_update += datetime.timedelta(seconds=-30)
             else:
                 self.prices.update(sec.yahoo_id, day_str, quote)
+        print('Update finished')        
+                
     def list_stocks(self):
         if not self.secs.empty():
             print(self.secs)
@@ -603,43 +609,7 @@ class UI:
         input()
         for i in range(len(dates)):
             self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio)) 
-    def securities_menu(self, inp=''):
-        go_on = inp
-        menu = []
-        menu.append(["l", "List securities"])
-        menu.append(["n", "New security"])
-        menu.append(["e", "Edit security"])
-        menu.append(["d", "Delete security"])
-        menu.append(['u', 'Update security prices'])
-        menu.append(['i', 'Initialize quotes for last 15 years'])
-        menu.append(["g", "New graph"])
-        menu.append(["p", "Stock split"])
-        menu.append(["-", '---'])
-        menu.append(["q", "Back"])
-        key, inp = self.menu(menu, inp)
-        if key == 'n':
-            self.new_stock()
-        elif key == 'e':
-            self.edit_stock()
-        elif key == 'd':
-            self.delete_stock()
-        elif key == 'l':
-            self.list_stocks()
-        elif key == 'i':
-            print('Start update')
-            self.get_historic_quotes()
-            print('Update finished')
-        elif key == 'u':
-            print('Start update')
-            self.update_stocks()
-            print('Update finished')
-        elif key == 'g':
-            self.new_graph()
-        elif key == 'p':
-            self.new_split()
-        elif key == 'q':
-            go_on = inp
-        return go_on
+
     def edit_stock(self):
         stock = input('Name of security ')
         stock_obj = self.secs.find_stock(stock, return_obj=True)
@@ -732,6 +702,24 @@ class UI:
     def list_portfolio_contents(self):
         print(self.portfolio)
         self.list_content()
+    def securities_menu(self, inp=''):
+        return self.new_menu(
+            [   'List securities',
+                'New security',
+                'Edit security',
+                'Delete security',
+                'Update security prices',
+                'Initialize quotes for last 15 years',
+                'New graph',
+                'Stock split'],
+            [   self.list_stocks,
+                self.new_stock,
+                self.edit_stock,
+                self.delete_stock,
+                self.update_stocks,
+                self.get_historic_quotes,
+                self.new_graph,
+                self.new_split], inp)
     def analyzes_menu(self, inp=''):
         return self.new_menu(
             [   'List portfolio',
@@ -757,14 +745,14 @@ class UI:
                 'Portfolios - Menu',
                 'New transaction',
                 'Import from PDFs',
-                'Settings (eg. planned savings)',
+                'Settings (eg. planned savings) - Menu',
                 'Forecast'],
             [   self.analyzes_menu,
                 self.securities_menu,
                 self.portfolio_menu,
-                self.settings_menu,
                 self.new_transaction,
                 self.import_pdfs,
+                self.settings_menu,
                 None])
     def new_menu(self, choices, functions, inp=''):
         letters = 'abcdefghijklmnoprstuvwxyz'

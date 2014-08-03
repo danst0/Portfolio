@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import this
+# import this
 import pickle
 from prettytable import PrettyTable
 import sys, os
@@ -106,8 +106,9 @@ class Security:
         self.yahoo_id = yahoo_id
         self.type = type
         if aliases == None:
-            aliases = ''
-        self.aliases = aliases.split('::')
+            self.aliases = []
+        else:
+            self.aliases = aliases
         self.keys = ['Name', 'Aliases', 'ID', 'Type']
     def list(self):
         return (self.name, ', '.join(self.aliases), self.yahoo_id, self.type)
@@ -126,11 +127,15 @@ class Securities:
         self.securities = []
         all = self.data.c.execute('SELECT name, aliases, yahoo_id, type FROM stocks')
         for line in all.fetchall():
+            line = list(line)
+#             print(line)
+            if line[1] != None:
+                line[1] = line[1].split('::')
             self.securities.append(Security(*line))
-#         print(self.securities)
         self.prices = None
 
     def add(self, name, aliases, yahoo_id, type):
+#         print(aliases)
         self.securities.append(Security(name, aliases, yahoo_id, type))
         self.data.c.execute('INSERT INTO stocks(id, name, aliases, yahoo_id, type) VALUES (?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), yahoo_id, type))
     def change_stock(self, yahoo_id, sec):
@@ -191,8 +196,6 @@ class Securities:
         stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()
         return None if stock_id is None else stock_id[0]
 
-
-
 class Transaction:
     """Class to store transactions"""
     def __init__(self, data):
@@ -206,6 +209,8 @@ class Transaction:
         total_value = None
         currency = ''
         value = 0.0
+        wert_found = False
+        charge = 0.0
         while line_counter < len(lines):
             line = lines[line_counter]
             if line.find('Daniel Dumke') != -1:
@@ -237,7 +242,6 @@ class Transaction:
                             line_counter += 1 
                             line = lines[line_counter]
                             name = line.strip(' ')
-#                             print(name)
                     elif line.find('UMGER.ZUM DEV.-KURS') != -1:
                         # Will be overwritten if WERT Line is found (and correct)
 #                         print(line)
@@ -247,6 +251,7 @@ class Transaction:
                             print('Error while importing, currency not EUR')
                             sys.exit()
                         value = float(result.group(2).replace('.','').replace(',','.'))
+                        wert_found = True
                     elif line.find('WERT') != -1:
 #                         print(line)
 #                         pdb.set_trace()
@@ -261,6 +266,7 @@ class Transaction:
                             sys.exit()
                         if value == 0.0:
                             value = float(result.group(3).replace('.','').replace(',','.'))
+                            wert_found = True
 #                         print(date, currency, value)                   
 #                         print(result)
 
@@ -278,6 +284,9 @@ class Transaction:
                         line_counter += 1 
                         line = lines[line_counter]
                         name = line.strip(' ')
+                        result = re.match('0,0.%.(.*?)00.*', name)
+                        if result:
+                            name = result.group(1).strip()
 #                         print(name)
                     
                     elif re.match('AM.*([0-9\.]{10}).*UM.*', line) != None:
@@ -298,22 +307,24 @@ class Transaction:
 #                         print_all = True
                     elif line.replace('.', '').find(str(total_value).replace('.',',')) != -1:
                     # Nominale when buying
+                    # All additional lines
+                        while lines[line_counter+2] != '':
+#                             print(line)
+                            line_counter += 1 
+                            line = lines[line_counter]
+                            charge += float(line.replace('.', '').replace(',', '.'))
+#                             print(charge)
+                        line_counter += 1 
+                        line = lines[line_counter]
 #                         print(line)
-                        line_counter += 1 
-                        line = lines[line_counter]
-                        var_charge = float(line.replace('.', '').replace(',', '.'))
-#                         print(var_charge)
-                        line_counter += 1 
-                        line = lines[line_counter]
-                        fixed_charge = float(line.replace('.', '').replace(',', '.'))
-#                         print(fixed_charge)
-                        line_counter += 1 
-                        line = lines[line_counter]
                         total = float(line.replace('.', '').replace(',', '.'))
 #                         print(total)
-#                         print(total_value + var_charge + fixed_charge, total)
-#                         print(abs(total - (total_value + var_charge + fixed_charge)))
-                        if abs(total - (total_value + var_charge + fixed_charge)) > 0.01:
+#                         print(total_value + charge, total)
+#                         print(abs(total - (total_value + charge)))
+#                         print(lines[line_counter+1])
+#                         print(lines[line_counter+2])
+#                         print(lines[line_counter+3])                        
+                        if abs(total - (total_value + charge)) > 0.01:
                             print('Error while importing, totals do not match')
                             sys.exit()
 #                         print(line)
@@ -325,9 +336,9 @@ class Transaction:
         elif type == 'dividende':
             return {'type': 'd', 'name': name, 'date': date, 'value': value}
         elif type == 'kauf':
-            return {'type': 'b', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': fixed_charge + var_charge}  
+            return {'type': 'b', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': charge}  
         elif type == 'verkauf':
-            return {'type': 's', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': fixed_charge + var_charge}  
+            return {'type': 's', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': charge}  
 
     def add(self, type, stock_id, date, nominal, price, cost, portfolio):
         if stock_id != None:
@@ -355,6 +366,7 @@ class Transaction:
                 self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
                 return True
             else:
+                print(result)
                 print('Transaction already seems to exist!')
                 return False
         else:
@@ -573,11 +585,16 @@ class UI:
     def new_stock(self):
         print('Name ',) 
         name = input()
+        print('Aliases (comma separated) ',) 
+        aliases = input().split(',')
+#         print(aliases)
+        for num in range(len(aliases)):
+            aliases[num] = aliases[num].strip()
         print ('ID ',)
         id = input()
         print ('Type ',)
         type = input()
-        self.secs.add(name, id, type)
+        self.secs.add(name, aliases, id, type)
     def list_content(self):
 
         pf = input('Portfolio [All] ')
@@ -651,9 +668,11 @@ class UI:
         new_name = input('New name (empty for no change) ')
         if new_name == '':
             new_name = stock_obj.name
-        new_aliases = input('New Aliases (empty for no change) ')
+        new_aliases = input('New Aliases (empty for no change) ').split(',')
         if new_aliases == '':
             new_aliases = stock_obj.aliases
+        for num in range(len(new_aliases)):
+            new_aliases[num] = new_aliases[num].strip()
         new_id = input('New id (empty for no change) ')
         if new_id== '':
             new_id = stock_obj.yahoo_id

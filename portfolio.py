@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import this
 import pickle
 from prettytable import PrettyTable
 import sys, os
@@ -14,6 +15,7 @@ import pdb
 import sqlite3
 import uuid
 import subprocess
+import string
 
 
 import matplotlib.pyplot as plt
@@ -51,7 +53,7 @@ class Database:
         else:
             print('Created table for transactions')
         try:
-            self.c.execute('''CREATE TABLE stocks (id GUID PRIMARY KEY, name TEXT, yahoo_id TEXT, type TEXT)''')
+            self.c.execute('''CREATE TABLE stocks (id GUID PRIMARY KEY, name TEXT, aliases TEXT, yahoo_id TEXT, type TEXT)''')
         except:
             pass
         else:
@@ -67,7 +69,10 @@ class Database:
     def close(self):
         self.conn.commit()
         self.conn.close()
-        
+def normalize(s):
+    for p in string.punctuation:
+        s = s.replace(p, '')
+    return s.lower().strip()      
 class Portfolio:
     """Collection of different portfolios or stocks."""
     def __init__(self, name, parent=None):
@@ -96,13 +101,16 @@ class Portfolio:
         
 class Security:
     """Class for stocks, bond, cash, everything is a security."""
-    def __init__(self, name, yahoo_id, type):
+    def __init__(self, name, aliases, yahoo_id, type):
         self.name = name
         self.yahoo_id = yahoo_id
         self.type = type
-        self.keys = ['Name', 'ID', 'Type']
+        if aliases == None:
+            aliases = ''
+        self.aliases = aliases.split('::')
+        self.keys = ['Name', 'Aliases', 'ID', 'Type']
     def list(self):
-        return (self.name, self.yahoo_id, self.type)
+        return (self.name, ', '.join(self.aliases), self.yahoo_id, self.type)
     def __str__(self):
         x = PrettyTable(self.keys)
         x.align[self.keys[0]] = "l" # Left align city names
@@ -112,27 +120,26 @@ class Security:
 
 class Securities:
     """Wrapper for all stored securities"""
-    keys = ['Name', 'ID', 'Type', 'Last price']
+    keys = ['Name', 'Aliases', 'ID', 'Type', 'Last price']
     def __init__(self, data):
         self.data = data
         self.securities = []
-        all = self.data.c.execute('SELECT * FROM stocks')
+        all = self.data.c.execute('SELECT name, aliases, yahoo_id, type FROM stocks')
         for line in all.fetchall():
-
-            self.securities.append(Security(*line[1:]))
+            self.securities.append(Security(*line))
 #         print(self.securities)
         self.prices = None
 
-    def add(self, name, yahoo_id, type):
-        self.securities.append(Security(name, yahoo_id, type))
-        self.data.c.execute('INSERT INTO stocks(id, name, yahoo_id, type) VALUES (?, ?, ?, ?)', (uuid.uuid4(), name, yahoo_id, type))
+    def add(self, name, aliases, yahoo_id, type):
+        self.securities.append(Security(name, aliases, yahoo_id, type))
+        self.data.c.execute('INSERT INTO stocks(id, name, aliases, yahoo_id, type) VALUES (?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), yahoo_id, type))
     def change_stock(self, yahoo_id, sec):
         found = False
         for num, item in enumerate(self.securities):
             if yahoo_id.lower() in item.yahoo_id.lower():
                 found = True
                 self.securities[num] = sec
-                self.data.c.execute('UPDATE stocks set name = ?, yahoo_id = ?, type = ? WHERE yahoo_id = ?', (sec.name, sec.yahoo_id, sec.type, yahoo_id))
+                self.data.c.execute('UPDATE stocks set name = ?, aliases = ?, yahoo_id = ?, type = ? WHERE yahoo_id = ?', (sec.name, '::'.join(sec.aliases), sec.yahoo_id, sec.type, yahoo_id))
                 break
         return found
     def delete_stock(self, yahoo_id):
@@ -164,12 +171,18 @@ class Securities:
     def find_stock(self, stock_id_or_name, return_obj=False):
         found = None
         found_obj = None
-        for item  in self.securities:
-            if (stock_id_or_name.lower() in item.name.lower() or
-                stock_id_or_name.lower() in item.yahoo_id.lower()):
+        for item in self.securities:
+            if (normalize(stock_id_or_name) in normalize(item.name) or
+                normalize(stock_id_or_name) in normalize(item.yahoo_id)):
                 found = item.yahoo_id
                 found_obj = item
                 break
+            else:
+                for alias in item.aliases:
+                    if normalize(stock_id_or_name) == normalize(alias):
+                        found = item.yahoo_id
+                        found_obj = item
+                        break                        
         if return_obj:
             return found_obj
         else:
@@ -177,6 +190,8 @@ class Securities:
     def get_stock_id_from_yahoo_id(self, yahoo_id):
         stock_id = self.data.c.execute('''SELECT id FROM stocks WHERE yahoo_id = ?''', (yahoo_id,)).fetchone()
         return None if stock_id is None else stock_id[0]
+
+
 
 class Transaction:
     """Class to store transactions"""
@@ -189,6 +204,8 @@ class Transaction:
         lines = text.split('\n')
         print_all = False
         total_value = None
+        currency = ''
+        value = 0.0
         while line_counter < len(lines):
             line = lines[line_counter]
             if line.find('Daniel Dumke') != -1:
@@ -220,16 +237,30 @@ class Transaction:
                             line_counter += 1 
                             line = lines[line_counter]
                             name = line.strip(' ')
-#                             print(name)   
-                    elif line.find('WERT') != -1:
+#                             print(name)
+                    elif line.find('UMGER.ZUM DEV.-KURS') != -1:
+                        # Will be overwritten if WERT Line is found (and correct)
 #                         print(line)
-                        result = re.match('WERT\s*([0-9]{2}\.[0-9]{2}\.[0-9]{4}).*([A-Z]{3})\s*([0-9\.,]*)', line)
-                        date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y").date()
-                        currency = result.group(2)
+                        result = re.match('UMGER.ZUM DEV.-KURS\s.*([A-Z]{3})\s*([0-9\.,]*)', line)
+                        currency = result.group(1)
                         if currency != 'EUR':
                             print('Error while importing, currency not EUR')
                             sys.exit()
-                        value = float(result.group(3).replace('.','').replace(',','.'))
+                        value = float(result.group(2).replace('.','').replace(',','.'))
+                    elif line.find('WERT') != -1:
+#                         print(line)
+#                         pdb.set_trace()
+                        result = re.match('WERT\s*([0-9]{2}\.[0-9]{2}\.[0-9]{4}).*([A-Z]{3})\s*([0-9\.,]*)', line)
+                        if not result:
+                            result = re.match('WERT\s*([0-9]{2}\.[0-9]{2}\.[0-9]{4})', line)
+                        date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y").date()
+                        if currency == '':
+                            currency = result.group(2)
+                        if currency != 'EUR':
+                            print('Error while importing, currency not EUR')
+                            sys.exit()
+                        if value == 0.0:
+                            value = float(result.group(3).replace('.','').replace(',','.'))
 #                         print(date, currency, value)                   
 #                         print(result)
 
@@ -295,6 +326,9 @@ class Transaction:
             return {'type': 'd', 'name': name, 'date': date, 'value': value}
         elif type == 'kauf':
             return {'type': 'b', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': fixed_charge + var_charge}  
+        elif type == 'verkauf':
+            return {'type': 's', 'name': name, 'date': date, 'nominale': nominale, 'value': value, 'cost': fixed_charge + var_charge}  
+
     def add(self, type, stock_id, date, nominal, price, cost, portfolio):
         if stock_id != None:
             if price < 0:
@@ -380,7 +414,7 @@ class Prices:
                 self.numbers[id] = {}
             self.numbers[id][date] = price
     def delete_prices(self, yahoo_id):
-        stock_id = self.get_stock_id_from_yahoo_id(yahoo_id)
+        stock_id = self.secs.get_stock_id_from_yahoo_id(yahoo_id)
         self.data.c.execute('''DELETE FROM prices WHERE stock_id = ?''', (stock_id, ))
     def get_dates_and_prices(self, yahoo_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
         stock_id = self.get_stock_id_from_yahoo_id(yahoo_id)
@@ -617,13 +651,16 @@ class UI:
         new_name = input('New name (empty for no change) ')
         if new_name == '':
             new_name = stock_obj.name
+        new_aliases = input('New Aliases (empty for no change) ')
+        if new_aliases == '':
+            new_aliases = stock_obj.aliases
         new_id = input('New id (empty for no change) ')
         if new_id== '':
             new_id = stock_obj.yahoo_id
         new_type = input('New Type (empty for no change) ')
         if new_type == '':
             new_type = stock_obj.type
-        self.secs.change_stock(stock_obj.yahoo_id, Security(new_name, new_id, new_type))
+        self.secs.change_stock(stock_obj.yahoo_id, Security(new_name, new_aliases, new_id, new_type))
     def delete_stock(self):
         stock = input('Name of security ')
         stock_obj = self.secs.find_stock(stock, return_obj=True)
@@ -764,7 +801,7 @@ class UI:
                 x.add_row([letters[num], choice])
 #                 i[1] = i[1].replace(' - Menu', '')
             x.add_row(["-", '---'])
-            x.add_row(["q", "Quit"])
+            x.add_row(["q", "Exit"])
             print(x)
             if inp == '':
                 try:

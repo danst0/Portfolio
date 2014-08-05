@@ -33,6 +33,10 @@ import matplotlib.pyplot as plt
 # Next todo: get price from specific date, multiply by number of stocks
 
 
+def normalize(s):
+    for p in string.punctuation:
+        s = s.replace(p, '')
+    return s.lower().strip() 
 
 class Analyses:
     """Perform additional analyses on the Portfolios and stocks."""
@@ -69,10 +73,7 @@ class Database:
     def close(self):
         self.conn.commit()
         self.conn.close()
-def normalize(s):
-    for p in string.punctuation:
-        s = s.replace(p, '')
-    return s.lower().strip()      
+     
 class Portfolio:
     """Collection of different portfolios or stocks."""
     def __init__(self, name, parent=None):
@@ -136,8 +137,16 @@ class Securities:
 
     def add(self, name, aliases, yahoo_id, type):
 #         print(aliases)
-        self.securities.append(Security(name, aliases, yahoo_id, type))
-        self.data.c.execute('INSERT INTO stocks(id, name, aliases, yahoo_id, type) VALUES (?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), yahoo_id, type))
+        already_exists = False
+        for sec in self.securities:
+            if normalize(sec.yahoo_id) == normalize(yahoo_id):
+                already_exists = True
+                break
+        if not already_exists:
+            self.securities.append(Security(name, aliases, yahoo_id, type))
+            self.data.c.execute('INSERT INTO stocks(id, name, aliases, yahoo_id, type) VALUES (?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), yahoo_id, type))
+        else:
+            print('ID for Stock already exists, therefore not added')
     def change_stock(self, yahoo_id, sec):
         found = False
         for num, item in enumerate(self.securities):
@@ -152,8 +161,8 @@ class Securities:
         for num, item in enumerate(self.securities):
             if yahoo_id.lower() in item.yahoo_id.lower():
                 found = True
-                self.securities.pop(num)
-                self.data.c.execute('DELETE FROM stocks WHERE yahoo_id = ?', (yahoo_id,))
+                tmp = self.securities.pop(num)
+                self.data.c.execute('DELETE FROM stocks WHERE yahoo_id = ? AND name = ?', (yahoo_id, tmp.name))
                 break
         return found      
 #         pickle.dump( self.securities, open( "securities.p", "wb" ) )
@@ -213,7 +222,8 @@ class Transaction:
         charge = 0.0
         while line_counter < len(lines):
             line = lines[line_counter]
-            if line.find('Daniel Dumke') != -1:
+            if (line.find('Daniel Dumke') != -1 or
+                line.find('Daniel Stengel') != -1):
                 valid = True
 #                 print('Valid document for Daniel Dumke')
             if valid:
@@ -366,9 +376,8 @@ class Transaction:
                 self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
                 return True
             else:
-                print(result)
-                print('Transaction already seems to exist!')
-                return False
+                print('Transaction already seems to exist: ' + str(result))
+                return True
         else:
             return False
 #         self.data.commit()
@@ -514,6 +523,7 @@ class Prices:
             for dates in self.numbers[key].keys():
                 x.add_row((key, dates, self.numbers[key][dates]))
         return str(x)
+
 class UI:
     """Class to display user interface."""
     def __init__(self, securities, portfolio, prices, transaction):

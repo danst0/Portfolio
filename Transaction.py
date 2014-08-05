@@ -5,8 +5,9 @@ from prettytable import PrettyTable
 
 class Transaction:
 	"""Class to store transactions"""
-	def __init__(self, data):
+	def __init__(self, data, secs):
 		self.data = data
+		self.secs = secs
 	def get_data_from_text(self, text):
 		valid = False
 		type = ''
@@ -209,10 +210,12 @@ class Transaction:
 		result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
 		return result
 	def __repr__(self):
-		keys = ['ID', 'Type', 'Date', 'Total']
-		result = self.data.c.execute('''SELECT stock_id, type, date, total FROM transactions''').fetchall()
+		keys = ['Name', 'Type', 'Date', 'Total']
+		result = self.data.c.execute('''SELECT stock_id, type, date, total FROM transactions ORDER BY date DESC''').fetchall()
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
 		for item in result:
+			item = list(item)
+			item[0] = self.secs.get_name_from_stock_id(item[0])
 			x.add_row(item)
 		return str(x)

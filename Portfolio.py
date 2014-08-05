@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 class Portfolio:
 	"""Collection of different portfolios or stocks."""
 	def __init__(self, name, parent=None):

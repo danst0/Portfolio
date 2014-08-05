@@ -24,19 +24,9 @@ from Prices import Prices
 from UI import UI
 
 import matplotlib.pyplot as plt
-# Sample stocks		   
-# +--------------------+---------+-------+------------+
-# | Name			   |	ID	 |	Type | Last price |
-# +--------------------+---------+-------+------------+
-# | Aareal Bank AG	   |  ARL.DE | Stock |	 32.25	  |
-# | Apple Inc.		   |  APC.F	 | Stock |	  72.5	  |
-# | Host Marriot	   |  HMT.F	 |	REIT |	 16.72	  |
-# | DB TR EU Renten 1C | DBXN.DE |	Bond |	 209.37	  |
-# | DB MSCI EU M 1C	   | DX2I.DE | Stock |	  73.7	  |
-# +--------------------+---------+-------+------------+
 
-# Next todo: get price from specific date, multiply by number of stocks
-
+# Rounding within pretty table
+# Verify input of PDF parser
 
 def normalize(s):
 	for p in string.punctuation:
@@ -47,8 +37,6 @@ class Analyses:
 	"""Perform additional analyses on the Portfolios and stocks."""
 	pass
 
-
-	
 if __name__ == "__main__":
 	DATA = Database()
 	try:

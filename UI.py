@@ -330,7 +330,7 @@ class UI:
 				if key == letters[num]:
 					found = True
 					if choice.find(' - Menu') != -1:
-						functions[num](inp)
+						inp = functions[num](inp)
 					else:
 						functions[num]()
 					break
@@ -363,7 +363,6 @@ class UI:
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
-							
 						else:
 							print('Transaction successful')
 							# Remove successful PDFs

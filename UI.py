@@ -264,6 +264,15 @@ class UI:
 	def merge_stock(self):
 	    print('I do nothing, yet')
 	    pass
+	def manual_price_update(self):
+		stock = input('Security ')
+		tmp_default = (datetime.date.today()).strftime('%Y-%m-%d')
+		my_date = input('Price date [' + tmp_default + '] ')
+		if my_date == '':
+			my_date = tmp_default
+		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
+		price = float(input('Price '))
+		self.prices.update(self.secs.find_stock(stock), my_date, price)
 	def securities_menu(self, inp=''):
 		return self.new_menu(
 			[	'List securities',
@@ -272,6 +281,7 @@ class UI:
 				'Merge security',
 				'Delete security',
 				'Update security prices',
+				'Manual price update',
 				'Initialize quotes for last 15 years',
 				'New graph',
 				'Stock split'],
@@ -281,6 +291,7 @@ class UI:
 				self.merge_stock,
 				self.delete_stock,
 				self.update_stocks,
+				self.manual_price_update,
 				self.get_historic_quotes,
 				self.new_graph,
 				self.new_split], inp)

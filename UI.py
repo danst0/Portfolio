@@ -15,7 +15,10 @@ class UI:
 		go_on = True
 		while go_on:
 			go_on = self.main_menu()
-
+	def nice_number(self, number):
+		if number != None:
+			number = round(number, 2)
+		return number
 	def get_historic_quotes(self):
 		print('Start update')
 			
@@ -233,6 +236,9 @@ class UI:
 		keys = ['Name', 'Nominal', 'Price', 'Value']		
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
+		x.align["Price"] = "r"
+		x.align["Value"] = "r"
+		x.align["Nominal"] = "r"
 		prices = []
 		tmp = 0.0
 		for key in stocks.keys():
@@ -242,7 +248,10 @@ class UI:
 				value = stocks[key] * price
 			else:
 				print('Price for ' + self.secs.get_name_from_stock_id(key) + ' missing; assuming zero')
-			x.add_row([self.secs.get_name_from_stock_id(key), stocks[key], price, value])
+			x.add_row([self.secs.get_name_from_stock_id(key),
+						self.nice_number(stocks[key]),
+						self.nice_number(price),
+						self.nice_number(value)])
 			tmp += value
 		x.add_row(4*['====='])
 		x.add_row(['Total', '----', '----', tmp])

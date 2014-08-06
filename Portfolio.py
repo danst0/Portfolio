@@ -9,6 +9,10 @@ class Portfolio:
 		self.children = []
 		self.child_securities = []
 		self.cash = 0.0
+	def adjust_cash(self, value):
+		self.cash += value
+	def get_cash(self):
+		return self.cash
 	def add_security(self, parent, stock_id):
 		if self.name == parent:
 			self.child_securities.append(stock_id)
@@ -21,8 +25,9 @@ class Portfolio:
 		else:
 			for i in self.children:
 				i.add_portfolio(parent, name)
-	def __str__(self, level=1):
+	def __repr__(self, level=1):
 		output = self.name + '\n'
 		for i in self.children:
+			output += 'Available cash: ' + i.get_cash() + '\n'
 			output += '	   '*level + '+-- ' + i.__str__(level+1)
 		return output

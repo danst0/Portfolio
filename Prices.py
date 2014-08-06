@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import datetime		
+import ystockquote
+import urllib
+import re
+import uuid
 
 class Prices:
 	"""Class to store price developments."""

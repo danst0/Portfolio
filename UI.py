@@ -93,7 +93,7 @@ class UI:
 		transactions = self.transaction.get_total_for_portfolio(pf)
 #		  print(transactions)
 		
-		x = PrettyTable(['ID', 'Nominal', 'Cost', 'Value'])
+		x = PrettyTable(['Name', 'Nominal', 'Cost', 'Value'])
 		x.align['Invested'] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
 #		  print(transactions)

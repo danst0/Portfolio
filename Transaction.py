@@ -207,7 +207,8 @@ class Transaction:
 		return stocks
 
 	def get_total_for_portfolio(self, portfolio):
-		result = self.data.c.execute('''SELECT yahoo_id, SUM(nominal), SUM(cost), SUM(total) FROM transactions WHERE portfolio = ? GROUP BY yahoo_id''', (portfolio,)).fetchall()
+		result = self.data.c.execute('''SELECT name, SUM(nominal), SUM(cost), SUM(total) FROM transactions INNER JOIN stocks ON stocks.id = transactions.stock_id WHERE portfolio = ? GROUP BY stock_id''', (portfolio,)).fetchall()
+# 		for item in result
 		return result
 	def __repr__(self):
 		keys = ['Name', 'Type', 'Date', 'Total']

@@ -261,6 +261,9 @@ class UI:
 	def list_portfolio_contents(self):
 		print(self.portfolio)
 		self.list_content()
+	def merge_stock(self):
+	    print('I do nothing, yet')
+	    pass
 	def securities_menu(self, inp=''):
 		return self.new_menu(
 			[	'List securities',

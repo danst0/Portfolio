@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from prettytable import PrettyTable
+import string
 
+def normalize(s):
+	for p in string.punctuation:
+		s = s.replace(p, '')
+	return s.lower().strip() 
 		
 class Security:
 	"""Class for stocks, bond, cash, everything is a security."""

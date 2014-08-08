@@ -50,7 +50,7 @@ class Securities:
 		already_exists = False
 		for sec in self.securities:
 			if (normalize(sec.yahoo_id) == normalize(yahoo_id)
-				and normalize(yahoo_id) != normalize('unknown')):
+				and normalize(yahoo_id)[:7] != normalize('unknown')):
 				already_exists = True
 				break
 		if not already_exists:

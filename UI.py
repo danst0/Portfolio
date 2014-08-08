@@ -3,6 +3,9 @@
 
 import datetime
 from prettytable import PrettyTable
+import os
+import subprocess
+import random
 
 class UI:
 	"""Class to display user interface."""
@@ -266,6 +269,7 @@ class UI:
 	    pass
 	def manual_price_update(self):
 		stock = input('Security ')
+		print(self.secs.find_stock(stock))
 		tmp_default = (datetime.date.today()).strftime('%Y-%m-%d')
 		my_date = input('Price date [' + tmp_default + '] ')
 		if my_date == '':

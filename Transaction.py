@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from prettytable import PrettyTable
+import re
+import datetime
+import uuid
 
 class Transaction:
 	"""Class to store transactions"""

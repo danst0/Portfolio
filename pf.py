@@ -13,7 +13,7 @@ import datetime
 import re
 import pdb
 import uuid
-import subprocess
+
 import string
 from Database import Database
 from Portfolio import Portfolio

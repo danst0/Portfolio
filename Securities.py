@@ -3,6 +3,7 @@
 
 from prettytable import PrettyTable
 import string
+import uuid
 
 def normalize(s):
 	for p in string.punctuation:

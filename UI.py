@@ -18,6 +18,10 @@ class UI:
 		go_on = True
 		while go_on:
 			go_on = self.main_menu()
+		random.seed()
+	def rand_str(self):
+	    num = random.randint(0,9999)
+	    return str(num).zfill(4)
 	def nice_number(self, number):
 		if number != None:
 			number = round(number, 2)
@@ -386,7 +390,7 @@ class UI:
 					print(data['name'])
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
-						self.secs.add(data['name'], '', 'unknown', 'unkown')
+						self.secs.add(data['name'], '', 'unknown'+self.rand_str(), 'unkown')
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')

@@ -6,12 +6,14 @@
 # Regular and one time component
 # Overall delta in wealth
 #
-
+from prettytable import PrettyTable
 
 class Portfolio:
 	"""Collection of different portfolios or stocks."""
-	def __init__(self, name, transaction):
-		self.name = name	
+	def __init__(self, name, transaction, prices):
+		self.name = name
+		self.transaction = transaction
+		self.prices = prices
 
 	def add_portfolio(self, parent, name):
 		if self.name == parent:
@@ -24,15 +26,21 @@ class Portfolio:
 		return output
 
 	def profitability(self, from_date, to_date):
-		stocks_at_start = self.transaction.get_portfolio('All', from_date.strftime("%Y-%m-%d"))
+		stocks_at_start = self.transaction.get_portfolio('All', from_date)
 		print(stocks_at_start)
 		portfolio_value_at_start = 0.0
 		for key in stocks_at_start.keys():
-			portfolio_value_at_start += stocks_at_start[key] * self.prices.get_price(key, from_date.strftime("%Y-%m-%d"))
-		stocks_at_end = self.transaction.get_portfolio('All', to_date.strftime("%Y-%m-%d"))
+			price = self.prices.get_price(key, from_date)
+			if price == None:
+				price = 0.0
+			portfolio_value_at_start += stocks_at_start[key] * price
+		stocks_at_end = self.transaction.get_portfolio('All', to_date)
 		portfolio_value_at_end = 0.0
 		for key in stocks_at_end.keys():
-			portfolio_value_at_end += stocks_at_end[key] * self.prices.get_price(key, to_date.strftime("%Y-%m-%d"))
+			price = self.prices.get_price(key, to_date)
+			if price == None:
+				price = 0.0
+			portfolio_value_at_end += stocks_at_end[key] * price
 
 		invest = self.transaction.get_total_invest('All', from_date, to_date)
 		divest = self.transaction.get_total_divest('All', from_date, to_date)
@@ -49,5 +57,8 @@ class Portfolio:
 		keys = ['ROI']
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
-		x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
+		kpi = 'n/a'
+		if portfolio_value_at_start - invest != 0:
+		    kpi = str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100, 2)) + '%'
+		x.add_row([kpi])
 		print(str(x))

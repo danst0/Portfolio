@@ -41,5 +41,6 @@ class Money:
 		else:
 			income = None
 		print(income)
+		self.portfolio.profitability(from_date, to_date)
 		
 		print(income, new_total - old_total, new_total)

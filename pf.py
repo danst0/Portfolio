@@ -41,10 +41,6 @@ class Analyses:
 
 if __name__ == "__main__":
 	DATA = Database()
-	try:
-		PORTFOLIO = pickle.load(open('portfolio.p', 'rb'))
-	except:
-		PORTFOLIO = Portfolio('All')
 	PRICES = Prices(DATA)
 	SECS = Securities(DATA)
 	PRICES.secs = SECS
@@ -53,7 +49,8 @@ if __name__ == "__main__":
 #	  print(PRICES)
 	print('SECS')
 	print(SECS)
-	TRANSACTION = Transaction(DATA, SECS, PORTFOLIO)
+	TRANSACTION = Transaction(DATA, SECS)
+	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES)
 	MONEY = Money(DATA, PORTFOLIO)
 	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)
 	pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))

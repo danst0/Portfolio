@@ -9,11 +9,12 @@ import random
 
 class UI:
 	"""Class to display user interface."""
-	def __init__(self, securities, portfolio, prices, transaction):
+	def __init__(self, securities, portfolio, prices, transaction, money):
 		self.secs = securities
 		self.portfolio = portfolio
 		self.prices = prices
 		self.transaction = transaction
+		self.money = money
 		self.last_update = datetime.datetime.now() + datetime.timedelta(days=-1)
 		go_on = True
 		while go_on:
@@ -240,6 +241,20 @@ class UI:
 		x.padding_width = 1 # One space between column edges and contents (default)
 		x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
 		print(str(x))
+		
+	def last_day_of_last_month(self, date):
+		return date.replace(day=1) - datetime.timedelta(days=1)
+		
+	def cash_info(self):
+		tmp_default = self.last_day_of_last_month(datetime.date.today()).strftime('%Y-%m-%d')
+		my_date = input('Date of state [' + tmp_default + '] ')
+		if my_date == '':
+			my_date = tmp_default
+		my_income = input('Income in month ')
+		my_total = input('Total cash at hand (w/o portfolios) ')
+		self.money.add_income(my_date, my_income)
+		self.money.add_total(my_date, my_total)
+
 	def list_portfolio(self):
 		portfolio = input('Portfolio [All] ')
 		if portfolio == '':
@@ -292,6 +307,8 @@ class UI:
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
 		price = float(input('Price '))
 		self.prices.update(self.secs.find_stock(stock), my_date, price)
+	def savings(self):
+	    pass
 	def securities_menu(self, inp=''):
 		return self.new_menu(
 			[	'List securities',
@@ -317,8 +334,10 @@ class UI:
 	def analyzes_menu(self, inp=''):
 		return self.new_menu(
 			[	'List portfolio',
+			    'Saving development',
 				'Profitability'],
 			[	self.list_portfolio,
+			    self.savings,
 				self.profitability], inp)
 	def settings_menu(self, inp=''):
 		return self.new_menu(
@@ -340,6 +359,7 @@ class UI:
 				'Securities - Menu',
 				'Portfolios - Menu',
 				'New transaction',
+				'Add cash info', 
 				'Import from PDFs',
 				'Settings (eg. planned savings) - Menu',
 				'Forecast'],
@@ -347,6 +367,7 @@ class UI:
 				self.securities_menu,
 				self.portfolio_menu,
 				self.new_transaction,
+				self.cash_info,
 				self.import_pdfs,
 				self.settings_menu,
 				None])

@@ -54,7 +54,7 @@ if __name__ == "__main__":
 	print('SECS')
 	print(SECS)
 	TRANSACTION = Transaction(DATA, SECS, PORTFOLIO)
-	MONEY = Money(DATA)
+	MONEY = Money(DATA, PORTFOLIO)
 	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)
 	pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
 #	  print('PRICES')

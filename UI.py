@@ -280,8 +280,8 @@ class UI:
 		print(self.portfolio)
 		self.list_content()
 	def merge_stock(self):
-	    print('I do nothing, yet')
-	    pass
+		print('I do nothing, yet')
+		pass
 	def manual_price_update(self):
 		stock = input('Security ')
 		print(self.secs.find_stock(stock))

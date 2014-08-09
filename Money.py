@@ -41,6 +41,5 @@ class Money:
 		else:
 			income = None
 		print(income)
-        self.portfolio
 		
 		print(income, new_total - old_total, new_total)

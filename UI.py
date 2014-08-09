@@ -20,8 +20,8 @@ class UI:
 			go_on = self.main_menu()
 		random.seed()
 	def rand_str(self):
-	    num = random.randint(0,9999)
-	    return str(num).zfill(4)
+		num = random.randint(0,9999)
+		return str(num).zfill(4)
 	def nice_number(self, number):
 		if number != None:
 			number = round(number, 2)

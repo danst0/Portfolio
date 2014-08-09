@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
 import os
 import subprocess
@@ -308,7 +309,15 @@ class UI:
 		price = float(input('Price '))
 		self.prices.update(self.secs.find_stock(stock), my_date, price)
 	def savings(self):
-	    pass
+		tmp_default = self.last_day_of_last_month(datetime.date.today() - relativedelta(months=1)).strftime('%Y-%m-%d')
+		from_date = input('From date [' + tmp_default + '] ')
+		if from_date == '':
+			from_date = tmp_default
+		tmp_default = self.last_day_of_last_month(datetime.date.today()).strftime('%Y-%m-%d')
+		to_date = input('To date [' + tmp_default + '] ')
+		if to_date == '':
+			to_date = tmp_default
+		self.money.get_all(from_date, to_date)
 	def securities_menu(self, inp=''):
 		return self.new_menu(
 			[	'List securities',
@@ -334,10 +343,10 @@ class UI:
 	def analyzes_menu(self, inp=''):
 		return self.new_menu(
 			[	'List portfolio',
-			    'Saving development',
+				'Saving development',
 				'Profitability'],
 			[	self.list_portfolio,
-			    self.savings,
+				self.savings,
 				self.profitability], inp)
 	def settings_menu(self, inp=''):
 		return self.new_menu(

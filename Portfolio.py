@@ -16,16 +16,17 @@ class Portfolio:
 		self.children = []
 		self.child_securities = []
 		self.cash = 0.0
-	def adjust_cash(self, value):
-		self.cash += value
+	
+
+	
 	def get_cash(self):
 		return self.cash
-	def add_security(self, parent, stock_id):
+	def adjust_cash(self, parent, value):
 		if self.name == parent:
-			self.child_securities.append(stock_id)
+			self.cash += value
 		else:
 			for i in self.children:
-				i.add_security(parent, stock_id)
+				i.adjust_cash(parent, value)
 	def add_portfolio(self, parent, name):
 		if self.name == parent:
 			self.children.append(Portfolio(name, parent))

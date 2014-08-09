@@ -112,6 +112,14 @@ class UI:
 			x.add_row(i[:-1] + (self.prices.get_last_price(i[0],) * i[1],))
 		print(x)
 
+	def list_pf_cash(self):
+
+		pf = input('Portfolio [All] ')
+		if pf == '':
+			pf = 'All'
+		print('Cash balance for portfolio ' + pf + ': ' + str(round(self.portfolio.get_cash(),2)))
+
+
 	def new_portfolio(self):
 		print(self.portfolio)
 		print('Parent ',) 
@@ -317,10 +325,12 @@ class UI:
 		return self.new_menu(
 			[	'Add portfolio',
 				'List portfolios',
-				'List content of portfolio'],
+				'List content of portfolio',
+				'List cash'],
 			[	self.new_portfolio,
 				self.print_portfolio,
-				self.list_portfolio_contents], inp)
+				self.list_portfolio_contents,
+				self.list_pf_cash], inp)
 	def main_menu(self):
 		self.new_menu(
 			[	'Analyzes - Menu',

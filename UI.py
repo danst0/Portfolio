@@ -3,18 +3,26 @@
 
 import datetime
 from prettytable import PrettyTable
+import os
+import subprocess
+import random
 
 class UI:
 	"""Class to display user interface."""
-	def __init__(self, securities, portfolio, prices, transaction):
+	def __init__(self, securities, portfolio, prices, transaction, money):
 		self.secs = securities
 		self.portfolio = portfolio
 		self.prices = prices
 		self.transaction = transaction
+		self.money = money
 		self.last_update = datetime.datetime.now() + datetime.timedelta(days=-1)
 		go_on = True
 		while go_on:
 			go_on = self.main_menu()
+		random.seed()
+	def rand_str(self):
+		num = random.randint(0,9999)
+		return str(num).zfill(4)
 	def nice_number(self, number):
 		if number != None:
 			number = round(number, 2)
@@ -105,6 +113,14 @@ class UI:
 			x.add_row(i[:-1] + (self.prices.get_last_price(i[0],) * i[1],))
 		print(x)
 
+	def list_pf_cash(self):
+
+		pf = input('Portfolio [All] ')
+		if pf == '':
+			pf = 'All'
+		print('Cash balance for portfolio ' + pf + ': ' + str(round(self.portfolio.get_cash(),2)))
+
+
 	def new_portfolio(self):
 		print(self.portfolio)
 		print('Parent ',) 
@@ -150,9 +166,12 @@ class UI:
 		dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), None, split_date)
 		print(dates)
 		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
 		input()
+
 		for i in range(len(dates)):
-			self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio)) 
+			self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
+
 
 	def edit_stock(self):
 		stock = input('Name of security ')
@@ -222,6 +241,20 @@ class UI:
 		x.padding_width = 1 # One space between column edges and contents (default)
 		x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
 		print(str(x))
+		
+	def last_day_of_last_month(self, date):
+		return date.replace(day=1) - datetime.timedelta(days=1)
+		
+	def cash_info(self):
+		tmp_default = self.last_day_of_last_month(datetime.date.today()).strftime('%Y-%m-%d')
+		my_date = input('Date of state [' + tmp_default + '] ')
+		if my_date == '':
+			my_date = tmp_default
+		my_income = input('Income in month ')
+		my_total = input('Total cash at hand (w/o portfolios) ')
+		self.money.add_income(my_date, my_income)
+		self.money.add_total(my_date, my_total)
+
 	def list_portfolio(self):
 		portfolio = input('Portfolio [All] ')
 		if portfolio == '':
@@ -262,10 +295,11 @@ class UI:
 		print(self.portfolio)
 		self.list_content()
 	def merge_stock(self):
-	    print('I do nothing, yet')
-	    pass
+		print('I do nothing, yet')
+		pass
 	def manual_price_update(self):
 		stock = input('Security ')
+		print(self.secs.find_stock(stock))
 		tmp_default = (datetime.date.today()).strftime('%Y-%m-%d')
 		my_date = input('Price date [' + tmp_default + '] ')
 		if my_date == '':
@@ -273,6 +307,8 @@ class UI:
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
 		price = float(input('Price '))
 		self.prices.update(self.secs.find_stock(stock), my_date, price)
+	def savings(self):
+	    pass
 	def securities_menu(self, inp=''):
 		return self.new_menu(
 			[	'List securities',
@@ -298,8 +334,10 @@ class UI:
 	def analyzes_menu(self, inp=''):
 		return self.new_menu(
 			[	'List portfolio',
+			    'Saving development',
 				'Profitability'],
 			[	self.list_portfolio,
+			    self.savings,
 				self.profitability], inp)
 	def settings_menu(self, inp=''):
 		return self.new_menu(
@@ -309,16 +347,19 @@ class UI:
 		return self.new_menu(
 			[	'Add portfolio',
 				'List portfolios',
-				'List content of portfolio'],
+				'List content of portfolio',
+				'List cash'],
 			[	self.new_portfolio,
 				self.print_portfolio,
-				self.list_portfolio_contents], inp)
+				self.list_portfolio_contents,
+				self.list_pf_cash], inp)
 	def main_menu(self):
 		self.new_menu(
 			[	'Analyzes - Menu',
 				'Securities - Menu',
 				'Portfolios - Menu',
 				'New transaction',
+				'Add cash info', 
 				'Import from PDFs',
 				'Settings (eg. planned savings) - Menu',
 				'Forecast'],
@@ -326,6 +367,7 @@ class UI:
 				self.securities_menu,
 				self.portfolio_menu,
 				self.new_transaction,
+				self.cash_info,
 				self.import_pdfs,
 				self.settings_menu,
 				None])
@@ -382,7 +424,7 @@ class UI:
 					print(data['name'])
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
-						self.secs.add(data['name'], '', 'unknown', 'unkown')
+						self.secs.add(data['name'], '', 'unknown'+self.rand_str(), 'unkown')
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')

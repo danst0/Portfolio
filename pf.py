@@ -13,8 +13,10 @@ import datetime
 import re
 import pdb
 import uuid
-import subprocess
+
+
 import string
+from Money import Money
 from Database import Database
 from Portfolio import Portfolio
 from Securities import Securities
@@ -51,8 +53,9 @@ if __name__ == "__main__":
 #	  print(PRICES)
 	print('SECS')
 	print(SECS)
-	TRANSACTION = Transaction(DATA, SECS)
-	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION)
+	TRANSACTION = Transaction(DATA, SECS, PORTFOLIO)
+	MONEY = Money(DATA, PORTFOLIO)
+	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)
 	pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
 #	  print('PRICES')
 #	  print(PRICES)

@@ -165,9 +165,12 @@ class UI:
 		dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), None, split_date)
 		print(dates)
 		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
 		input()
+
 		for i in range(len(dates)):
-			self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio)) 
+			self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
+
 
 	def edit_stock(self):
 		stock = input('Name of security ')

@@ -30,6 +30,13 @@ class Database:
 			pass
 		else:
 			print('Created table for prices')
+		try:
+			self.c.execute('''CREATE TABLE money (id GUID PRIMARY KEY, date TEXT, type TEXT, value REAL)''')
+		except:
+			pass
+		else:
+			print('Created table for money')
+
 	def commit(self):
 		self.conn.commit()
 	def close(self):

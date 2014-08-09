@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# Tracking on Income and expense
+# Monthly tracking 1 time entry per 31st
+# Regular and one time component
+# Overall delta in wealth
+#
+
+
 class Portfolio:
 	"""Collection of different portfolios or stocks."""
 	def __init__(self, name, parent=None):

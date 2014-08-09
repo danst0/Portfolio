@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 class Money:
-    def __init__(self):
-        pass
+    def __init__(self, data):
+        self.data = data
+
     
     def add_income(self, date, income):
         pass

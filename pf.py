@@ -52,6 +52,7 @@ if __name__ == "__main__":
 	TRANSACTION = Transaction(DATA, SECS)
 	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES)
 	MONEY = Money(DATA, PORTFOLIO)
+	TRANSACTION.money = MONEY
 	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)
 	pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
 #	  print('PRICES')

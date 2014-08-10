@@ -27,7 +27,7 @@ class Portfolio:
 
 	def profitability(self, from_date, to_date):
 		stocks_at_start = self.transaction.get_portfolio('All', from_date)
-		print(stocks_at_start)
+# 		print(stocks_at_start)
 		portfolio_value_at_start = 0.0
 		for key in stocks_at_start.keys():
 			price = self.prices.get_price(key, from_date)
@@ -46,19 +46,5 @@ class Portfolio:
 		divest = self.transaction.get_total_divest('All', from_date, to_date)
 		dividend = self.transaction.get_total_dividend('All', from_date, to_date)
 
-		profit_incl_on_books = portfolio_value_at_end + invest - divest - portfolio_value_at_start + dividend
-		print('Absolute KPIs')
-		keys = ['Start portfolio', 'Investment', 'Divestment', 'Current portfolio', 'Dividend', 'Profit (incl. on books)']
-		x = PrettyTable(keys)
-		x.padding_width = 1 # One space between column edges and contents (default)
-		x.add_row([portfolio_value_at_start, -invest, divest, portfolio_value_at_end, dividend, profit_incl_on_books])
-		print(str(x))
-		print('Relative KPIs')		  
-		keys = ['ROI']
-		x = PrettyTable(keys)
-		x.padding_width = 1 # One space between column edges and contents (default)
-		kpi = 'n/a'
-		if portfolio_value_at_start - invest != 0:
-		    kpi = str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100, 2)) + '%'
-		x.add_row([kpi])
-		print(str(x))
+		profit_on_books_wo_dividend = portfolio_value_at_end + invest - divest - portfolio_value_at_start
+		return portfolio_value_at_start, -invest, divest, portfolio_value_at_end, dividend, profit_on_books_wo_dividend

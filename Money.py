@@ -25,11 +25,13 @@ class Money:
 	
 	def get_all(self, from_date, to_date):
 		old_total = self.data.c.execute('''SELECT value FROM money WHERE type = ? AND date <= ? ORDER BY date DESC''', ('total', from_date)).fetchone()
-		print(old_total)
+# 		print(old_total)
 		new_total = self.data.c.execute('''SELECT value FROM money WHERE type = ? AND date <= ? ORDER BY date DESC''', ('total', to_date)).fetchone()
-		print(new_total)
+# 		print(new_total)
 		tmp_income = self.data.c.execute('''SELECT value FROM money WHERE type = ? AND date > ? AND date <= ? ORDER BY date DESC''', ('income', from_date, to_date)).fetchall()
-		print(tmp_income)
+		tmp_settlement = self.data.c.execute('''SELECT value FROM money WHERE type = ? AND date > ? AND date <= ? ORDER BY date DESC''', ('settlement', from_date, to_date)).fetchall()
+# 		print(tmp_settlement)
+# 		print(tmp_income)
 		if old_total != None:
 			old_total = old_total[0]
 		if new_total != None:
@@ -38,9 +40,20 @@ class Money:
 		if tmp_income != None:
 			for i in tmp_income:
 				income += i[0]
-		else:
-			income = None
-		print(income)
-		self.portfolio.profitability(from_date, to_date)
+		if tmp_settlement != None:
+		    for i in tmp_settlement:
+		        income += i[0]
+# 		print(income)
+		portfolio_value_at_start, invest, divest, portfolio_value_at_end, dividend, profit_on_books_wo_dividend = self.portfolio.profitability(from_date, to_date)
+		print('Old cash value ' + str(old_total))
+		print('Old PF value ' + str(portfolio_value_at_start))
+		print('Income ' + str(income))
+		expense = portfolio_value_at_end + new_total - invest + divest - income - portfolio_value_at_start - old_total
+		print('Expense ' + str(expense))
+		print('Invest/Divest ' + str(invest) + '/' + str(divest))
+
+		print('New cash value ' + str(new_total))
+		print('New PF value ' + str(portfolio_value_at_end))
+		print('Informational (incl. in cash): Dividend ' + str(dividend))
+		print('Informational (incl. in pf): Profit on books ' + str(profit_on_books_wo_dividend))
 		
-		print(income, new_total - old_total, new_total)

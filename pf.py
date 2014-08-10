@@ -40,7 +40,6 @@ class Analyses:
 	pass
 
 if __name__ == "__main__":
-    print(ystockquote.get_price_book('GOOG'))
 	DATA = Database()
 	PRICES = Prices(DATA)
 	SECS = Securities(DATA)

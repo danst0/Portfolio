@@ -12,7 +12,7 @@ class Money:
 		result = self.data.c.execute('''SELECT value FROM money WHERE type = ? AND date = ?''', (typus, date)).fetchone()
 		return False if result == None else True
 	def update(self, typus, date, value):
-		if self.row_exists(typus, date):
+		if typus != 'settlement' and self.row_exists(typus, date):
 			self.data.c.execute('''UPDATE money SET value = ? WHERE type = ? AND date = ?''', (value, typus, date))
 		else:
 			self.data.c.execute('''INSERT INTO money(id, type, date, value) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), typus, date, value))

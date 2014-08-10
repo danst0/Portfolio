@@ -191,7 +191,8 @@ class Transaction:
 	def get_total_dividend(self, portfolio, from_date, to_date):
 		return self.get_total(portfolio, 'd', from_date, to_date)
 	def get_total(self, portfolio, type, from_date, to_date):
-		result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date >= ? AND date <= ?''', (portfolio, type, from_date, to_date)).fetchall()
+		result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date > ? AND date <= ?''', (portfolio, type, from_date, to_date)).fetchall()
+# 		print('get_total ', result)
 		if result != None:
 			result = result[0]
 			if result != None:

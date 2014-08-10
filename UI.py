@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
 import os
 import subprocess
@@ -112,13 +113,6 @@ class UI:
 #			  print(i)
 			x.add_row(i[:-1] + (self.prices.get_last_price(i[0],) * i[1],))
 		print(x)
-
-	def list_pf_cash(self):
-
-		pf = input('Portfolio [All] ')
-		if pf == '':
-			pf = 'All'
-		print('Cash balance for portfolio ' + pf + ': ' + str(round(self.portfolio.get_cash(),2)))
 
 
 	def new_portfolio(self):
@@ -308,7 +302,15 @@ class UI:
 		price = float(input('Price '))
 		self.prices.update(self.secs.find_stock(stock), my_date, price)
 	def savings(self):
-	    pass
+		tmp_default = self.last_day_of_last_month(datetime.date.today() - relativedelta(months=1)).strftime('%Y-%m-%d')
+		from_date = input('From date [' + tmp_default + '] ')
+		if from_date == '':
+			from_date = tmp_default
+		tmp_default = self.last_day_of_last_month(datetime.date.today()).strftime('%Y-%m-%d')
+		to_date = input('To date [' + tmp_default + '] ')
+		if to_date == '':
+			to_date = tmp_default
+		self.money.get_all(from_date, to_date)
 	def securities_menu(self, inp=''):
 		return self.new_menu(
 			[	'List securities',
@@ -334,10 +336,10 @@ class UI:
 	def analyzes_menu(self, inp=''):
 		return self.new_menu(
 			[	'List portfolio',
-			    'Saving development',
+				'Saving development',
 				'Profitability'],
 			[	self.list_portfolio,
-			    self.savings,
+				self.savings,
 				self.profitability], inp)
 	def settings_menu(self, inp=''):
 		return self.new_menu(
@@ -347,12 +349,10 @@ class UI:
 		return self.new_menu(
 			[	'Add portfolio',
 				'List portfolios',
-				'List content of portfolio',
-				'List cash'],
+				'List content of portfolio'],
 			[	self.new_portfolio,
 				self.print_portfolio,
-				self.list_portfolio_contents,
-				self.list_pf_cash], inp)
+				self.list_portfolio_contents], inp)
 	def main_menu(self):
 		self.new_menu(
 			[	'Analyzes - Menu',

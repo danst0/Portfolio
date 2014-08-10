@@ -8,10 +8,10 @@ import uuid
 
 class Transaction:
 	"""Class to store transactions"""
-	def __init__(self, data, secs, portfolio):
+	def __init__(self, data, secs):
 		self.data = data
 		self.secs = secs
-		self.pf = portfolio
+		
 	def get_data_from_text(self, text):
 		valid = False
 		type = ''
@@ -177,7 +177,6 @@ class Transaction:
 			if result == []:
 				self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
 				print('Cash addition ' + str(total))
-				self.pf.adjust_cash(portfolio, total)
 				return True
 			else:
 				print('Transaction already seems to exist: ' + str(result))

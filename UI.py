@@ -7,6 +7,8 @@ from prettytable import PrettyTable
 import os
 import subprocess
 import random
+import urllib
+import ystockquote
 
 class UI:
 	"""Class to display user interface."""

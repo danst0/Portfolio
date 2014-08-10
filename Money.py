@@ -56,4 +56,4 @@ class Money:
 		print('New PF value ' + str(portfolio_value_at_end))
 		print('Informational (incl. in cash): Dividend ' + str(dividend))
 		print('Informational (incl. in pf): Profit on books ' + str(profit_on_books_wo_dividend))
-		
+        

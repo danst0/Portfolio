@@ -174,7 +174,7 @@ class Transaction:
 				cost = 0
 				total = price
 			result = self.data.c.execute('''SELECT id FROM transactions WHERE type = ? AND portfolio = ? AND stock_id = ? AND date = ? AND nominal = ? AND price = ? AND cost = ? AND total = ?''', (type, portfolio, stock_id, date, nominal, price, cost, total)).fetchall()
-            
+			
 			if result == []:
 				self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
 				self.money.update('settlement', date, total)
@@ -200,7 +200,7 @@ class Transaction:
 			if result != None:
 				result = result[0]
 		if result == None:
-			result = 0.0
+		    result = 0.0
 		return result
 	def get_portfolio(self, portfolio, date):
 		"""Get portfolio contents on that specific date, incl. all transactions from that date"""
@@ -214,7 +214,7 @@ class Transaction:
 
 	def get_total_for_portfolio(self, portfolio):
 		result = self.data.c.execute('''SELECT name, SUM(nominal), SUM(cost), SUM(total) FROM transactions INNER JOIN stocks ON stocks.id = transactions.stock_id WHERE portfolio = ? GROUP BY stock_id''', (portfolio,)).fetchall()
-# 		for item in result
+#		for item in result
 		return result
 	def __repr__(self):
 		keys = ['Name', 'Type', 'Date', 'Total']

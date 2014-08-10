@@ -49,7 +49,7 @@ if __name__ == "__main__":
 #	  print(PRICES)
 	print('SECS')
 	print(SECS)
-	TRANSACTION = Transaction(DATA, SECS)
+	TRANSACTION = Transaction(DATA, SECS, PRICES)
 	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES)
 	MONEY = Money(DATA, PORTFOLIO)
 	TRANSACTION.money = MONEY

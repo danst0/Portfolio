@@ -299,8 +299,17 @@ class UI:
 		print(self.portfolio)
 		self.list_content()
 	def merge_stock(self):
-		print('I do nothing, yet')
-		pass
+		first_stock = input('Remaining security ')
+		stock_obj = self.secs.find_stock(first_stock, return_obj=True)
+		main_isin = self.secs.find_stock(first_stock)
+		print(stock_obj)
+		second_stock = input('Vanishing security ')
+		stock_obj = self.secs.find_stock(second_stock, return_obj=True)
+		secondary_isin = self.secs.find_stock(second_stock)
+		print(stock_obj)
+		self.secs.merge_stocks_from_isin(main_isin, secondary_isin)
+		
+        
 	def manual_price_update(self):
 		stock = input('Security ')
 		print(self.secs.find_stock(stock))
@@ -419,7 +428,7 @@ class UI:
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or
 				file.startswith('KONTOAUSZU') or
-				file.startswith('PERSONAL_I') or
+				file.startswith('PERSONAL') or
 				file.startswith('TERMINANSC') or
 				file.startswith('WICHTIGE_M') or
 				file.startswith('VERLUSTVER') or
@@ -434,7 +443,8 @@ class UI:
 					print(data['name'])
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
-						self.secs.add(data['name'], '', 'unknown'+self.rand_str(), 'unkown')
+						tmp_id = 'unknown'+self.rand_str()
+						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown')
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')

@@ -25,6 +25,7 @@ class Security:
 			self.aliases = []
 		else:
 			self.aliases = aliases
+			self.aliases.remove('')		
 		self.keys = ['Name', 'Aliases', 'ISIN', 'Yahoo-ID', 'Type']
 	def list(self):
 		return (self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type)
@@ -59,6 +60,7 @@ class Securities:
 				already_exists = True
 				break
 		if not already_exists:
+			aliases.remove('')	
 			self.securities.append(Security(name, aliases, isin_id, yahoo_id, type))
 			self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
 		else:
@@ -81,6 +83,7 @@ class Securities:
 				found = True
 				tmp = self.securities.pop(num)
 				self.data.c.execute('DELETE FROM stocks WHERE isin_id = ? AND name = ?', (isin_id, tmp.name))
+				### TODO: Delete prices
 				break
 		return found	  
 #		  pickle.dump( self.securities, open( "securities.p", "wb" ) )
@@ -93,19 +96,38 @@ class Securities:
 		name = self.data.c.execute('''SELECT isin_id FROM stocks WHERE id = ?''', (stock_id,)).fetchone()
 		return None if name is None else name[0]
 
+	def merge_stocks_from_isin(self, main_isin, secondary_isin):
+		main_stock = self.find_stock(main_isin, return_obj=True)
+		secondary_stock = self.find_stock(secondary_isin, return_obj=True)
+		new_name = main_stock.name
+		new_aliases = main_stock.aliases + secondary_stock.aliases + [secondary_stock.name]
+		new_isin = main_stock.isin_id
+		if main_stock.isin_id.startswith('unknown') and not secondary_stock.isin_id.startswith('unknown'):
+			new_isin = secondary_stock.isin
+		new_yahoo_id = main_stock.yahoo_id
+		if main_stock.yahoo_id.startswith('unknown') and not secondary_stock.yahoo_id.startswith('unknown'):
+			new_yahoo_id = secondary_stock.yahoo_id
+		new_type = main_stock.type
+		if main_stock.type == None and not secondary_stock.type == None:
+			new_type = secondary_stock.type
+		self.change_stock(main_isin, Security(new_name, new_aliases, new_isin, new_yahoo_id, new_type))
+		self.delete_stock(secondary_isin)
+		
+		
 
 	def __str__(self):
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
 		for i in self.securities:
-# 			print(i.isin_id, self.prices.get_last_price(i.isin_id))
+#			print(i.isin_id, self.prices.get_last_price(i.isin_id))
 			x.add_row(i.list() + (self.prices.get_last_price(i.isin_id),))
 		return str(x)
 	def __iter__(self):
 		for x in self.securities:
 			yield x
 	def find_stock(self, stock_id_or_name, return_obj=False):
+		"""Return ISIN or stock object"""
 		found = None
 		found_obj = None
 		for item in self.securities:

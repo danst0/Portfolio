@@ -19,7 +19,7 @@ class Database:
 		else:
 			print('Created table for transactions')
 		try:
-			self.c.execute('''CREATE TABLE stocks (id GUID PRIMARY KEY, name TEXT, aliases TEXT, de_id TEXT, type TEXT)''')
+			self.c.execute('''CREATE TABLE stocks (id GUID PRIMARY KEY, name TEXT, aliases TEXT, isin_id TEXT, type TEXT)''')
 		except:
 			pass
 		else:

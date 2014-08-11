@@ -74,12 +74,12 @@ class UI:
 		yesterday_str = yesterday.strftime('%Y-%m-%d')
 		for sec in self.secs:
 			quote = None
-			quote = self.prices.get_quote(sec.de_id)
+			quote = self.prices.get_quote(sec.isin_id)
 			if not quote:
 				print('No quotes found for:', sec.name)
 				self.last_update += datetime.timedelta(seconds=-30)
 			else:
-				self.prices.update(sec.de_id, day_str, quote)
+				self.prices.update(sec.isin_id, day_str, quote)
 		print('Update finished')		
 				
 	def list_stocks(self):
@@ -182,24 +182,24 @@ class UI:
 			new_aliases = stock_obj.aliases
 		for num in range(len(new_aliases)):
 			new_aliases[num] = new_aliases[num].strip()
-		new_de_id = input('New ISIN (empty for no change) ')
-		if new_de_id== '':
-			new_de_id = stock_obj.de_id
+		new_isin_id = input('New ISIN (empty for no change) ')
+		if new_isin_id== '':
+			new_isin_id = stock_obj.isin_id
 		new_id = input('New yahoo id (empty for no change) ')
 		if new_id== '':
 			new_id = stock_obj.yahoo_id
 		new_type = input('New Type (empty for no change) ')
 		if new_type == '':
 			new_type = stock_obj.type
-		self.secs.change_stock(stock_obj.de_id, Security(new_name, new_aliases, new_de_id, new_id, new_type))
+		self.secs.change_stock(stock_obj.isin_id, Security(new_name, new_aliases, new_isin_id, new_id, new_type))
 	def delete_stock(self):
 		stock = input('Name of security ')
 		stock_obj = self.secs.find_stock(stock, return_obj=True)
 		print(stock_obj)
 		do_delete = input('Delete stock ')
 		if do_delete.lower() == 'yes':
-			self.prices.delete_prices(stock_obj.de_id)
-			self.secs.delete_stock(stock_obj.de_id)			  
+			self.prices.delete_prices(stock_obj.isin_id)
+			self.secs.delete_stock(stock_obj.isin_id)			  
 	def profitability(self):
 		portfolio = input('Portfolio [All] ')
 		if portfolio == '':
@@ -432,7 +432,7 @@ class UI:
 						# Add security as dummy if not already existing
 						self.secs.add(data['name'], '', 'unknown'+self.rand_str(), 'unkown')
 					if data['type'] in ['b', 's']:
-						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_de_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
+						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
@@ -440,7 +440,7 @@ class UI:
 							os.remove(base_path + '/' + file)
 
 					elif data['type'] in ['d']:
-						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_de_id(self.secs.find_stock(data['name'])), data['date'], 0, data['value'], 0, 'All'):
+						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], 0, data['value'], 0, 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
@@ -470,4 +470,4 @@ class UI:
 		price = float(input())
 		print('Cost')
 		cost = float(input())
-		self.transaction.add(type, self.secs.get_stock_id_from_de_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)
+		self.transaction.add(type, self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)

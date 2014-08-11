@@ -25,7 +25,8 @@ class Security:
 			self.aliases = []
 		else:
 			self.aliases = aliases
-			self.aliases.remove('')		
+			if '' in self.aliases:
+				self.aliases.remove('')		
 		self.keys = ['Name', 'Aliases', 'ISIN', 'Yahoo-ID', 'Type']
 	def list(self):
 		return (self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type)
@@ -60,7 +61,8 @@ class Securities:
 				already_exists = True
 				break
 		if not already_exists:
-			aliases.remove('')	
+			if '' in self.aliases:
+				aliases.remove('')	
 			self.securities.append(Security(name, aliases, isin_id, yahoo_id, type))
 			self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
 		else:
@@ -83,7 +85,6 @@ class Securities:
 				found = True
 				tmp = self.securities.pop(num)
 				self.data.c.execute('DELETE FROM stocks WHERE isin_id = ? AND name = ?', (isin_id, tmp.name))
-				### TODO: Delete prices
 				break
 		return found	  
 #		  pickle.dump( self.securities, open( "securities.p", "wb" ) )
@@ -110,8 +111,13 @@ class Securities:
 		new_type = main_stock.type
 		if main_stock.type == None and not secondary_stock.type == None:
 			new_type = secondary_stock.type
-		self.change_stock(main_isin, Security(new_name, new_aliases, new_isin, new_yahoo_id, new_type))
-		self.delete_stock(secondary_isin)
+		yes_no = input('Should I do the merge?')
+		if yes_no == 'yes':
+			self.data.c.execute('''UPDATE transactions SET stock_id = ? WHERE stock_id = ?''', (self.get_stock_id_from_isin_id(main_isin), self.get_stock_id_from_isin_id(secondary_isin)))
+			self.change_stock(main_isin, Security(new_name, new_aliases, new_isin, new_yahoo_id, new_type))
+			self.delete_stock(secondary_isin)
+			self.prices.delete_prices(secondary_isin)
+			
 		
 		
 

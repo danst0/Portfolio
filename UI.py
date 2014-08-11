@@ -46,16 +46,20 @@ class UI:
 		today_str = today.strftime('%Y-%m-%d')
 		first_day_str = first_day.strftime('%Y-%m-%d')
 		for sec in self.secs:
-			quote = None
-			try:
-				quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
-			except urllib.error.HTTPError:
-				print('No quotes found for:', sec.name)
-				self.last_update += datetime.timedelta(seconds=-90)
+			if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
+				print('Updating', sec.yahoo_id)
+				quote = None
+				try:
+					quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
+				except urllib.error.HTTPError:
+					print('No quotes found for:', sec.name)
+					self.last_update += datetime.timedelta(seconds=-90)
+				else:
+#					  print(quote)
+					for key in quote:
+						self.prices.update(sec.isin_id, key, quote[key]['Close'])
 			else:
-#				  print(quote)
-				for key in quote:
-					self.prices.update(sec.de_id, key, quote[key]['Close'])
+			    print('No Yahoo ID for', sec.name)
 		print('Update finished')
 					
 	def update_stocks(self):

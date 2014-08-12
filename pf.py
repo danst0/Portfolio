@@ -40,6 +40,7 @@ class Analyses:
 	pass
 
 if __name__ == "__main__":
+#     print('pf - Portfolio Version 0.3')
 	DATA = Database()
 	PRICES = Prices(DATA)
 	SECS = Securities(DATA)

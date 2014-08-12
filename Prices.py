@@ -23,11 +23,11 @@ class Prices:
 			if id not in self.numbers.keys():
 				self.numbers[id] = {}
 			self.numbers[id][date] = price
-	def delete_prices(self, yahoo_id):
-		stock_id = self.secs.get_stock_id_from_yahoo_id(yahoo_id)
+	def delete_prices(self, isin_id):
+		stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
 		self.data.c.execute('''DELETE FROM prices WHERE stock_id = ?''', (stock_id, ))
-	def get_dates_and_prices(self, yahoo_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
-		stock_id = self.get_stock_id_from_yahoo_id(yahoo_id)
+	def get_dates_and_prices(self, isin_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
+		stock_id = self.get_stock_id_from_isin_id(isin_id)
 		if from_date == None:
 			from_date = '1900-01-01'
 		result = self.data.c.execute('''SELECT date, price FROM prices WHERE stock_id = ? AND date >= ? AND date <= ? ORDER BY date''', (stock_id, from_date, to_date)).fetchall()
@@ -38,8 +38,8 @@ class Prices:
 			dates.append(datetime.datetime.strptime(item[0], "%Y-%m-%d").date())
 			values.append(item[1])			  
 		return dates, values
-	def find_split_date(self, yahoo_id):
-		prices = self.get_prices(yahoo_id)
+	def find_split_date(self, isin_id):
+		prices = self.get_prices(isin_id)
 		old_price = None
 		last_unsplit_date = None
 		suggested_ratio = None
@@ -56,8 +56,8 @@ class Prices:
 	def row_exists(self, stock_id, date):
 		result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
 		return False if result == None else True
-	def update(self, yahoo_id, date, price):
-		id = self.secs.get_stock_id_from_yahoo_id(yahoo_id)
+	def update(self, isin_id, date, price):
+		id = self.secs.get_stock_id_from_isin_id(isin_id)
 		if id not in self.numbers.keys():
 			self.numbers[id] = {}
 		self.numbers[id][date] = price
@@ -74,15 +74,17 @@ class Prices:
 			except:
 				pass
 		return price
-	def get_prices(self, id):
-		id = self.secs.get_stock_id_from_yahoo_id(id)
+	def get_prices(self, isin_id):
+		id = self.secs.get_stock_id_from_isin_id(isin_id)
 		prices = None
 		try:
-			prices = self.numbers[id]
+			prices = self.numbers[isin_id]
 		except:
 			pass
 		return prices
-	def get_last_price(self, id):
+	def get_last_price(self, isin_id):
+		id = self.secs.get_stock_id_from_isin_id(isin_id)
+# 		print(isin_id, id)
 #		  pdb.set_trace()
 		prices = self.get_prices(id)
 #		  print(prices)

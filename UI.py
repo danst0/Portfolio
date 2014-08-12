@@ -7,6 +7,9 @@ from prettytable import PrettyTable
 import os
 import subprocess
 import random
+import urllib
+import ystockquote
+from Securities import Security
 
 class UI:
 	"""Class to display user interface."""
@@ -43,16 +46,20 @@ class UI:
 		today_str = today.strftime('%Y-%m-%d')
 		first_day_str = first_day.strftime('%Y-%m-%d')
 		for sec in self.secs:
-			quote = None
-			try:
-				quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
-			except urllib.error.HTTPError:
-				print('No quotes found for:', sec.name)
-				self.last_update += datetime.timedelta(seconds=-90)
+			if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
+				print('Updating', sec.yahoo_id)
+				quote = None
+				try:
+					quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
+				except urllib.error.HTTPError:
+					print('No quotes found for:', sec.name)
+					self.last_update += datetime.timedelta(seconds=-90)
+				else:
+#					  print(quote)
+					for key in quote:
+						self.prices.update(sec.isin_id, key, quote[key]['Close'])
 			else:
-#				  print(quote)
-				for key in quote:
-					self.prices.update(sec.yahoo_id, key, quote[key]['Close'])
+				print('No Yahoo ID for', sec.name)
 		print('Update finished')
 					
 	def update_stocks(self):
@@ -71,12 +78,12 @@ class UI:
 		yesterday_str = yesterday.strftime('%Y-%m-%d')
 		for sec in self.secs:
 			quote = None
-			quote = self.prices.get_quote(sec.yahoo_id)
+			quote = self.prices.get_quote(sec.isin_id)
 			if not quote:
 				print('No quotes found for:', sec.name)
 				self.last_update += datetime.timedelta(seconds=-30)
 			else:
-				self.prices.update(sec.yahoo_id, day_str, quote)
+				self.prices.update(sec.isin_id, day_str, quote)
 		print('Update finished')		
 				
 	def list_stocks(self):
@@ -179,21 +186,24 @@ class UI:
 			new_aliases = stock_obj.aliases
 		for num in range(len(new_aliases)):
 			new_aliases[num] = new_aliases[num].strip()
-		new_id = input('New id (empty for no change) ')
+		new_isin_id = input('New ISIN (empty for no change) ')
+		if new_isin_id== '':
+			new_isin_id = stock_obj.isin_id
+		new_id = input('New yahoo id (empty for no change) ')
 		if new_id== '':
 			new_id = stock_obj.yahoo_id
 		new_type = input('New Type (empty for no change) ')
 		if new_type == '':
 			new_type = stock_obj.type
-		self.secs.change_stock(stock_obj.yahoo_id, Security(new_name, new_aliases, new_id, new_type))
+		self.secs.change_stock(stock_obj.isin_id, Security(new_name, new_aliases, new_isin_id, new_id, new_type))
 	def delete_stock(self):
 		stock = input('Name of security ')
 		stock_obj = self.secs.find_stock(stock, return_obj=True)
 		print(stock_obj)
 		do_delete = input('Delete stock ')
 		if do_delete.lower() == 'yes':
-			self.prices.delete_prices(stock_obj.yahoo_id)
-			self.secs.delete_stock(stock_obj.yahoo_id)			  
+			self.prices.delete_prices(stock_obj.isin_id)
+			self.secs.delete_stock(stock_obj.isin_id)			  
 	def profitability(self):
 		portfolio = input('Portfolio [All] ')
 		if portfolio == '':
@@ -289,8 +299,17 @@ class UI:
 		print(self.portfolio)
 		self.list_content()
 	def merge_stock(self):
-		print('I do nothing, yet')
-		pass
+		first_stock = input('Remaining security ')
+		stock_obj = self.secs.find_stock(first_stock, return_obj=True)
+		main_isin = self.secs.find_stock(first_stock)
+		print(stock_obj)
+		second_stock = input('Vanishing security ')
+		stock_obj = self.secs.find_stock(second_stock, return_obj=True)
+		secondary_isin = self.secs.find_stock(second_stock)
+		print(stock_obj)
+		self.secs.merge_stocks_from_isin(main_isin, secondary_isin)
+		
+		
 	def manual_price_update(self):
 		stock = input('Security ')
 		print(self.secs.find_stock(stock))
@@ -371,14 +390,25 @@ class UI:
 				self.import_pdfs,
 				self.settings_menu,
 				None])
+	def highligh_first_letter(self, text, letter):
+	    pos = text.lower().find(letter)
+	    return text[:pos] + '[' + text[pos:pos+1] + ']' + text[pos+1:]
 	def new_menu(self, choices, functions, inp=''):
-		letters = 'abcdefghijklmnoprstuvwxyz'
 		while True:
+			letters = ''
+			for choice in choices:
+				for i in range(len(choice)):
+# 					print(choice[i], letters)
+					if choice[i].lower() not in letters and choice[i].lower() != 'q':
+						letters += choice[i].lower()
+						break
+			letters += 'q'
+# 			print(letters)	  
 			x = PrettyTable(["Key", "Item"])
 			x.align["Item"] = "l"
 			x.padding_width = 1 # One space between column edges and contents (default)
 			for num, choice in enumerate(choices):
-				x.add_row([letters[num], choice])
+				x.add_row([letters[num], self.highligh_first_letter(choice, letters[num])])
 #				  i[1] = i[1].replace(' - Menu', '')
 			x.add_row(["-", '---'])
 			x.add_row(["q", "Exit"])
@@ -409,7 +439,7 @@ class UI:
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or
 				file.startswith('KONTOAUSZU') or
-				file.startswith('PERSONAL_I') or
+				file.startswith('PERSONAL') or
 				file.startswith('TERMINANSC') or
 				file.startswith('WICHTIGE_M') or
 				file.startswith('VERLUSTVER') or
@@ -424,9 +454,10 @@ class UI:
 					print(data['name'])
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
-						self.secs.add(data['name'], '', 'unknown'+self.rand_str(), 'unkown')
+						tmp_id = 'unknown'+self.rand_str()
+						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown')
 					if data['type'] in ['b', 's']:
-						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
+						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
@@ -434,7 +465,7 @@ class UI:
 							os.remove(base_path + '/' + file)
 
 					elif data['type'] in ['d']:
-						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(data['name'])), data['date'], 0, data['value'], 0, 'All'):
+						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], 0, data['value'], 0, 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
@@ -464,4 +495,4 @@ class UI:
 		price = float(input())
 		print('Cost')
 		cost = float(input())
-		self.transaction.add(type, self.secs.get_stock_id_from_yahoo_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)
+		self.transaction.add(type, self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)

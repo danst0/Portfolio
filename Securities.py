@@ -25,7 +25,7 @@ class Security:
 			self.aliases = []
 		else:
 			self.aliases = aliases
-			if '' in self.aliases:
+			if aliases != '' and '' in self.aliases:
 				self.aliases.remove('')		
 		self.keys = ['Name', 'Aliases', 'ISIN', 'Yahoo-ID', 'Type']
 	def list(self):
@@ -61,7 +61,8 @@ class Securities:
 				already_exists = True
 				break
 		if not already_exists:
-			if '' in self.aliases:
+# 			print(aliases)
+			if aliases != '' and '' in aliases :
 				aliases.remove('')	
 			self.securities.append(Security(name, aliases, isin_id, yahoo_id, type))
 			self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))

@@ -59,7 +59,7 @@ class UI:
 					for key in quote:
 						self.prices.update(sec.isin_id, key, quote[key]['Close'])
 			else:
-			    print('No Yahoo ID for', sec.name)
+				print('No Yahoo ID for', sec.name)
 		print('Update finished')
 					
 	def update_stocks(self):
@@ -309,7 +309,7 @@ class UI:
 		print(stock_obj)
 		self.secs.merge_stocks_from_isin(main_isin, secondary_isin)
 		
-        
+		
 	def manual_price_update(self):
 		stock = input('Security ')
 		print(self.secs.find_stock(stock))
@@ -390,14 +390,25 @@ class UI:
 				self.import_pdfs,
 				self.settings_menu,
 				None])
+	def highligh_first_letter(self, text, letter):
+	    pos = text.lower().find(letter)
+	    return text[:pos] + '[' + text[pos:pos+1] + ']' + text[pos+1:]
 	def new_menu(self, choices, functions, inp=''):
-		letters = 'abcdefghijklmnoprstuvwxyz'
 		while True:
+			letters = ''
+			for choice in choices:
+				for i in range(len(choice)):
+# 					print(choice[i], letters)
+					if choice[i].lower() not in letters and choice[i].lower() != 'q':
+						letters += choice[i].lower()
+						break
+			letters += 'q'
+# 			print(letters)	  
 			x = PrettyTable(["Key", "Item"])
 			x.align["Item"] = "l"
 			x.padding_width = 1 # One space between column edges and contents (default)
 			for num, choice in enumerate(choices):
-				x.add_row([letters[num], choice])
+				x.add_row([letters[num], self.highligh_first_letter(choice, letters[num])])
 #				  i[1] = i[1].replace(' - Menu', '')
 			x.add_row(["-", '---'])
 			x.add_row(["q", "Exit"])

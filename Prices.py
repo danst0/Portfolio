@@ -90,12 +90,8 @@ class Prices:
 		prices = self.get_prices(id)
 #		  print(prices)
 		if prices != None:
-			try:
 				max_key = max(prices.keys())
 				return prices[max_key]
-			except:
-				print(prices.keys())			
-
 		else:
 			return None
 	def get_quote(self, symbol):

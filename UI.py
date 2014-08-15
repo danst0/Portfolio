@@ -391,19 +391,19 @@ class UI:
 				self.settings_menu,
 				None])
 	def highligh_first_letter(self, text, letter):
-	    pos = text.lower().find(letter)
-	    return text[:pos] + '[' + text[pos:pos+1] + ']' + text[pos+1:]
+		pos = text.lower().find(letter)
+		return text[:pos] + '[' + text[pos:pos+1] + ']' + text[pos+1:]
 	def new_menu(self, choices, functions, inp=''):
 		while True:
 			letters = ''
 			for choice in choices:
 				for i in range(len(choice)):
-# 					print(choice[i], letters)
+#					print(choice[i], letters)
 					if choice[i].lower() not in letters and choice[i].lower() != 'q':
 						letters += choice[i].lower()
 						break
 			letters += 'q'
-# 			print(letters)	  
+#			print(letters)	  
 			x = PrettyTable(["Key", "Item"])
 			x.align["Item"] = "l"
 			x.padding_width = 1 # One space between column edges and contents (default)
@@ -456,7 +456,7 @@ class UI:
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
 						tmp_id = 'unknown'+self.rand_str()
-						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown')
+						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown', interactive=True)
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
@@ -477,7 +477,7 @@ class UI:
 				else:
 					# Remove invalid PDFs
 					os.remove(base_path + '/' + file)
-        print(file_counter, 'files successfully imported.')
+		print(file_counter, 'files successfully imported.')
 	def new_transaction(self):
 		print('Transaction type (Buy/Sell/Dividend)')
 		type = input()

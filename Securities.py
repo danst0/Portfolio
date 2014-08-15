@@ -21,7 +21,8 @@ class Security:
 			yahoo_id = ''
 		self.yahoo_id = yahoo_id
 		self.type = type
-		if aliases == None:
+		# Aliases should be a list!!
+		if aliases == None or aliases == '':
 			self.aliases = []
 		else:
 			self.aliases = aliases
@@ -52,7 +53,7 @@ class Securities:
 			self.securities.append(Security(*line))
 		self.prices = None
 
-	def add(self, name, aliases, isin_id, yahoo_id, type):
+	def add(self, name, aliases, isin_id, yahoo_id, type, interactive=False):
 #		  print(aliases)
 		already_exists = False
 		for sec in self.securities:
@@ -61,11 +62,24 @@ class Securities:
 				already_exists = True
 				break
 		if not already_exists:
-# 			print(aliases)
+#			print(aliases)
 			if aliases != '' and '' in aliases :
-				aliases.remove('')	
-			self.securities.append(Security(name, aliases, isin_id, yahoo_id, type))
-			self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
+				aliases.remove('')
+			new_sec = Security(name, aliases, isin_id, yahoo_id, type)	
+			interactive_success = False
+			if interactive:
+				print(self)
+				print('Adding the following security')
+				print(new_sec)
+				alternative = input('Is there an alternative? If yes, input name here else just hit enter? ')
+				if alternative != '':
+					tmp_sec = self.find_stock(alternative, return_obj=True)
+					tmp_sec.aliases = tmp_sec.aliases + [new_sec.name]
+					self.change_stock(tmp_sec.isin_id, tmp_sec)
+					interactive_success = True
+			if not interactive_success:
+    			self.securities.append(new_sec)
+	    		self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
 		else:
 			print('ID for Stock already exists, therefore not added')
 	def change_stock(self, isin_id, sec):

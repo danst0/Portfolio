@@ -57,6 +57,7 @@ class Prices:
 		result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
 		return False if result == None else True
 	def update(self, isin_id, date, price):
+#		print('date for price update ', date)
 		id = self.secs.get_stock_id_from_isin_id(isin_id)
 		if id not in self.numbers.keys():
 			self.numbers[id] = {}
@@ -89,8 +90,12 @@ class Prices:
 		prices = self.get_prices(id)
 #		  print(prices)
 		if prices != None:
+			try:
 			max_key = max(prices.keys())
 			return prices[max_key]
+			except:
+				print(prices.keys())			
+
 		else:
 			return None
 	def get_quote(self, symbol):

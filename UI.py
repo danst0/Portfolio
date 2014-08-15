@@ -435,6 +435,7 @@ class UI:
 	def import_pdfs(self):
 		base_path = os.path.expanduser('~') + '/Desktop/PDFs'
 		print(base_path)
+		file_counter = 0
 		for file in os.listdir(base_path):
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or
@@ -461,6 +462,7 @@ class UI:
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
+							file_counter += 1
 							# Remove successful PDFs
 							os.remove(base_path + '/' + file)
 
@@ -469,11 +471,13 @@ class UI:
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
+							file_counter += 1
 							# Remove successful PDFs
 							os.remove(base_path + '/' + file)
 				else:
 					# Remove invalid PDFs
 					os.remove(base_path + '/' + file)
+        print(file_counter, 'files successfully imported.')
 	def new_transaction(self):
 		print('Transaction type (Buy/Sell/Dividend)')
 		type = input()

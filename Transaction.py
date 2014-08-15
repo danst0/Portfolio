@@ -68,7 +68,7 @@ class Transaction:
 						value = float(result.group(2).replace('.','').replace(',','.'))
 						wert_found = True
 					elif line.find('WERT') != -1:
-#						  print(line)
+#						print(line)
 #						  pdb.set_trace()
 						result = re.match('WERT\s*([0-9]{2}\.[0-9]{2}\.[0-9]{4}).*([A-Z]{3})\s*([0-9\.,]*)', line)
 						if not result:
@@ -79,10 +79,14 @@ class Transaction:
 						if currency != 'EUR':
 							print('Error while importing, currency not EUR')
 							sys.exit()
-						if value == 0.0:
+						try:
 							value = float(result.group(3).replace('.','').replace(',','.'))
-							wert_found = True
-#						  print(date, currency, value)					 
+						except:
+							if value == 0.0:
+								print('Error while importing values')
+								sys.exit()
+						wert_found = True
+#						print(date, currency, value)
 #						  print(result)
 
 					elif line.find('Umsatz') != -1:
@@ -184,7 +188,7 @@ class Transaction:
 				return True
 			else:
 				print('Transaction already seems to exist: ' + str(result))
-				return True
+				return False
 		else:
 			return False
 #		  self.data.commit()
@@ -196,13 +200,13 @@ class Transaction:
 		return self.get_total(portfolio, 'd', from_date, to_date)
 	def get_total(self, portfolio, type, from_date, to_date):
 		result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date > ? AND date <= ?''', (portfolio, type, from_date, to_date)).fetchall()
-# 		print('get_total ', result)
+#		print('get_total ', result)
 		if result != None:
 			result = result[0]
 			if result != None:
 				result = result[0]
 		if result == None:
-		    result = 0.0
+			result = 0.0
 		return result
 	def get_portfolio(self, portfolio, date):
 		"""Get portfolio contents on that specific date, incl. all transactions from that date"""

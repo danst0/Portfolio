@@ -85,14 +85,14 @@ class Prices:
 		return prices
 	def get_last_price(self, isin_id):
 		id = self.secs.get_stock_id_from_isin_id(isin_id)
-# 		print(isin_id, id)
+#		print(isin_id, id)
 #		  pdb.set_trace()
 		prices = self.get_prices(id)
 #		  print(prices)
 		if prices != None:
 			try:
-			max_key = max(prices.keys())
-			return prices[max_key]
+				max_key = max(prices.keys())
+				return prices[max_key]
 			except:
 				print(prices.keys())			
 

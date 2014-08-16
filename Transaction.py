@@ -183,7 +183,7 @@ class Transaction:
 			if result == []:
 				self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
 				self.money.update('settlement', date, total)
-				if type != 'd':
+				if type != 'd' and price != 0.0:
 				    self.prices.update(self.secs.get_isin_id_from_stock_id(stock_id), date, price)
 				print('Cash addition ' + str(total))
 				return True

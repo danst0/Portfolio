@@ -221,13 +221,14 @@ class UI:
 		to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
 		stocks_at_start = self.transaction.get_portfolio('All', from_date.strftime("%Y-%m-%d"))
 		print(stocks_at_start)
+		
 		portfolio_value_at_start = 0.0
 		for key in stocks_at_start.keys():
-			portfolio_value_at_start += stocks_at_start[key] * self.prices.get_price(key, from_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_start += stocks_at_start[key] * self.prices.get_last_price_from_stock_id(key, from_date.strftime("%Y-%m-%d"), none_equals_zero=True)
 		stocks_at_end = self.transaction.get_portfolio('All', to_date.strftime("%Y-%m-%d"))
 		portfolio_value_at_end = 0.0
 		for key in stocks_at_end.keys():
-			portfolio_value_at_end += stocks_at_end[key] * self.prices.get_price(key, to_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_end += stocks_at_end[key] * self.prices.get_last_price_from_stock_id(key, to_date.strftime("%Y-%m-%d"), none_equals_zero=True)
 
 		invest = self.transaction.get_total_invest('All', from_date, to_date)
 		divest = self.transaction.get_total_divest('All', from_date, to_date)
@@ -244,7 +245,11 @@ class UI:
 		keys = ['ROI']
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
-		x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
+		if portfolio_value_at_start - invest != 0:
+		    tmp = [str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%']
+		else:
+		    tmp = ['n/a']
+		x.add_row(tmp)
 		print(str(x))
 		
 	def last_day_of_last_month(self, date):
@@ -269,31 +274,7 @@ class UI:
 		if my_date == '':
 			my_date = tmp_default
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
-		stocks = self.transaction.get_portfolio('All', my_date.strftime("%Y-%m-%d"))
-#		  print(stocks)
-		keys = ['Name', 'Nominal', 'Price', 'Value']		
-		x = PrettyTable(keys)
-		x.padding_width = 1 # One space between column edges and contents (default)
-		x.align["Price"] = "r"
-		x.align["Value"] = "r"
-		x.align["Nominal"] = "r"
-		prices = []
-		tmp = 0.0
-		for key in stocks.keys():
-			price = self.prices.get_price(key, my_date.strftime("%Y-%m-%d"))
-			value = 0.0
-			if price != None:
-				value = stocks[key] * price
-			else:
-				print('Price for ' + self.secs.get_name_from_stock_id(key) + ' missing; assuming zero')
-			x.add_row([self.secs.get_name_from_stock_id(key),
-						self.nice_number(stocks[key]),
-						self.nice_number(price),
-						self.nice_number(value)])
-			tmp += value
-		x.add_row(4*['====='])
-		x.add_row(['Total', '----', '----', tmp])
-		print(str(x))
+        self.portfolio.print_pf(my_date)
 	def print_portfolio(self):
 		print(self.portfolio)
 	def list_portfolio_contents(self):

@@ -66,37 +66,40 @@ class Prices:
 			self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
 		else:
 			self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), id, date, price))
-	def get_price(self, id, date):
+	def get_price(self, stock_id, date, none_equals_zero=False):
+		"""Return price at given date or up to four days earlier"""
 		price = None
+		if none_equals_zero:
+			price = 0.0
 		for i in range(4):
 			date = (datetime.datetime.strptime(date, '%Y-%m-%d') - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 			try:
-				price = self.numbers[id][date]
+				price = self.numbers[stock_id][date]
 			except:
 				pass
 		return price
-	def get_prices(self, isin_id):
-		id = self.secs.get_stock_id_from_isin_id(isin_id)
+	def get_prices(self, stock_id, before_date=None):
 		prices = None
-		try:
-			prices = self.numbers[isin_id]
-		except:
-			pass
+		if stock_id in self.numbers.keys():
+			prices = self.numbers[stock_id]
+# 		print(prices)
+		if prices and before_date:
+			prices = { k: v for k, v in prices.items() if k <= before_date }
 		return prices
-	def get_last_price(self, isin_id, none_equals_zero=False):
-		id = self.secs.get_stock_id_from_isin_id(isin_id)
-#		print(isin_id, id)
-#		  pdb.set_trace()
-		prices = self.get_prices(id)
-#		  print(prices)
-		if prices != None:
+	def get_last_price(self, isin_id, before_date=None, none_equals_zero=False):
+		stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
+		return self.get_last_price_from_stock_id(stock_id, before_date, none_equals_zero)	
+	def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
+		"""Return last price available, if given, return last price available before given date"""
+		prices = self.get_prices(stock_id, before_date)
+		if prices:
 			max_key = max(prices.keys())
 			return prices[max_key]
 		else:
-		    if none_equals_zero:
-		        return 0.0
-		    else:
-    			return None
+			if none_equals_zero:
+				return 0.0
+			else:
+				return None
 	def get_quote(self, symbol):
 		print(symbol)
 		base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='

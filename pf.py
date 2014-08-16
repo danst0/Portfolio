@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	print('SECS')
 	print(SECS)
 	TRANSACTION = Transaction(DATA, SECS, PRICES)
-	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES)
+	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES, SECS)
 	MONEY = Money(DATA, PORTFOLIO)
 	TRANSACTION.money = MONEY
 	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)

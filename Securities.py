@@ -4,6 +4,7 @@
 from prettytable import PrettyTable
 import string
 import uuid
+from helper_functions import *
 
 def normalize(s):
 	for p in string.punctuation:
@@ -88,8 +89,7 @@ class Securities:
 			if isin_id.lower() in item.isin_id.lower():
 				found = True
 				self.securities[num] = sec
-#				print('UPDATE stocks set name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), isin_id, sec.yahoo_id, sec.type, isin_id))
-				self.data.c.execute('UPDATE stocks set name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), isin_id, sec.yahoo_id, sec.type, isin_id))
+				self.data.c.execute('UPDATE stocks SET name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), sec.isin_id, sec.yahoo_id, sec.type, isin_id))
 				self.data.commit()
 				break
 		return found
@@ -143,7 +143,7 @@ class Securities:
 		
 		for i in sorted(self.securities, key=lambda x: x.name.lower()):
 #			print(i.isin_id, self.prices.get_last_price(i.isin_id))
-			x.add_row(i.list() + (self.prices.get_last_price(i.isin_id),))
+			x.add_row(i.list() + (nice_number(self.prices.get_last_price(i.isin_id)),))
 		return str(x)
 	def __iter__(self):
 		for x in self.securities:

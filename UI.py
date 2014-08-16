@@ -11,6 +11,7 @@ import urllib
 import ystockquote
 from Securities import Security
 from input_methods import *
+from helper_functions import *
 
 class UI:
 	"""Class to display user interface."""
@@ -25,13 +26,7 @@ class UI:
 		while go_on:
 			go_on = self.main_menu()
 		random.seed()
-	def rand_str(self):
-		num = random.randint(0,9999)
-		return str(num).zfill(4)
-	def nice_number(self, number):
-		if number != None:
-			number = round(number, 2)
-		return number
+
 	def get_historic_quotes(self):
 		print('Start update')
 			
@@ -78,13 +73,16 @@ class UI:
 		day_str = today.strftime('%Y-%m-%d')
 		yesterday_str = yesterday.strftime('%Y-%m-%d')
 		for sec in self.secs:
-			quote = None
-			quote = self.prices.get_quote(sec.isin_id)
-			if not quote:
-				print('No quotes found for:', sec.name)
-				self.last_update += datetime.timedelta(seconds=-30)
+			if not sec.isin_id.startswith('unknown'):
+				quote = None
+				quote = self.prices.get_quote(sec.isin_id)
+				if not quote:
+					print('No quotes found for:', sec.name)
+					self.last_update += datetime.timedelta(seconds=-30)
+				else:
+					self.prices.update(sec.isin_id, day_str, quote)
 			else:
-				self.prices.update(sec.isin_id, day_str, quote)
+				print('No ISIN for', sec.name)
 		print('Update finished')		
 				
 	def list_stocks(self):
@@ -220,8 +218,11 @@ class UI:
 			to_date = tmp_default
 		to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
 		stocks_at_start = self.transaction.get_portfolio('All', from_date.strftime("%Y-%m-%d"))
-		print(stocks_at_start)
-		
+#		print(stocks_at_start)
+		print('Portfolio at start date', from_date.strftime("%Y-%m-%d"))
+		self.portfolio.list_pf(from_date)
+		print('Portfolio at end date', to_date.strftime("%Y-%m-%d"))
+		self.portfolio.list_pf(to_date)
 		portfolio_value_at_start = 0.0
 		for key in stocks_at_start.keys():
 			portfolio_value_at_start += stocks_at_start[key] * self.prices.get_last_price_from_stock_id(key, from_date.strftime("%Y-%m-%d"), none_equals_zero=True)
@@ -239,16 +240,16 @@ class UI:
 		keys = ['Start portfolio', 'Investment', 'Divestment', 'Current portfolio', 'Dividend', 'Profit (incl. on books)']
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
-		x.add_row([portfolio_value_at_start, -invest, divest, portfolio_value_at_end, dividend, profit_incl_on_books])
+		x.add_row([nice_number(portfolio_value_at_start), nice_number(-invest), nice_number(divest), nice_number(portfolio_value_at_end), nice_number(dividend), nice_number(profit_incl_on_books)])
 		print(str(x))
 		print('Relative KPIs')		  
 		keys = ['ROI']
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
 		if portfolio_value_at_start - invest != 0:
-		    tmp = [str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%']
+			tmp = [nice_number(profit_incl_on_books/(portfolio_value_at_start - invest)) + '%']
 		else:
-		    tmp = ['n/a']
+			tmp = ['n/a']
 		x.add_row(tmp)
 		print(str(x))
 		
@@ -274,7 +275,7 @@ class UI:
 		if my_date == '':
 			my_date = tmp_default
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
-        self.portfolio.print_pf(my_date)
+		self.portfolio.print_pf(my_date)
 	def print_portfolio(self):
 		print(self.portfolio)
 	def list_portfolio_contents(self):
@@ -300,7 +301,7 @@ class UI:
 		if my_date == '':
 			my_date = tmp_default
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
-		price = float(input('Price '))
+		price = input_float('Price')
 		self.prices.update(self.secs.find_stock(stock), my_date, price)
 	def savings(self):
 		tmp_default = self.last_day_of_last_month(datetime.date.today() - relativedelta(months=1)).strftime('%Y-%m-%d')

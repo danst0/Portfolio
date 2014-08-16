@@ -10,6 +10,7 @@ import random
 import urllib
 import ystockquote
 from Securities import Security
+from input_methods import *
 
 class UI:
 	"""Class to display user interface."""
@@ -99,11 +100,11 @@ class UI:
 #		  print(aliases)
 		for num in range(len(aliases)):
 			aliases[num] = aliases[num].strip()
-		print ('ID ',)
-		id = input()
-		print ('Type ',)
-		type = input()
-		self.secs.add(name, aliases, id, type)
+		rand_id = 'unknown'+self.rand_str()
+		isin_id = input_string('ISIN', '[A-Z]{2}[0-9]{10}', rand_id)
+		yahoo_id = input_string('Yahoo ID', '[A-Z0-9]{1,10}', rand_id)
+		type = input_string('Type', 'Stock|Bond|REIT')
+		self.secs.add(name, aliases, isin_id, yahoo_id, type)
 	def list_content(self):
 
 		pf = input('Portfolio [All] ')
@@ -493,10 +494,7 @@ class UI:
 		date = input()
 		if date == '':
 			date = tmp_default
-		print('Nominale')
-		nom = float(input())
-		print('Price')
-		price = float(input())
-		print('Cost')
-		cost = float(input())
+		nom = input_float('Nominale')
+		price = input_float('Price')
+		cost = input_float('Cost')
 		self.transaction.add(type, self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)

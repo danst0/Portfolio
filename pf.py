@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+VERSION = '0.3'
+
 # import this
 import pickle
 from prettytable import PrettyTable
@@ -40,7 +42,7 @@ class Analyses:
 	pass
 
 if __name__ == "__main__":
-#     print('pf - Portfolio Version 0.3')
+    print('pf - Portfolio Version', VERSION)
 	DATA = Database()
 	PRICES = Prices(DATA)
 	SECS = Securities(DATA)

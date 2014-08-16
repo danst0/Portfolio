@@ -96,7 +96,7 @@ class Prices:
 		    if none_equals_zero:
 		        return 0.0
 		    else:
-			return None
+    			return None
 	def get_quote(self, symbol):
 		print(symbol)
 		base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='

@@ -78,8 +78,8 @@ class Securities:
 					self.change_stock(tmp_sec.isin_id, tmp_sec)
 					interactive_success = True
 			if not interactive_success:
-    			self.securities.append(new_sec)
-	    		self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
+				self.securities.append(new_sec)
+				self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
 		else:
 			print('ID for Stock already exists, therefore not added')
 	def change_stock(self, isin_id, sec):
@@ -140,7 +140,8 @@ class Securities:
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
-		for i in self.securities:
+		
+		for i in sorted(self.securities, key=lambda x: x.name):
 #			print(i.isin_id, self.prices.get_last_price(i.isin_id))
 			x.add_row(i.list() + (self.prices.get_last_price(i.isin_id),))
 		return str(x)

@@ -141,7 +141,7 @@ class Securities:
 		x.align[self.keys[0]] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
 		
-		for i in sorted(self.securities, key=lambda x: x.name):
+		for i in sorted(self.securities, key=lambda x: x.name.lower()):
 #			print(i.isin_id, self.prices.get_last_price(i.isin_id))
 			x.add_row(i.list() + (self.prices.get_last_price(i.isin_id),))
 		return str(x)

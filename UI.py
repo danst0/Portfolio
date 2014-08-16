@@ -117,7 +117,7 @@ class UI:
 		x.align['Invested'] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
 #		  print(transactions)
-		for i in transactions:
+		for i in sorted(transactions, key=lambda x: x[0].lower()):
 #			  print(i)
 			x.add_row(i[:-1] + (self.prices.get_last_price(i[0], none_equals_zero=True) * i[1],))
 		print(x)

@@ -42,7 +42,7 @@ class Analyses:
 	pass
 
 if __name__ == "__main__":
-    print('pf - Portfolio Version', VERSION)
+	print('pf - Portfolio Version', VERSION)
 	DATA = Database()
 	PRICES = Prices(DATA)
 	SECS = Securities(DATA)
@@ -60,8 +60,8 @@ if __name__ == "__main__":
 	pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
 #	  print('PRICES')
 #	  print(PRICES)
-# 	print('SECS')
-# 	print(SECS)
+#	print('SECS')
+#	print(SECS)
 	print('TRANSACTIONS')
 	print(TRANSACTION)
 	DATA.close()

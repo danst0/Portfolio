@@ -119,7 +119,7 @@ class UI:
 #		  print(transactions)
 		for i in transactions:
 #			  print(i)
-			x.add_row(i[:-1] + (self.prices.get_last_price(i[0],) * i[1],))
+			x.add_row(i[:-1] + (self.prices.get_last_price(i[0], none_equals_zero=True) * i[1],))
 		print(x)
 
 

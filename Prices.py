@@ -83,7 +83,7 @@ class Prices:
 		except:
 			pass
 		return prices
-	def get_last_price(self, isin_id):
+	def get_last_price(self, isin_id, none_equals_zero=False):
 		id = self.secs.get_stock_id_from_isin_id(isin_id)
 #		print(isin_id, id)
 #		  pdb.set_trace()
@@ -93,6 +93,9 @@ class Prices:
 			max_key = max(prices.keys())
 			return prices[max_key]
 		else:
+		    if none_equals_zero:
+		        return 0.0
+		    else:
 			return None
 	def get_quote(self, symbol):
 		print(symbol)

@@ -64,7 +64,9 @@ class Securities:
 				break
 		if not already_exists:
 #			print(aliases)
-			if aliases != '' and '' in aliases :
+			if aliases != '':
+				aliases = [x.strip() for x in aliases]
+				if '' in aliases:
 				aliases.remove('')
 			new_sec = Security(name, aliases, isin_id, yahoo_id, type)	
 			interactive_success = False

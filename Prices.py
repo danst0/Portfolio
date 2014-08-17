@@ -58,8 +58,18 @@ class Prices:
 	def row_exists(self, stock_id, date):
 		result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''', (stock_id, date)).fetchone()
 		return False if result == None else True
-	def update(self, isin_id, date, price):
+	def update(self, isin_id, date, price, interactive=False, alt_name=''):
 #		print('date for price update ', date)
+		if not isin_id and interactive:
+				print(self.secs)
+				print('No valid ISIN given for', alt_name)
+				tmp = input_string('Which stock is it?')
+				tmp_stock = self.secs.find_stock(tmp, return_obj=True)
+				isin_id = tmp_stock.isin_id
+				tmp_stock.aliases.append(alt_name)
+				self.secs.change_stock(isin_id, tmp_stock)
+		elif not isin_id:
+			print('No valid ISIN given.')
         if isin_id:
             id = self.secs.get_stock_id_from_isin_id(isin_id)
             if id not in self.numbers.keys():
@@ -69,8 +79,6 @@ class Prices:
                 self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
             else:
                 self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), id, date, price))
-        else:
-            print('No valid ISIN given.')
 	def get_price(self, stock_id, date, none_equals_zero=False):
 		"""Return price at given date or up to four days earlier"""
 		price = None

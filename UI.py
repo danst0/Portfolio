@@ -6,12 +6,13 @@ from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
 import os
 import subprocess
-import random
 import urllib
 import ystockquote
 from Securities import Security
 from input_methods import *
 from helper_functions import *
+import matplotlib.pyplot as plt
+import sys
 
 class UI:
 	"""Class to display user interface."""
@@ -424,11 +425,21 @@ class UI:
 					break
 			if not found and key == 'q':
 				break
-		return inp		  
+		return inp
 	def import_pdfs(self):
 		base_path = os.path.expanduser('~') + '/Desktop/PDFs'
 		print(base_path)
 		file_counter = 0
+		for file in os.listdir(base_path):
+			if file.startswith('PERSONAL') and file.endswith('.pdf'):
+				print('Import ' + file)
+				data = self.transaction.get_data_from_personal_investment_report(subprocess.check_output(['/usr/local/bin/pdf2txt.py', base_path + '/' + file]).decode("utf-8"))
+				if data:
+					for name, date, price in data:
+						date = datetime.datetime.strptime(date, '%d.%m.%Y').strftime('%Y-%m-%d')
+						self.prices.update(self.secs.find_stock(name), date, price)
+						print(name, date, price)
+				sys.exit()
 		for file in os.listdir(base_path):
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or

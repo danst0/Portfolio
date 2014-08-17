@@ -155,9 +155,40 @@ class Transaction:
 		elif type == 'dividende':
 			return {'type': 'd', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'value': value}
 		elif type == 'kauf':
-			return {'type': 'b', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'nominale': nominale, 'value': value, 'cost': charge}	
+			return {'type': 'b', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'nominale': nominale, 'value': value, 'cost': charge} 
 		elif type == 'verkauf':
-			return {'type': 's', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'nominale': nominale, 'value': value, 'cost': charge}	
+			return {'type': 's', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'nominale': nominale, 'value': value, 'cost': charge} 
+	def get_data_from_personal_investment_report(self, text):
+		valid = False
+		line_counter = 0
+		lines = text.split('\n')
+		found_start = False
+		price_dates = []
+		wkn_names = []
+		while line_counter < len(lines):
+			line = lines[line_counter]
+			if (line.lower().find('daniel dumke') != -1 or
+				line.lower().find('daniel stengel') != -1):
+				valid = True
+			if valid:
+				if found_start:
+# 					print(line)
+					price_date = re.match('([0-9]{1,5},[0-9]{2,4}) ([0-9]{2}\.[0-9]{2}\.[0-9]{4})', line)
+					if price_date:
+						price_dates.append((float(price_date.group(1).replace(',', '.')), price_date.group(2)))
+# 						print(price_date)
+					wkn_name = re.match('([A-Z0-9]{6}) ([A-Z0-9\.\-+ ]{5,30})', line)
+					if wkn_name:
+						wkn_names.append((wkn_name.group(1), wkn_name.group(2)))
+# 						print(wkn_name)
+				elif line.lower().find('ihr depot (alphabetisch geordnet)') != -1:
+					found_start = True
+			line_counter += 1
+		name_date_price = []
+		for num, pd in enumerate(price_dates):
+			name_date_price.append((wkn_names[num][1], price_dates[num][1], price_dates[num][0]))
+#		name_date_price = zip(price_dates, wkn_names)
+		return name_date_price
 	def add(self, type, stock_id, date, nominal, price, cost, portfolio):
 		if stock_id != None:
 			if price < 0:
@@ -184,7 +215,7 @@ class Transaction:
 				self.data.c.execute('INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
 				self.money.update('settlement', date, total)
 				if type != 'd' and price != 0.0:
-				    self.prices.update(self.secs.get_isin_id_from_stock_id(stock_id), date, price)
+					self.prices.update(self.secs.get_isin_id_from_stock_id(stock_id), date, price)
 				print('Cash addition ' + str(total))
 				return True
 			else:

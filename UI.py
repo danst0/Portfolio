@@ -194,7 +194,7 @@ class UI:
 			new_name = stock_obj.name
 		new_aliases = input('New Aliases (empty for no change) ').split(',')
 		if new_aliases == '':
-			new_aliases = stock_obj.aliases
+			new_aliases = stock_obj.aliases			
 		for num in range(len(new_aliases)):
 			new_aliases[num] = new_aliases[num].strip()
 		new_isin_id = input('New ISIN (empty for no change) ')
@@ -447,7 +447,7 @@ class UI:
 					file_counter += 1
 
 #				os.remove(base_path + '/' + file)
-				sys.exit()
+		sys.exit()
 		for file in os.listdir(base_path):
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or
@@ -491,7 +491,7 @@ class UI:
 					os.remove(base_path + '/' + file)
 		print(file_counter, 'files successfully imported.')
 	def new_transaction(self):
-		print('Transaction type (Buy/Sell/Dividend)')
+		print('Transaction type ([B]uy/[S]ell/[D]ividend)')
 		type = input()
 		print('Security')
 		stock = input()

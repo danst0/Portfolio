@@ -67,7 +67,7 @@ class Securities:
 			if aliases != '':
 				aliases = [x.strip() for x in aliases]
 				if '' in aliases:
-				aliases.remove('')
+					aliases.remove('')
 			new_sec = Security(name, aliases, isin_id, yahoo_id, type)	
 			interactive_success = False
 			if interactive:

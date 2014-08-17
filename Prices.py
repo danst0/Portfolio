@@ -70,15 +70,15 @@ class Prices:
 				self.secs.change_stock(isin_id, tmp_stock)
 		elif not isin_id:
 			print('No valid ISIN given.')
-        if isin_id:
-            id = self.secs.get_stock_id_from_isin_id(isin_id)
-            if id not in self.numbers.keys():
-                self.numbers[id] = {}
-            self.numbers[id][date] = price
-            if self.row_exists(id, date):
-                self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
-            else:
-                self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), id, date, price))
+		if isin_id:
+			id = self.secs.get_stock_id_from_isin_id(isin_id)
+			if id not in self.numbers.keys():
+				self.numbers[id] = {}
+			self.numbers[id][date] = price
+			if self.row_exists(id, date):
+				self.data.c.execute('''UPDATE prices SET price = ? WHERE stock_id = ? AND date = ?''', (price, id, date))
+			else:
+				self.data.c.execute('''INSERT INTO prices(id, stock_id, date, price) VALUES (?, ?, ?, ?)''', (uuid.uuid4(), id, date, price))
 	def get_price(self, stock_id, date, none_equals_zero=False):
 		"""Return price at given date or up to four days earlier"""
 		price = None

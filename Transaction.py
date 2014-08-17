@@ -161,26 +161,28 @@ class Transaction:
 	def get_data_from_personal_investment_report(self, text):
 		valid = False
 		line_counter = 0
-		lines = text.split('\n')
+		lines = text.decode('utf-8').split('\n')
+		print(lines)
 		found_start = False
 		price_dates = []
 		wkn_names = []
 		while line_counter < len(lines):
 			line = lines[line_counter]
+# 			print(line)
 			if (line.lower().find('daniel dumke') != -1 or
 				line.lower().find('daniel stengel') != -1):
 				valid = True
 			if valid:
 				if found_start:
-# 					print(line)
+					print(line)
 					price_date = re.match('([0-9]{1,5},[0-9]{2,4}) ([0-9]{2}\.[0-9]{2}\.[0-9]{4})', line)
 					if price_date:
 						price_dates.append((float(price_date.group(1).replace(',', '.')), price_date.group(2)))
-# 						print(price_date)
+						print(price_date)
 					wkn_name = re.match('([A-Z0-9]{6}) ([A-Z0-9\.\-+ ]{5,30})', line)
 					if wkn_name:
 						wkn_names.append((wkn_name.group(1), wkn_name.group(2)))
-# 						print(wkn_name)
+						print(wkn_name)
 				elif line.lower().find('ihr depot (alphabetisch geordnet)') != -1:
 					found_start = True
 			line_counter += 1

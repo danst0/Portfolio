@@ -13,6 +13,7 @@ from input_methods import *
 from helper_functions import *
 import matplotlib.pyplot as plt
 import sys
+import codecs
 
 class UI:
 	"""Class to display user interface."""
@@ -433,12 +434,19 @@ class UI:
 		for file in os.listdir(base_path):
 			if file.startswith('PERSONAL') and file.endswith('.pdf'):
 				print('Import ' + file)
-				data = self.transaction.get_data_from_personal_investment_report(subprocess.check_output(['/usr/local/bin/pdf2txt.py', base_path + '/' + file]).decode("utf-8"))
+				subprocess.check_output(['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'mac', '-table', base_path + '/' + file, base_path + '/data.txt'])
+				with open(base_path + 'data.txt', 'rb') as myfile:
+					data = myfile.read()
+#				print(data)
+				data = self.transaction.get_data_from_personal_investment_report(data)
 				if data:
 					for name, date, price in data:
+						print('Updated prices', name, date, price)
 						date = datetime.datetime.strptime(date, '%d.%m.%Y').strftime('%Y-%m-%d')
-						self.prices.update(self.secs.find_stock(name), date, price)
-						print(name, date, price)
+						self.prices.update(self.secs.find_stock(name), date, price, interactive=True, alt_name=name)
+					file_counter += 1
+
+#				os.remove(base_path + '/' + file)
 				sys.exit()
 		for file in os.listdir(base_path):
 			if (file.startswith('HV-BEGLEIT') or

@@ -164,14 +164,24 @@ class UI:
 		if ratio == '':
 			ratio = suggested_ratio
 		dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), None, split_date)
-		print(dates)
-		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
-		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
-		input()
-
-		for i in range(len(dates)):
-			self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
-
+#		print(dates)
+#		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+#		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
+		go_on = input_yes('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+		if go_on:
+			print('Changing prices')
+			for i in range(len(dates)):
+				self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
+			stocks_at_split = self.transaction.get_portfolio('All', split_date)
+			stock_id = self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock))
+			number_before_split = stocks_at_split[stock_id]
+#			print(stocks_at_split)
+#			print(stock_id)
+	#		print(number_before_split)
+			number_after_split = number_before_split * ratio
+			date_after_split = (datetime.datetime.strptime(split_date, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+			print('Adding additional stocks')
+			self.transaction.add('b', stock_id, date_after_split, number_after_split - number_before_split, 0.0, 0.0, 'All')
 
 	def edit_stock(self):
 		stock = input('Name of security ')

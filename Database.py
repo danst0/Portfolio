@@ -9,22 +9,14 @@ import sys
 import shutil
 
 class Database:
-	def backup(self, path, file):
-		files = []
-		shutil.copy(path+file, path+file+'-'+datetime.datetime.fromtimestamp(os.path.getmtime(path+file)).strftime('%Y-%m-%d-%H-%M-%S'))
-		for file_name in os.listdir(path):
-			if file_name.startswith(file):
-				files.append(file_name)
-		files.pop(0)
-		if len(files) > 5:
-			os.remove(sorted(files)[0])
+
 	def __init__(self):
 		sqlite3.register_converter('GUID', lambda b: uuid.UUID(bytes=b))
 		sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes)
-		data_path = os.path.expanduser('~') + '/Dropbox/'
-		data_file = 'data.sql'
-		self.backup(data_path, data_file)
-		self.conn = sqlite3.connect(data_path + data_file, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+		self.data_path = os.path.expanduser('~') + '/Dropbox/'
+		self.data_file = 'data.sql'
+		self.backup(self.data_path, self.data_file)
+		self.conn = sqlite3.connect(self.data_path + self.data_file, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
 		self.c = self.conn.cursor()
 		# Create tables	   
 		try:
@@ -57,3 +49,16 @@ class Database:
 	def close(self):
 		self.conn.commit()
 		self.conn.close()
+		self.backup(self.data_path, self.data_file)		
+	def backup(self, path, file):
+		files = []
+		new_name = (path +
+					'.bak.' +
+					file +
+					'-' + datetime.datetime.fromtimestamp(os.path.getmtime(path+file)).strftime('%Y-%m-%d-%H-%M-%S'))
+		shutil.copy(path+file, new_name)
+		for file_name in os.listdir(path):
+			if file_name.startswith('.bak.' + file):
+				files.append(file_name)
+		if len(files) > 10:
+			os.remove(sorted(files)[0])		

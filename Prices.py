@@ -6,6 +6,7 @@ import ystockquote
 import urllib
 import re
 import uuid
+from input_methods import *
 
 class Prices:
 	"""Class to store price developments."""

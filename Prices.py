@@ -15,7 +15,7 @@ class Prices:
 		self.secs = None
 		self.numbers = {}
 		all = self.data.c.execute('SELECT * FROM prices')
-		print('Preise initialisieren')
+#		print('Preise initialisieren')
 		for line in all.fetchall():
 			id = line[1]
 			date = line[2]
@@ -27,7 +27,7 @@ class Prices:
 		stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
 		self.data.c.execute('''DELETE FROM prices WHERE stock_id = ?''', (stock_id, ))
 	def get_dates_and_prices(self, isin_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
-		stock_id = self.get_stock_id_from_isin_id(isin_id)
+		stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
 		if from_date == None:
 			from_date = '1900-01-01'
 		result = self.data.c.execute('''SELECT date, price FROM prices WHERE stock_id = ? AND date >= ? AND date <= ? ORDER BY date''', (stock_id, from_date, to_date)).fetchall()
@@ -39,7 +39,8 @@ class Prices:
 			values.append(item[1])			  
 		return dates, values
 	def find_split_date(self, isin_id):
-		prices = self.get_prices(isin_id)
+		stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
+		prices = self.get_prices(stock_id)
 		old_price = None
 		last_unsplit_date = None
 		suggested_ratio = None
@@ -82,7 +83,7 @@ class Prices:
 		prices = None
 		if stock_id in self.numbers.keys():
 			prices = self.numbers[stock_id]
-# 		print(prices)
+#		print(prices)
 		if prices and before_date:
 			prices = { k: v for k, v in prices.items() if k <= before_date }
 		return prices

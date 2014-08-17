@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import random
+
 def rand_str():
 	num = random.randint(0,9999)
 	return str(num).zfill(4)

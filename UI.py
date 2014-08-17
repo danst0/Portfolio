@@ -98,7 +98,7 @@ class UI:
 #		  print(aliases)
 		for num in range(len(aliases)):
 			aliases[num] = aliases[num].strip()
-		rand_id = 'unknown'+self.rand_str()
+		rand_id = 'unknown'+rand_str()
 		isin_id = input_string('ISIN', '[A-Z]{2}[0-9]{10}', rand_id)
 		yahoo_id = input_string('Yahoo ID', '[A-Z0-9]{1,10}', rand_id)
 		type = input_string('Type', 'Stock|Bond|REIT')
@@ -247,7 +247,7 @@ class UI:
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
 		if portfolio_value_at_start - invest != 0:
-			tmp = [nice_number(profit_incl_on_books/(portfolio_value_at_start - invest)) + '%']
+			tmp = [nice_number(100 * profit_incl_on_books/(portfolio_value_at_start - invest)) + '%']
 		else:
 			tmp = ['n/a']
 		x.add_row(tmp)
@@ -438,7 +438,7 @@ class UI:
 					print(data['name'])
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
-						tmp_id = 'unknown'+self.rand_str()
+						tmp_id = 'unknown'+rand_str()
 						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown', interactive=True)
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):

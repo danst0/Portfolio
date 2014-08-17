@@ -434,8 +434,8 @@ class UI:
 		for file in os.listdir(base_path):
 			if file.startswith('PERSONAL') and file.endswith('.pdf'):
 				print('Import ' + file)
-				subprocess.check_output(['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'mac', '-table', base_path + '/' + file, base_path + '/data.txt'])
-				with open(base_path + 'data.txt', 'rb') as myfile:
+				subprocess.check_output(['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', base_path + '/' + file, base_path + '/data.txt'])
+				with open(base_path + '/data.txt', 'rb') as myfile:
 					data = myfile.read()
 #				print(data)
 				data = self.transaction.get_data_from_personal_investment_report(data)
@@ -446,8 +446,9 @@ class UI:
 						self.prices.update(self.secs.find_stock(name), date, price, interactive=True, alt_name=name)
 					file_counter += 1
 
-#				os.remove(base_path + '/' + file)
-		sys.exit()
+				os.remove(base_path + '/' + file)
+		os.remove(base_path + '/data.txt')
+# 		sys.exit()
 		for file in os.listdir(base_path):
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or

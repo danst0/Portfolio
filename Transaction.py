@@ -161,35 +161,34 @@ class Transaction:
 	def get_data_from_personal_investment_report(self, text):
 		valid = False
 		line_counter = 0
-		lines = text.decode('utf-8').split('\n')
-		print(lines)
+#		print(text)
+		lines = text.decode('latin-1').splitlines()
+# 		print(lines)
 		found_start = False
-		price_dates = []
-		wkn_names = []
+		name_date_price = []
+
 		while line_counter < len(lines):
 			line = lines[line_counter]
-# 			print(line)
+#			print(line)
 			if (line.lower().find('daniel dumke') != -1 or
 				line.lower().find('daniel stengel') != -1):
 				valid = True
 			if valid:
+#				print(line)
+# 				print('valid')
+# 				print(found_start)
 				if found_start:
-					print(line)
-					price_date = re.match('([0-9]{1,5},[0-9]{2,4}) ([0-9]{2}\.[0-9]{2}\.[0-9]{4})', line)
-					if price_date:
-						price_dates.append((float(price_date.group(1).replace(',', '.')), price_date.group(2)))
-						print(price_date)
-					wkn_name = re.match('([A-Z0-9]{6}) ([A-Z0-9\.\-+ ]{5,30})', line)
-					if wkn_name:
-						wkn_names.append((wkn_name.group(1), wkn_name.group(2)))
-						print(wkn_name)
-				elif line.lower().find('ihr depot (alphabetisch geordnet)') != -1:
+# 					print(line)
+					table_line = re.match('([0-9\.]{1,7},[0-9]{2}\s*)([A-Z0-9]{6})\s*(.*?)\s{2,}([0-9,]*)\s{2,}([0-9,]*)\s{2,}([0-9]{2}.[0-9]{2}.[0-9]{4})', line)
+					if table_line:
+						name_date_price.append((table_line.group(3), table_line.group(6), float(table_line.group(5).replace(',','.'))))
+# 						print(table_line.group(3), table_line.group(5), table_line.group(6))
+					if line.lower().find('WERTENTWICKLUNG FÜR IHR DEPOT'.lower()) != -1:
+						found_start = False
+				elif line.lower().find('IHR DEPOT (ALPHABETISCH GEORDNET)'.lower()) != -1:
+# 					print('HEUREKA')
 					found_start = True
 			line_counter += 1
-		name_date_price = []
-		for num, pd in enumerate(price_dates):
-			name_date_price.append((wkn_names[num][1], price_dates[num][1], price_dates[num][0]))
-#		name_date_price = zip(price_dates, wkn_names)
 		return name_date_price
 	def add(self, type, stock_id, date, nominal, price, cost, portfolio):
 		if stock_id != None:

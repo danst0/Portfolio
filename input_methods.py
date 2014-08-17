@@ -30,7 +30,7 @@ def input_float(text):
             break
     return feedback
 
-def input_string(text, regex, default=''):
+def input_string(text, regex='.*', default=''):
     while True:
         if default != '':
             text = text + ' [' + default + ']' 

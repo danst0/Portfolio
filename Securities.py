@@ -31,7 +31,7 @@ class Security:
 				self.aliases.remove('')		
 		self.keys = ['Name', 'Aliases', 'ISIN', 'Yahoo-ID', 'Type']
 	def list(self):
-		return (self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type)
+		return [self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type]
 	def __str__(self):
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
@@ -142,10 +142,12 @@ class Securities:
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
-		
 		for i in sorted(self.securities, key=lambda x: x.name.lower()):
+			first_cols = i.list()
+			if len(first_cols[1]) > 15:
+				first_cols[1] = first_cols[1][:15]
 #			print(i.isin_id, self.prices.get_last_price(i.isin_id))
-			x.add_row(i.list() + (nice_number(self.prices.get_last_price(i.isin_id)),))
+			x.add_row(first_cols + [nice_number(self.prices.get_last_price(i.isin_id))])
 		return str(x)
 	def __iter__(self):
 		for x in self.securities:

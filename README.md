@@ -12,6 +12,8 @@ Todos
  * Make copy of database after initial (complete) import, merge and clearing (so after it is identical to my real portfolio)
 * Develop reports that I am interested in
   * Performance
+   * Rolling ROI for the last year. on a monthly rolling basis (graph)
+   * How to judge my performance, e.g. timing decision by finding local min. (for buy decision) and max. (for sell decision), alternative: what were the expected risks/profits? What is their realization
   * Savings
   * ...
 * Dialogues

@@ -14,6 +14,9 @@ Todos
   * Performance
    * Rolling ROI for the last year. on a monthly rolling basis (graph)
    * How to judge my performance, e.g. timing decision by finding local min. (for buy decision) and max. (for sell decision), alternative: what were the expected risks/profits? What is their realization
+   * Absolute PF value (e.g. graph) --> started
+    * Pure development must contain invest, divest (not dividend)
+    * Drivers for development unclear. How to include in graph?
   * Savings
   * ...
 * Dialogues

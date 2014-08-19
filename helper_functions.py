@@ -11,5 +11,5 @@ def nice_number(number):
 # 		number = str(round(number, 2))
 # 		if number.find('.') > len(number) - 3:
 # 		    number += '0'
-		number = '{:20,.2f}'.format(number)
+		number = '{:10,.2f}'.format(number)
 	return number

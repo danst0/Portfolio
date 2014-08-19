@@ -301,6 +301,7 @@ class UI:
 # 			print('pf_value', portfolio_value_at_date, 'invest', invest, 'divest', divest, 'divid', total_dividend - dividend_before)
 			dates.append(loop_date)
 			pf_details.append(stocks)
+			# Logic of tmp_value: PF Value: reduce invests that happend after that date; further reduce by all dividends that will happen until end of horizon (vs. what already came)
 			tmp_value = portfolio_value_at_date - invest + divest - (total_dividend - dividend_before)
 # 			print(tmp_value)
 			pf_value.append(tmp_value)

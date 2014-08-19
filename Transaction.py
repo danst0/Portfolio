@@ -163,7 +163,7 @@ class Transaction:
 		line_counter = 0
 #		print(text)
 		lines = text.decode('latin-1').splitlines()
-# 		print(lines)
+#		print(lines)
 		found_start = False
 		name_date_price = []
 
@@ -175,18 +175,18 @@ class Transaction:
 				valid = True
 			if valid:
 #				print(line)
-# 				print('valid')
-# 				print(found_start)
+#				print('valid')
+#				print(found_start)
 				if found_start:
-# 					print(line)
+#					print(line)
 					table_line = re.match('([0-9\.]{1,7},[0-9]{2}\s*)([A-Z0-9]{6})\s*(.*?)\s{2,}([0-9,]*)\s{2,}([0-9,]*)\s{2,}([0-9]{2}.[0-9]{2}.[0-9]{4})', line)
 					if table_line:
 						name_date_price.append((table_line.group(3), table_line.group(6), float(table_line.group(5).replace(',','.'))))
-# 						print(table_line.group(3), table_line.group(5), table_line.group(6))
+#						print(table_line.group(3), table_line.group(5), table_line.group(6))
 					if line.lower().find('WERTENTWICKLUNG FÜR IHR DEPOT'.lower()) != -1:
 						found_start = False
 				elif line.lower().find('IHR DEPOT (ALPHABETISCH GEORDNET)'.lower()) != -1:
-# 					print('HEUREKA')
+#					print('HEUREKA')
 					found_start = True
 			line_counter += 1
 		return name_date_price
@@ -225,14 +225,22 @@ class Transaction:
 		else:
 			return False
 #		  self.data.commit()
+	def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
+		in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)
+		in_divest += self.get_total(portfolio, 's', from_date, to_date, stock_id)
+		return in_divest
 	def get_total_invest(self, portfolio, from_date, to_date):
 		return self.get_total(portfolio, 'b', from_date, to_date)
 	def get_total_divest(self, portfolio, from_date, to_date):
 		return self.get_total(portfolio, 's', from_date, to_date)
 	def get_total_dividend(self, portfolio, from_date, to_date):
 		return self.get_total(portfolio, 'd', from_date, to_date)
-	def get_total(self, portfolio, type, from_date, to_date):
-		result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date > ? AND date <= ?''', (portfolio, type, from_date, to_date)).fetchall()
+	def get_total(self, portfolio, type, from_date, to_date, stock_id=None):
+		if stock_id:
+			result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date > ? AND date <= ? AND stock_id = ?''', (portfolio, type, from_date, to_date, stock_id)).fetchall()
+		else:
+			result = self.data.c.execute('''SELECT SUM(total) FROM transactions WHERE portfolio = ? AND type = ? AND date > ? AND date <= ?''', (portfolio, type, from_date, to_date)).fetchall()
+
 #		print('get_total ', result)
 		if result != None:
 			result = result[0]

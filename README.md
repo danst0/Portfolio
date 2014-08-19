@@ -24,3 +24,8 @@ Todos
  * Make dialogues more resilient (ctrl-c and stupid input) 
 * Other functions
  * Function to reset tables money and prices and reinitialize based on transactions (loosing the prices imported)
+* Programming
+ * Modularization
+ * More functions
+ * More logic
+ * Less chaos

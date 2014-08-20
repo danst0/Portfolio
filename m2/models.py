@@ -3,15 +3,18 @@ from django.db import models
 # Create your models here.
 
 
+
+
 class Security(models.Model):
 	name = models.CharField(max_length=200)
-	aliases = models.DateTimeField('date published')
+	aliases = models.CharField(max_length=400)
 	isin_id = models.CharField(max_length=10)
 	yahoo_id = models.CharField(max_length=10)
 	type = models.CharField(max_length=10)
 
+	search_fields = ['name', 'aliases']
 	def __str__(self):
-		return (self.name, self.aliases, self.isin_id, self.yahoo_id, self.type)
+		return self.name#, self.aliases, self.isin_id, self.yahoo_id, self.type))
 
 class Portfolio(models.Model):
 	name = models.CharField(max_length=200)
@@ -29,7 +32,7 @@ class Transaction(models.Model):
 	total = models.DecimalField(max_digits=20, decimal_places=4)
 
 	def __str__(self):
-		return self.portfolio, self.type, self.stock_id, self.date, self.nominal, self.price, self.cost, self.total
+		return (self.portfolio, self.type, self.stock_id, self.date, self.nominal, self.price, self.cost, self.total).join(';')
 
 
 
@@ -47,3 +50,4 @@ class Money(models.Model):
 
 	def __str__(self):
 		return self.type, self.date, self.value
+

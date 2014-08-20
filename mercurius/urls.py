@@ -7,6 +7,7 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'mercurius.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
-
+    url(r'^m2/', include('m2.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )
+

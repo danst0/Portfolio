@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+VERSION = '0.3'
+
 # import this
 import pickle
 from prettytable import PrettyTable
@@ -25,7 +27,7 @@ from Transaction import Transaction
 from Prices import Prices
 from UI import UI
 
-import matplotlib.pyplot as plt
+
 
 # Rounding within pretty table
 # Verify input of PDF parser
@@ -40,6 +42,7 @@ class Analyses:
 	pass
 
 if __name__ == "__main__":
+	print('pf - Portfolio Version', VERSION)
 	DATA = Database()
 	PRICES = Prices(DATA)
 	SECS = Securities(DATA)
@@ -47,18 +50,18 @@ if __name__ == "__main__":
 	SECS.prices = PRICES
 #	  print('PRICES')
 #	  print(PRICES)
-	print('SECS')
+# 	print('SECS')
 	print(SECS)
 	TRANSACTION = Transaction(DATA, SECS, PRICES)
-	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES)
+	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES, SECS)
 	MONEY = Money(DATA, PORTFOLIO)
 	TRANSACTION.money = MONEY
 	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)
 	pickle.dump( PORTFOLIO, open('portfolio.p', 'wb'))
 #	  print('PRICES')
 #	  print(PRICES)
-	print('SECS')
-	print(SECS)
-	print('TRANSACTIONS')
+#	print('SECS')
+#	print(SECS)
+# 	print('TRANSACTIONS')
 	print(TRANSACTION)
 	DATA.close()

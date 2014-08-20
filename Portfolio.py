@@ -7,13 +7,15 @@
 # Overall delta in wealth
 #
 from prettytable import PrettyTable
+from helper_functions import *
 
 class Portfolio:
 	"""Collection of different portfolios or stocks."""
-	def __init__(self, name, transaction, prices):
+	def __init__(self, name, transaction, prices, secs):
 		self.name = name
 		self.transaction = transaction
 		self.prices = prices
+		self.secs = secs
 
 	def add_portfolio(self, parent, name):
 		if self.name == parent:
@@ -48,3 +50,31 @@ class Portfolio:
 
 		profit_on_books_wo_dividend = portfolio_value_at_end + invest - divest - portfolio_value_at_start
 		return portfolio_value_at_start, -invest, divest, portfolio_value_at_end, dividend, profit_on_books_wo_dividend
+	
+	def list_pf(self, at_date):
+		stocks = self.transaction.get_portfolio('All', at_date.strftime("%Y-%m-%d"))
+#		  print(stocks)
+		keys = ['Name', 'Nominal', 'Price', 'Value']		
+		x = PrettyTable(keys)
+		x.padding_width = 1 # One space between column edges and contents (default)
+		x.align["Price"] = "r"
+		x.align["Value"] = "r"
+		x.align["Nominal"] = "r"
+		prices = []
+		tmp = 0.0
+		for key in sorted(stocks.keys(), key=lambda x: self.secs.get_name_from_stock_id(x)):
+			price = self.prices.get_last_price_from_stock_id(key, at_date.strftime("%Y-%m-%d"))
+			value = 0.0
+			if price != None:
+				value = stocks[key] * price
+			else:
+			    pass
+# 				print('Price for ' + self.secs.get_name_from_stock_id(key) + ' missing; assuming zero')
+			x.add_row([self.secs.get_name_from_stock_id(key),
+						nice_number(stocks[key]),
+						nice_number(price),
+						nice_number(value)])
+			tmp += value
+		x.add_row(4*['====='])
+		x.add_row(['Total', '----', '----', nice_number(tmp)])
+		print(str(x))

@@ -4,6 +4,7 @@
 from prettytable import PrettyTable
 import string
 import uuid
+from helper_functions import *
 
 def normalize(s):
 	for p in string.punctuation:
@@ -21,7 +22,8 @@ class Security:
 			yahoo_id = ''
 		self.yahoo_id = yahoo_id
 		self.type = type
-		if aliases == None:
+		# Aliases should be a list!!
+		if aliases == None or aliases == '':
 			self.aliases = []
 		else:
 			self.aliases = aliases
@@ -29,7 +31,7 @@ class Security:
 				self.aliases.remove('')		
 		self.keys = ['Name', 'Aliases', 'ISIN', 'Yahoo-ID', 'Type']
 	def list(self):
-		return (self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type)
+		return [self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type]
 	def __str__(self):
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
@@ -52,7 +54,7 @@ class Securities:
 			self.securities.append(Security(*line))
 		self.prices = None
 
-	def add(self, name, aliases, isin_id, yahoo_id, type):
+	def add(self, name, aliases, isin_id, yahoo_id, type, interactive=False):
 #		  print(aliases)
 		already_exists = False
 		for sec in self.securities:
@@ -61,11 +63,26 @@ class Securities:
 				already_exists = True
 				break
 		if not already_exists:
-# 			print(aliases)
-			if aliases != '' and '' in aliases :
-				aliases.remove('')	
-			self.securities.append(Security(name, aliases, isin_id, yahoo_id, type))
-			self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
+#			print(aliases)
+			if aliases != '':
+				aliases = [x.strip() for x in aliases]
+				if '' in aliases:
+					aliases.remove('')
+			new_sec = Security(name, aliases, isin_id, yahoo_id, type)	
+			interactive_success = False
+			if interactive:
+				print(self)
+				print('Adding the following security')
+				print(new_sec)
+				alternative = input('Is there an alternative? If yes, input name here else just hit enter? ')
+				if alternative != '':
+					tmp_sec = self.find_stock(alternative, return_obj=True)
+					tmp_sec.aliases = tmp_sec.aliases + [new_sec.name]
+					self.change_stock(tmp_sec.isin_id, tmp_sec)
+					interactive_success = True
+			if not interactive_success:
+				self.securities.append(new_sec)
+				self.data.c.execute('INSERT INTO stocks(id, name, aliases, isin_id, yahoo_id, type) VALUES (?, ?, ?, ?, ?, ?)', (uuid.uuid4(), name, '::'.join(aliases), isin_id, yahoo_id, type))
 		else:
 			print('ID for Stock already exists, therefore not added')
 	def change_stock(self, isin_id, sec):
@@ -74,8 +91,7 @@ class Securities:
 			if isin_id.lower() in item.isin_id.lower():
 				found = True
 				self.securities[num] = sec
-#				print('UPDATE stocks set name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), isin_id, sec.yahoo_id, sec.type, isin_id))
-				self.data.c.execute('UPDATE stocks set name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), isin_id, sec.yahoo_id, sec.type, isin_id))
+				self.data.c.execute('UPDATE stocks SET name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), sec.isin_id, sec.yahoo_id, sec.type, isin_id))
 				self.data.commit()
 				break
 		return found
@@ -126,9 +142,12 @@ class Securities:
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
-		for i in self.securities:
+		for i in sorted(self.securities, key=lambda x: x.name.lower()):
+			first_cols = i.list()
+			if len(first_cols[1]) > 15:
+				first_cols[1] = first_cols[1][:15]
 #			print(i.isin_id, self.prices.get_last_price(i.isin_id))
-			x.add_row(i.list() + (self.prices.get_last_price(i.isin_id),))
+			x.add_row(first_cols + [nice_number(self.prices.get_last_price(i.isin_id))])
 		return str(x)
 	def __iter__(self):
 		for x in self.securities:

@@ -6,10 +6,14 @@ from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
 import os
 import subprocess
-import random
 import urllib
 import ystockquote
 from Securities import Security
+from input_methods import *
+from helper_functions import *
+import matplotlib.pyplot as plt
+import sys
+import codecs
 
 class UI:
 	"""Class to display user interface."""
@@ -24,13 +28,7 @@ class UI:
 		while go_on:
 			go_on = self.main_menu()
 		random.seed()
-	def rand_str(self):
-		num = random.randint(0,9999)
-		return str(num).zfill(4)
-	def nice_number(self, number):
-		if number != None:
-			number = round(number, 2)
-		return number
+
 	def get_historic_quotes(self):
 		print('Start update')
 			
@@ -77,13 +75,16 @@ class UI:
 		day_str = today.strftime('%Y-%m-%d')
 		yesterday_str = yesterday.strftime('%Y-%m-%d')
 		for sec in self.secs:
-			quote = None
-			quote = self.prices.get_quote(sec.isin_id)
-			if not quote:
-				print('No quotes found for:', sec.name)
-				self.last_update += datetime.timedelta(seconds=-30)
+			if not sec.isin_id.startswith('unknown'):
+				quote = None
+				quote = self.prices.get_quote(sec.isin_id)
+				if not quote:
+					print('No quotes found for:', sec.name)
+					self.last_update += datetime.timedelta(seconds=-30)
+				else:
+					self.prices.update(sec.isin_id, day_str, quote)
 			else:
-				self.prices.update(sec.isin_id, day_str, quote)
+				print('No ISIN for', sec.name)
 		print('Update finished')		
 				
 	def list_stocks(self):
@@ -99,11 +100,11 @@ class UI:
 #		  print(aliases)
 		for num in range(len(aliases)):
 			aliases[num] = aliases[num].strip()
-		print ('ID ',)
-		id = input()
-		print ('Type ',)
-		type = input()
-		self.secs.add(name, aliases, id, type)
+		rand_id = 'unknown'+rand_str()
+		isin_id = input_string('ISIN', '[A-Z]{2}[0-9]{10}', rand_id)
+		yahoo_id = input_string('Yahoo ID', '[A-Z0-9]{1,10}', rand_id)
+		type = input_string('Type', 'Stock|Bond|REIT')
+		self.secs.add(name, aliases, isin_id, yahoo_id, type)
 	def list_content(self):
 
 		pf = input('Portfolio [All] ')
@@ -116,9 +117,9 @@ class UI:
 		x.align['Invested'] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
 #		  print(transactions)
-		for i in transactions:
+		for i in sorted(transactions, key=lambda x: x[0].lower()):
 #			  print(i)
-			x.add_row(i[:-1] + (self.prices.get_last_price(i[0],) * i[1],))
+			x.add_row(i[:-1] + (self.prices.get_last_price(i[0], none_equals_zero=True) * i[1],))
 		print(x)
 
 
@@ -165,14 +166,24 @@ class UI:
 		if ratio == '':
 			ratio = suggested_ratio
 		dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), None, split_date)
-		print(dates)
-		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
-		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
-		input()
-
-		for i in range(len(dates)):
-			self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
-
+#		print(dates)
+#		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+#		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
+		go_on = input_yes('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
+		if go_on:
+			print('Changing prices')
+			for i in range(len(dates)):
+				self.prices.update(self.secs.find_stock(stock), dates[i], values[i]/float(ratio))
+			stocks_at_split = self.transaction.get_portfolio('All', split_date)
+			stock_id = self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock))
+			number_before_split = stocks_at_split[stock_id]
+#			print(stocks_at_split)
+#			print(stock_id)
+	#		print(number_before_split)
+			number_after_split = number_before_split * ratio
+			date_after_split = (datetime.datetime.strptime(split_date, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+			print('Adding additional stocks')
+			self.transaction.add('b', stock_id, date_after_split, number_after_split - number_before_split, 0.0, 0.0, 'All')
 
 	def edit_stock(self):
 		stock = input('Name of security ')
@@ -183,7 +194,7 @@ class UI:
 			new_name = stock_obj.name
 		new_aliases = input('New Aliases (empty for no change) ').split(',')
 		if new_aliases == '':
-			new_aliases = stock_obj.aliases
+			new_aliases = stock_obj.aliases			
 		for num in range(len(new_aliases)):
 			new_aliases[num] = new_aliases[num].strip()
 		new_isin_id = input('New ISIN (empty for no change) ')
@@ -204,6 +215,142 @@ class UI:
 		if do_delete.lower() == 'yes':
 			self.prices.delete_prices(stock_obj.isin_id)
 			self.secs.delete_stock(stock_obj.isin_id)			  
+	
+	def rolling_profitability(self):
+		portfolio = input('Portfolio [All] ')
+		if portfolio == '':
+			portfolio = 'All'
+		time_span = 360
+		tmp_default = (datetime.date.today() - datetime.timedelta(days=time_span)).strftime('%Y-%m-%d')
+		from_date = input('Start date [' + tmp_default + '] ')
+		if from_date == '':
+			from_date = tmp_default
+		from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
+		tmp_default = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+		to_date = input('End date [' + tmp_default + '] ')
+		if to_date == '':
+			to_date = tmp_default
+		to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
+		dates = []
+		roi_list = []
+		for i in range(int(time_span/30)):
+			loop_to_date = (datetime.date.today() - datetime.timedelta(days=1+i*30))			
+			loop_from_date = (datetime.date.today() - datetime.timedelta(days=time_span+i*30))
+			stocks_at_start = self.transaction.get_portfolio('All', loop_from_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_start = 0.0
+			for key in stocks_at_start.keys():
+				portfolio_value_at_start += stocks_at_start[key] * self.prices.get_last_price_from_stock_id(key, loop_from_date.strftime("%Y-%m-%d"), none_equals_zero=True)
+			stocks_at_end = self.transaction.get_portfolio('All', loop_to_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_end = 0.0
+			for key in stocks_at_end.keys():
+				portfolio_value_at_end += stocks_at_end[key] * self.prices.get_last_price_from_stock_id(key, loop_to_date.strftime("%Y-%m-%d"), none_equals_zero=True)
+
+			invest = self.transaction.get_total_invest('All', loop_from_date, loop_to_date)
+			divest = self.transaction.get_total_divest('All', loop_from_date, loop_to_date)
+			dividend = self.transaction.get_total_dividend('All', loop_from_date, loop_to_date)
+
+			profit_incl_on_books = portfolio_value_at_end + invest - divest - portfolio_value_at_start + dividend
+			if portfolio_value_at_start - invest != 0:
+				tmp = 100 * profit_incl_on_books/(portfolio_value_at_start - invest)
+			else:
+				tmp = 0.0
+			dates.append(loop_to_date)
+			roi_list.append(tmp)
+#			print('Date', loop_to_date, 'ROI', tmp)
+		plt.plot(dates, roi_list, 'r')
+#		  plt.axis(dates)
+		plt.title('Rolling Return-on-Investment; range: ' + from_date.strftime('%Y-%m-%d') + ' -- ' + to_date.strftime('%Y-%m-%d'))
+		plt.xlabel('%')
+		plt.xticks(rotation=15)
+		plt.xlabel('Date')
+		plt.show()
+	def pf_development(self):
+		portfolio = input('Portfolio [All] ')
+		if portfolio == '':
+			portfolio = 'All'
+		tmp_default = (datetime.date.today() - datetime.timedelta(days=360)).strftime('%Y-%m-%d')
+		from_date = input('Start date [' + tmp_default + '] ')
+		if from_date == '':
+			from_date = tmp_default
+		from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
+		tmp_default = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+		to_date = input('End date [' + tmp_default + '] ')
+		if to_date == '':
+			to_date = tmp_default
+		to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
+		dates = []
+		pf_details = []
+		pf_value = []
+		time_intervall = 30
+		total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)		
+		for i in range(int((to_date-from_date).days/time_intervall)):
+			loop_date = (datetime.date.today() - datetime.timedelta(days=1+i*30))			
+			stocks_at_date = self.transaction.get_portfolio('All', loop_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_date = 0.0
+			stocks = []
+			for key in stocks_at_date.keys():
+				nominale = stocks_at_date[key]
+				price = self.prices.get_last_price_from_stock_id(key, loop_date.strftime("%Y-%m-%d"), none_equals_zero=True)
+				portfolio_value_at_date += nominale * price
+				stocks.append((key, nominale, price))
+
+			invest = self.transaction.get_total_invest('All', loop_date, to_date)
+			divest = self.transaction.get_total_divest('All', loop_date, to_date)
+			dividend_before = self.transaction.get_total_dividend('All', from_date, loop_date)
+
+# 			print('pf_value', portfolio_value_at_date, 'invest', invest, 'divest', divest, 'divid', total_dividend - dividend_before)
+			dates.append(loop_date)
+			pf_details.append(stocks)
+			# Logic of tmp_value: PF Value: reduce invests that happend after that date; further reduce by all dividends that will happen until end of horizon (vs. what already came)
+			tmp_value = portfolio_value_at_date - invest + divest - (total_dividend - dividend_before)
+# 			print(tmp_value)
+			pf_value.append(tmp_value)
+		
+		
+		# Drivers vs. 1 intervall earlier
+		delta_keys = []
+		for stock in pf_details[0]:
+			cur_key = stock[0]
+			cur_nom = stock[1]
+			cur_price = stock[2]
+			for old_stock in pf_details[1]:
+				if cur_key == old_stock[0]:
+#					print(cur_nom * cur_price - old_stock[1] * old_stock[2], old_stock[1] * old_stock[2], cur_nom * cur_price, 'Nom', old_stock[1], cur_nom, 'EUR', old_stock[2],  cur_price)
+#					print(cur_key, '::', self.transaction.get_invest_divest('All', cur_key, dates[1], dates[0]))
+					delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest('All', cur_key, dates[1], dates[0])
+					delta_keys.append([cur_key, delta, abs(delta)])
+#		print(delta_keys)
+		delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
+		print('Total deviation vs. prior interval:', nice_number(pf_value[0] - pf_value[1]), '; major drivers:')
+		for i in range(3):
+			print(i+1, ': ' + self.secs.get_name_from_stock_id(delta_keys[i][0]), '(', nice_number(delta_keys[i][1]), ')')
+#		print(delta_keys)
+					
+		# Drivers vs. 2 intervall earlier
+		delta_keys = []
+		for stock in pf_details[0]:
+			cur_key = stock[0]
+			cur_nom = stock[1]
+			cur_price = stock[2]
+			for old_stock in pf_details[2]:
+				if cur_key == old_stock[0]:
+					delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest('All', cur_key, dates[2], dates[0])
+					delta_keys.append([cur_key, delta, abs(delta)])
+#		print(delta_keys)
+		delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
+		print('Total deviation vs. pre-prior interval:', nice_number(pf_value[0] - pf_value[2]), '; major drivers:')
+		for i in range(3):
+			print(i+1, ': ' + self.secs.get_name_from_stock_id(delta_keys[i][0]), '(', nice_number(delta_keys[i][1]), ')')
+#		print(delta_keys)
+
+
+		plt.plot(dates, pf_value, 'r')
+		plt.title('Portfolio values adj. by invest/divest/dividends; range: ' + loop_date.strftime('%Y-%m-%d') + ' -- ' + to_date.strftime('%Y-%m-%d'))
+		plt.xlabel('%')
+		plt.xticks(rotation=15)
+		plt.xlabel('Date')
+		plt.show()
+	
 	def profitability(self):
 		portfolio = input('Portfolio [All] ')
 		if portfolio == '':
@@ -219,14 +366,18 @@ class UI:
 			to_date = tmp_default
 		to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
 		stocks_at_start = self.transaction.get_portfolio('All', from_date.strftime("%Y-%m-%d"))
-		print(stocks_at_start)
+#		print(stocks_at_start)
+		print('Portfolio at start date', from_date.strftime("%Y-%m-%d"))
+		self.portfolio.list_pf(from_date)
+		print('Portfolio at end date', to_date.strftime("%Y-%m-%d"))
+		self.portfolio.list_pf(to_date)
 		portfolio_value_at_start = 0.0
 		for key in stocks_at_start.keys():
-			portfolio_value_at_start += stocks_at_start[key] * self.prices.get_price(key, from_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_start += stocks_at_start[key] * self.prices.get_last_price_from_stock_id(key, from_date.strftime("%Y-%m-%d"), none_equals_zero=True)
 		stocks_at_end = self.transaction.get_portfolio('All', to_date.strftime("%Y-%m-%d"))
 		portfolio_value_at_end = 0.0
 		for key in stocks_at_end.keys():
-			portfolio_value_at_end += stocks_at_end[key] * self.prices.get_price(key, to_date.strftime("%Y-%m-%d"))
+			portfolio_value_at_end += stocks_at_end[key] * self.prices.get_last_price_from_stock_id(key, to_date.strftime("%Y-%m-%d"), none_equals_zero=True)
 
 		invest = self.transaction.get_total_invest('All', from_date, to_date)
 		divest = self.transaction.get_total_divest('All', from_date, to_date)
@@ -237,13 +388,17 @@ class UI:
 		keys = ['Start portfolio', 'Investment', 'Divestment', 'Current portfolio', 'Dividend', 'Profit (incl. on books)']
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
-		x.add_row([portfolio_value_at_start, -invest, divest, portfolio_value_at_end, dividend, profit_incl_on_books])
+		x.add_row([nice_number(portfolio_value_at_start), nice_number(-invest), nice_number(divest), nice_number(portfolio_value_at_end), nice_number(dividend), nice_number(profit_incl_on_books)])
 		print(str(x))
 		print('Relative KPIs')		  
 		keys = ['ROI']
 		x = PrettyTable(keys)
 		x.padding_width = 1 # One space between column edges and contents (default)
-		x.add_row([str(round(profit_incl_on_books/(portfolio_value_at_start - invest)*100,2)) + '%'])
+		if portfolio_value_at_start - invest != 0:
+			tmp = [nice_number(100 * profit_incl_on_books/(portfolio_value_at_start - invest)) + '%']
+		else:
+			tmp = ['n/a']
+		x.add_row(tmp)
 		print(str(x))
 		
 	def last_day_of_last_month(self, date):
@@ -268,31 +423,7 @@ class UI:
 		if my_date == '':
 			my_date = tmp_default
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
-		stocks = self.transaction.get_portfolio('All', my_date.strftime("%Y-%m-%d"))
-#		  print(stocks)
-		keys = ['Name', 'Nominal', 'Price', 'Value']		
-		x = PrettyTable(keys)
-		x.padding_width = 1 # One space between column edges and contents (default)
-		x.align["Price"] = "r"
-		x.align["Value"] = "r"
-		x.align["Nominal"] = "r"
-		prices = []
-		tmp = 0.0
-		for key in stocks.keys():
-			price = self.prices.get_price(key, my_date.strftime("%Y-%m-%d"))
-			value = 0.0
-			if price != None:
-				value = stocks[key] * price
-			else:
-				print('Price for ' + self.secs.get_name_from_stock_id(key) + ' missing; assuming zero')
-			x.add_row([self.secs.get_name_from_stock_id(key),
-						self.nice_number(stocks[key]),
-						self.nice_number(price),
-						self.nice_number(value)])
-			tmp += value
-		x.add_row(4*['====='])
-		x.add_row(['Total', '----', '----', tmp])
-		print(str(x))
+		self.portfolio.print_pf(my_date)
 	def print_portfolio(self):
 		print(self.portfolio)
 	def list_portfolio_contents(self):
@@ -318,7 +449,7 @@ class UI:
 		if my_date == '':
 			my_date = tmp_default
 		my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
-		price = float(input('Price '))
+		price = input_float('Price')
 		self.prices.update(self.secs.find_stock(stock), my_date, price)
 	def savings(self):
 		tmp_default = self.last_day_of_last_month(datetime.date.today() - relativedelta(months=1)).strftime('%Y-%m-%d')
@@ -355,11 +486,15 @@ class UI:
 	def analyzes_menu(self, inp=''):
 		return self.new_menu(
 			[	'List portfolio',
+				'Portfolio development',
 				'Saving development',
-				'Profitability'],
+				'Profitability',
+				'Rolling profitability'],
 			[	self.list_portfolio,
+				self.pf_development,
 				self.savings,
-				self.profitability], inp)
+				self.profitability,
+				self.rolling_profitability], inp)
 	def settings_menu(self, inp=''):
 		return self.new_menu(
 			[	'Planned saving (p.m.)'],
@@ -391,19 +526,19 @@ class UI:
 				self.settings_menu,
 				None])
 	def highligh_first_letter(self, text, letter):
-	    pos = text.lower().find(letter)
-	    return text[:pos] + '[' + text[pos:pos+1] + ']' + text[pos+1:]
+		pos = text.lower().find(letter)
+		return text[:pos] + '[' + text[pos:pos+1] + ']' + text[pos+1:]
 	def new_menu(self, choices, functions, inp=''):
 		while True:
 			letters = ''
 			for choice in choices:
 				for i in range(len(choice)):
-# 					print(choice[i], letters)
+#					print(choice[i], letters)
 					if choice[i].lower() not in letters and choice[i].lower() != 'q':
 						letters += choice[i].lower()
 						break
 			letters += 'q'
-# 			print(letters)	  
+#			print(letters)	  
 			x = PrettyTable(["Key", "Item"])
 			x.align["Item"] = "l"
 			x.padding_width = 1 # One space between column edges and contents (default)
@@ -431,10 +566,29 @@ class UI:
 					break
 			if not found and key == 'q':
 				break
-		return inp		  
+		return inp
 	def import_pdfs(self):
 		base_path = os.path.expanduser('~') + '/Desktop/PDFs'
 		print(base_path)
+		file_counter = 0
+		for file in os.listdir(base_path):
+			if file.startswith('PERSONAL') and file.endswith('.pdf'):
+				print('Import ' + file)
+				subprocess.check_output(['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', base_path + '/' + file, base_path + '/data.txt'])
+				with open(base_path + '/data.txt', 'rb') as myfile:
+					data = myfile.read()
+#				print(data)
+				data = self.transaction.get_data_from_personal_investment_report(data)
+				if data:
+					for name, date, price in data:
+						print('Updated prices', name, date, price)
+						date = datetime.datetime.strptime(date, '%d.%m.%Y').strftime('%Y-%m-%d')
+						self.prices.update(self.secs.find_stock(name), date, price, interactive=True, alt_name=name)
+					file_counter += 1
+
+				os.remove(base_path + '/' + file)
+		os.remove(base_path + '/data.txt')
+#		sys.exit()
 		for file in os.listdir(base_path):
 			if (file.startswith('HV-BEGLEIT') or
 				file.startswith('KONTOABSCH') or
@@ -454,13 +608,14 @@ class UI:
 					print(data['name'])
 					if self.secs.find_stock(data['name']) == None:
 						# Add security as dummy if not already existing
-						tmp_id = 'unknown'+self.rand_str()
-						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown')
+						tmp_id = 'unknown'+rand_str()
+						self.secs.add(data['name'], '', tmp_id, tmp_id , 'unkown', interactive=True)
 					if data['type'] in ['b', 's']:
 						if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'], data['cost'], 'All'):
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
+							file_counter += 1
 							# Remove successful PDFs
 							os.remove(base_path + '/' + file)
 
@@ -469,13 +624,15 @@ class UI:
 							print(data['name'] +': could not add transaction (e.g. security not available)')
 						else:
 							print('Transaction successful')
+							file_counter += 1
 							# Remove successful PDFs
 							os.remove(base_path + '/' + file)
 				else:
 					# Remove invalid PDFs
 					os.remove(base_path + '/' + file)
+		print(file_counter, 'files successfully imported.')
 	def new_transaction(self):
-		print('Transaction type (Buy/Sell/Dividend)')
+		print('Transaction type ([B]uy/[S]ell/[D]ividend)')
 		type = input()
 		print('Security')
 		stock = input()
@@ -489,10 +646,7 @@ class UI:
 		date = input()
 		if date == '':
 			date = tmp_default
-		print('Nominale')
-		nom = float(input())
-		print('Price')
-		price = float(input())
-		print('Cost')
-		cost = float(input())
+		nom = input_float('Nominale')
+		price = input_float('Price')
+		cost = input_float('Cost')
 		self.transaction.add(type, self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock)), date, nom, price, cost, portfolio)

@@ -4,6 +4,7 @@
 from prettytable import PrettyTable
 import string
 import uuid
+from helper_functions import *
 
 def normalize(s):
 	for p in string.punctuation:
@@ -30,7 +31,7 @@ class Security:
 				self.aliases.remove('')		
 		self.keys = ['Name', 'Aliases', 'ISIN', 'Yahoo-ID', 'Type']
 	def list(self):
-		return (self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type)
+		return [self.name, ', '.join(self.aliases), self.isin_id, self.yahoo_id, self.type]
 	def __str__(self):
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
@@ -63,8 +64,10 @@ class Securities:
 				break
 		if not already_exists:
 #			print(aliases)
-			if aliases != '' and '' in aliases :
-				aliases.remove('')
+			if aliases != '':
+				aliases = [x.strip() for x in aliases]
+				if '' in aliases:
+					aliases.remove('')
 			new_sec = Security(name, aliases, isin_id, yahoo_id, type)	
 			interactive_success = False
 			if interactive:
@@ -88,8 +91,7 @@ class Securities:
 			if isin_id.lower() in item.isin_id.lower():
 				found = True
 				self.securities[num] = sec
-#				print('UPDATE stocks set name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), isin_id, sec.yahoo_id, sec.type, isin_id))
-				self.data.c.execute('UPDATE stocks set name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), isin_id, sec.yahoo_id, sec.type, isin_id))
+				self.data.c.execute('UPDATE stocks SET name = ?, aliases = ?, isin_id = ?, yahoo_id = ?, type = ? WHERE isin_id = ?', (sec.name, '::'.join(sec.aliases), sec.isin_id, sec.yahoo_id, sec.type, isin_id))
 				self.data.commit()
 				break
 		return found
@@ -140,10 +142,12 @@ class Securities:
 		x = PrettyTable(self.keys)
 		x.align[self.keys[0]] = "l" # Left align city names
 		x.padding_width = 1 # One space between column edges and contents (default)
-		
 		for i in sorted(self.securities, key=lambda x: x.name.lower()):
+			first_cols = i.list()
+			if len(first_cols[1]) > 15:
+				first_cols[1] = first_cols[1][:15]
 #			print(i.isin_id, self.prices.get_last_price(i.isin_id))
-			x.add_row(i.list() + (self.prices.get_last_price(i.isin_id),))
+			x.add_row(first_cols + [nice_number(self.prices.get_last_price(i.isin_id))])
 		return str(x)
 	def __iter__(self):
 		for x in self.securities:

@@ -27,7 +27,7 @@ from Transaction import Transaction
 from Prices import Prices
 from UI import UI
 
-import matplotlib.pyplot as plt
+
 
 # Rounding within pretty table
 # Verify input of PDF parser
@@ -50,10 +50,10 @@ if __name__ == "__main__":
 	SECS.prices = PRICES
 #	  print('PRICES')
 #	  print(PRICES)
-	print('SECS')
+# 	print('SECS')
 	print(SECS)
 	TRANSACTION = Transaction(DATA, SECS, PRICES)
-	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES)
+	PORTFOLIO = Portfolio('All', TRANSACTION, PRICES, SECS)
 	MONEY = Money(DATA, PORTFOLIO)
 	TRANSACTION.money = MONEY
 	UI = UI(SECS, PORTFOLIO, PRICES, TRANSACTION, MONEY)
@@ -62,6 +62,6 @@ if __name__ == "__main__":
 #	  print(PRICES)
 #	print('SECS')
 #	print(SECS)
-	print('TRANSACTIONS')
+# 	print('TRANSACTIONS')
 	print(TRANSACTION)
 	DATA.close()

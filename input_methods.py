@@ -30,7 +30,7 @@ def input_float(text):
             break
     return feedback
 
-def input_string(text, regex, default=''):
+def input_string(text, regex='.*', default=''):
     while True:
         if default != '':
             text = text + ' [' + default + ']' 
@@ -40,8 +40,15 @@ def input_string(text, regex, default=''):
         if feedback == '' and default != '':
             feedback = default
             break
-        if not re.match(regex, feedback):
+        if not re.match(regex, feedback, re.IGNORECASE):
             print('Your input must match', regex)
         else:
             break
     return feedback
+
+def input_yes(text, default='no'):
+    feedback = input_string(text, 'yes|no', default=default)
+    if feedback.lower() == 'yes':
+        return True
+    else:
+        return False

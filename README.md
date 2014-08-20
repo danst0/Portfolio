@@ -5,7 +5,6 @@ Portfolio wealth management app for the command line.
 
 Todos
 =====
-* make dates into python dates and only convert to string if required
 * Testing
  * Test completeness of import (esp. duplicates, number of transactions imported) --> Done
  * Test green-field installation --> Done
@@ -21,6 +20,7 @@ Todos
   * ...
 * Dialogues
  * Enable way to abort dialogues
+ * redo stock split: keep current current prices and quants, just include as a marker
  * Make dialogues more resilient (ctrl-c and stupid input) 
 * Other functions
  * Function to reset tables money and prices and reinitialize based on transactions (loosing the prices imported)
@@ -29,3 +29,4 @@ Todos
  * More functions
  * More logic
  * Less chaos
+ * make dates into python dates and only convert to string if required

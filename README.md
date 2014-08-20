@@ -5,6 +5,10 @@ Portfolio wealth management app for the command line.
 
 Todos
 =====
+* App Design
+ * Switch to django for the data model 
+* UI Design
+ * Make nice
 * Testing
  * Test completeness of import (esp. duplicates, number of transactions imported) --> Done
  * Test green-field installation --> Done

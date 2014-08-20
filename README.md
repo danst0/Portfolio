@@ -16,6 +16,8 @@ Todos
    * Absolute PF value (e.g. graph) --> started
     * Pure development must contain invest, divest (not dividend)
     * Drivers for development unclear. How to include in graph?
+   * Decision oriented analysis
+    * What effect did this buy (and esp. this buy-sell combination have)
   * Savings
   * ...
 * Dialogues

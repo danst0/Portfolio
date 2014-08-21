@@ -28,10 +28,13 @@ class CortalConsors(Importer):
                     # print(data)
                 data = self.get_data_from_personal_investment_report(data)
                 if data:
-                    aggregate.append(data)
+                    price_updates.append(data)
                     file_counter += 1
                 os.remove(self.base_path + '/' + file)
-        os.remove(self.base_path + '/data.txt')
+        try:
+            os.remove(self.base_path + '/data.txt')
+        except:
+            pass
 
         for file in os.listdir(self.base_path):
             if (file.startswith('HV-BEGLEIT') or
@@ -47,7 +50,7 @@ class CortalConsors(Importer):
                 os.remove(self.base_path + '/' + file)
             elif file.endswith('.pdf'):
                 print('Import ' + file)
-                data = self.transaction.get_data_from_text(
+                data = self.get_data_from_text(
                     subprocess.check_output(['/usr/local/bin/pdf2txt.py', self.base_path + '/' + file]).decode("utf-8"))
                 if data != None:
                     print(data['name'])

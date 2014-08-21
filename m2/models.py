@@ -13,6 +13,17 @@ class Security(models.Model):
 	type = models.CharField(max_length=10)
 
 	search_fields = ['name', 'aliases']
+
+	def set_aliases(self, x):
+    		if x and not isinstance(x, str): 
+    			self.aliases = ':::'.join(x)
+    		else:
+    			self.aliases = ''
+	def get_aliases(self):
+		if self.aliases == '':
+			return []
+		else:
+        		return self.aliases.split(':::')
 	def __str__(self):
 		return self.name#, self.aliases, self.isin_id, self.yahoo_id, self.type))
 

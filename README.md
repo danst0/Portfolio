@@ -5,6 +5,8 @@ Portfolio wealth management app for the command line.
 
 Todos
 =====
+* How to integrate current scripts into django?
+* How to display multiple information at once (__str__)
 * App Design
  * Switch to django for the data model 
 * UI Design

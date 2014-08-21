@@ -1,8 +1,8 @@
 from django.contrib import admin
-from m2.models import Security
-from m2.models import Money
-from m2.models import Transaction
-from m2.models import Price
+from Securities.models import Security, Price
+from Money.models import Money
+from Transactions.models import Transaction, Portfolio
+
 
 # Register your models here.
 
@@ -12,4 +12,5 @@ class SecurityAdmin(admin.ModelAdmin):
 admin.site.register(Security, SecurityAdmin)
 admin.site.register(Money)
 admin.site.register(Transaction)
+admin.site.register(Portfolio)
 admin.site.register(Price)

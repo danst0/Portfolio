@@ -1,6 +1,14 @@
 from django.db import models
+from Securities.models import Security
 
 # Create your models here.
+class Portfolio(models.Model):
+	name = models.CharField(max_length=200)
+	def __str__(self):
+		return self.name
+
+
+
 class Transaction(models.Model):
 	type = models.CharField(max_length=1)
 	portfolio = models.ForeignKey(Portfolio)
@@ -13,4 +21,5 @@ class Transaction(models.Model):
 
 	def __str__(self):
 		return (self.portfolio, self.type, self.stock_id, self.date, self.nominal, self.price, self.cost, self.total).join(';')
+
 

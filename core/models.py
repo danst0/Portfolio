@@ -3,8 +3,6 @@ from django.db import models
 # Create your models here.
 
 
-
-
 class Security(models.Model):
 	name = models.CharField(max_length=200)
 	aliases = models.CharField(max_length=400)

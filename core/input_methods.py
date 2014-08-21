@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import re
+
+
 def input_general(text):
     if not text.endswith(' '):
         text += ' '
@@ -10,6 +12,8 @@ def input_general(text):
     except:
         feedback = None
     return feedback
+
+
 def input_float(text):
     while True:
         feedback = input_general(text)
@@ -30,10 +34,11 @@ def input_float(text):
             break
     return feedback
 
+
 def input_string(text, regex='.*', default=''):
     while True:
         if default != '':
-            text = text + ' [' + default + ']' 
+            text = text + ' [' + default + ']'
         feedback = input_general(text)
         if feedback == None:
             break
@@ -45,6 +50,7 @@ def input_string(text, regex='.*', default=''):
         else:
             break
     return feedback
+
 
 def input_yes(text, default='no'):
     feedback = input_string(text, 'yes|no', default=default)

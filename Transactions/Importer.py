@@ -5,13 +5,14 @@ import os
 import subprocess
 import re
 import datetime
+from Securities.models import Security
 
 
 class Importer:
     def __init__(self):
         self.base_path = os.path.expanduser('~') + '/Desktop/PDFs'
+        self.secs = Security()
         print(self.base_path)
-
 
 class CortalConsors(Importer):
     def import_pdfs(self):
@@ -25,7 +26,6 @@ class CortalConsors(Importer):
                      self.base_path + '/data.txt'])
                 with open(self.base_path + '/data.txt', 'rb') as myfile:
                     data = myfile.read()
-                    # print(data)
                 data = self.get_data_from_personal_investment_report(data)
                 if data:
                     price_updates.append(data)
@@ -54,7 +54,7 @@ class CortalConsors(Importer):
                     subprocess.check_output(['/usr/local/bin/pdf2txt.py', self.base_path + '/' + file]).decode("utf-8"))
                 if data != None:
                     print(data['name'])
-                    if self.secs.find_stock(data['name']) == None:
+                    if self.secs.find_stock(data['name']):
                         # Add security as dummy if not already existing
                         tmp_id = 'unknown' + rand_str()
                         self.secs.add(data['name'], '', tmp_id, tmp_id, 'unkown', interactive=True)

@@ -173,7 +173,9 @@ class Securities:
             yield x
 
     def find_stock(self, stock_id_or_name, return_obj=False):
-        """Return ISIN or stock object"""
+        """Return ISIN or stock object
+        :rtype : ISIN_ID or Security Object
+        """
         found = None
         found_obj = None
         for item in self.securities:

@@ -22,6 +22,14 @@ class Security(models.Model):
         else:
             return self.aliases.split(':::')
 
+    def find_stock(self, name_alias_id):
+        """
+        Find securities
+        :param name_alias_id:
+        :return: ISIN_ID based on any (useful) information
+        """
+        find_something = Security.objects.filter(name=name_alias_id) | Security.objects.filter(aliases__contains=name_alias_id) | Security.objects.filter(isin_id=name_alias_id) | Security.objects.filter(yahoo_id=name_alias_id)
+        return find_something
     def __str__(self):
         return self.name  # , self.aliases, self.isin_id, self.yahoo_id, self.type))
 

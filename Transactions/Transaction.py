@@ -56,7 +56,7 @@ class Transaction:
                         except:
                             pass
                         else:
-                            #							  print(wkn)
+                            #	  print(wkn)
                             line_counter += 1
                             line = lines[line_counter]
                             name = line.strip(' ')

@@ -5,19 +5,22 @@ import os
 import subprocess
 import re
 import datetime
-from Securities.models import Security
+#from Securities.models import Security
+#from Transactions.models import Transaction
 
 
 class Importer:
     def __init__(self):
         self.base_path = os.path.expanduser('~') + '/Desktop/PDFs'
-        self.secs = Security()
+#        self.secs = Security()
+#        self.transaction = Transaction()
         print(self.base_path)
 
 class CortalConsors(Importer):
-    def import_pdfs(self):
+    def read_pdfs(self):
         file_counter = 0
         price_updates = []
+        transactions_update = []
         for file in os.listdir(self.base_path):
             if file.startswith('PERSONAL') and file.endswith('.pdf'):
                 print('Import ' + file)
@@ -52,37 +55,10 @@ class CortalConsors(Importer):
                 print('Import ' + file)
                 data = self.get_data_from_text(
                     subprocess.check_output(['/usr/local/bin/pdf2txt.py', self.base_path + '/' + file]).decode("utf-8"))
-                if data != None:
-                    print(data['name'])
-                    if self.secs.find_stock(data['name']):
-                        # Add security as dummy if not already existing
-                        tmp_id = 'unknown' + rand_str()
-                        self.secs.add(data['name'], '', tmp_id, tmp_id, 'unkown', interactive=True)
-                    if data['type'] in ['b', 's']:
-                        if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(
-                                self.secs.find_stock(data['name'])), data['date'], data['nominale'], data['value'],
-                                                    data['cost'], 'All'):
-                            print(data['name'] + ': could not add transaction (e.g. security not available)')
-                        else:
-                            print('Transaction successful')
-                            file_counter += 1
-                            # Remove successful PDFs
-                            os.remove(self.base_path + '/' + file)
-
-                    elif data['type'] in ['d']:
-                        if not self.transaction.add(data['type'], self.secs.get_stock_id_from_isin_id(
-                                self.secs.find_stock(data['name'])), data['date'], 0, data['value'], 0, 'All'):
-                            print(data['name'] + ': could not add transaction (e.g. security not available)')
-                        else:
-                            print('Transaction successful')
-                            file_counter += 1
-                            # Remove successful PDFs
-                            os.remove(self.base_path + '/' + file)
-                else:
-                    # Remove invalid PDFs
-                    os.remove(self.base_path + '/' + file)
-        print(file_counter, 'files successfully imported.')
-
+                transactions_update.append(data)
+            os.remove(self.base_path + '/' + file)
+#        print(file_counter, 'files successfully imported.')
+        return price_updates, transactions_update
 
     def get_data_from_text(self, text):
         valid = False

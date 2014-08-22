@@ -4,6 +4,7 @@ from decimal import *
 from django.db import models
 
 from Securities.models import Security
+from Securities.models import Price
 from Transactions.Importer import CortalConsors
 
 
@@ -13,8 +14,16 @@ from Transactions.Importer import CortalConsors
 class Portfolio(models.Model):
     name = models.CharField(max_length=200)
 
+    def find(self, name):
+        """
+        Find securities
+        :param name_alias_id:
+        :return: ISIN_ID based on any (useful) information
+        """
+        find_something = Portfolio.objects.get(name=name)
+        return None if not find_something else find_something
     def __str__(self):
-        return self.name
+        return 'Model:PF:' + str(self.name)
 
 
 class Transaction(models.Model):
@@ -27,6 +36,9 @@ class Transaction(models.Model):
     price = models.DecimalField(max_digits=20, decimal_places=4)
     cost = models.DecimalField(max_digits=20, decimal_places=4)
     total = models.DecimalField(max_digits=20, decimal_places=4)
+    prices = Price()
+    secs = Security()
+    pf = Portfolio()
 
     def __str__(self):
         return ';'.join((
@@ -35,7 +47,34 @@ class Transaction(models.Model):
 
     def import_sources(self):
         i = CortalConsors()
-        i.import_pdfs()
+        price_updates, transactions_update = i.read_pdfs()
+        self.import_transactions(transactions_update)
+        self.prices.import_prices(price_updates)
+
+    def import_transactions(self, transaction_update):
+        """
+
+        :param transaction_update:
+        [{'type': 'b', 'name': 'SGA DIV.STARS EUR.ZT04/UN', 'date': '2012-04-04', 'cost': 15.16, 'nominale': 45.0, 'value': 90.72}]
+        :return:
+        """
+        print(transaction_update)
+        for trans in transaction_update:
+            if trans['type'] == 'b':
+                total = -trans['nominale'] * trans['value'] - trans['cost']
+            elif trans['type'] == 's':
+                total = trans['nominale'] * trans['value'] - trans['cost']
+            elif trans['type'] == 'd':
+                total = trans['value']
+            sec = self.secs.find(trans['name'])
+            Transaction.objects.get_or_create(type=trans['type'],
+                                              portfolio=self.pf.find('All'),
+                                              stock_id=sec,
+                                              date=trans['date'],
+                                              nominal=trans['nominale'],
+                                              price=trans['value'],
+                                              cost=trans['cost'],
+                                              total=total)
 
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)

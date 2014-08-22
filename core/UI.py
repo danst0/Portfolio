@@ -154,17 +154,17 @@ class UI:
         if to_date == '':
             to_date = tmp_default
         to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
-        dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), from_date, to_date)
+        dates, values = self.prices.get_dates_and_prices(self.secs.find(stock), from_date, to_date)
         plt.plot(dates, values, 'r')
         # plt.axis(dates)
-        plt.ylabel(self.secs.find_stock(stock))
+        plt.ylabel(self.secs.find(stock))
         plt.xlabel('Date')
         plt.show()
 
     def new_split(self):
         print('Security', )
         stock = input()
-        last_unsplit_date, suggested_ratio = self.prices.find_split_date(self.secs.find_stock(stock))
+        last_unsplit_date, suggested_ratio = self.prices.find_split_date(self.secs.find(stock))
         print('Last unsplit date [' + last_unsplit_date + ']', )
         split_date = input()
         if split_date == '':
@@ -173,7 +173,7 @@ class UI:
         ratio = input()
         if ratio == '':
             ratio = suggested_ratio
-        dates, values = self.prices.get_dates_and_prices(self.secs.find_stock(stock), None, split_date)
+        dates, values = self.prices.get_dates_and_prices(self.secs.find(stock), None, split_date)
         # print(dates)
         #		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
         #		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
@@ -183,9 +183,9 @@ class UI:
         if go_on:
             print('Changing prices')
             for i in range(len(dates)):
-                self.prices.update(self.secs.find_stock(stock), dates[i], values[i] / float(ratio))
+                self.prices.update(self.secs.find(stock), dates[i], values[i] / float(ratio))
             stocks_at_split = self.transaction.get_portfolio('All', split_date)
-            stock_id = self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock))
+            stock_id = self.secs.get_stock_id_from_isin_id(self.secs.find(stock))
             number_before_split = stocks_at_split[stock_id]
             #			print(stocks_at_split)
             #			print(stock_id)
@@ -199,7 +199,7 @@ class UI:
 
     def edit_stock(self):
         stock = input('Name of security ')
-        stock_obj = self.secs.find_stock(stock, return_obj=True)
+        stock_obj = self.secs.find(stock, return_obj=True)
         print(stock_obj)
         new_name = input('New name (empty for no change) ')
         if new_name == '':
@@ -222,7 +222,7 @@ class UI:
 
     def delete_stock(self):
         stock = input('Name of security ')
-        stock_obj = self.secs.find_stock(stock, return_obj=True)
+        stock_obj = self.secs.find(stock, return_obj=True)
         print(stock_obj)
         do_delete = input('Delete stock ')
         if do_delete.lower() == 'yes':
@@ -468,26 +468,26 @@ class UI:
 
     def merge_stock(self):
         first_stock = input('Remaining security ')
-        stock_obj = self.secs.find_stock(first_stock, return_obj=True)
-        main_isin = self.secs.find_stock(first_stock)
+        stock_obj = self.secs.find(first_stock, return_obj=True)
+        main_isin = self.secs.find(first_stock)
         print(stock_obj)
         second_stock = input('Vanishing security ')
-        stock_obj = self.secs.find_stock(second_stock, return_obj=True)
-        secondary_isin = self.secs.find_stock(second_stock)
+        stock_obj = self.secs.find(second_stock, return_obj=True)
+        secondary_isin = self.secs.find(second_stock)
         print(stock_obj)
         self.secs.merge_stocks_from_isin(main_isin, secondary_isin)
 
 
     def manual_price_update(self):
         stock = input('Security ')
-        print(self.secs.find_stock(stock))
+        print(self.secs.find(stock))
         tmp_default = (datetime.date.today()).strftime('%Y-%m-%d')
         my_date = input('Price date [' + tmp_default + '] ')
         if my_date == '':
             my_date = tmp_default
         my_date = datetime.datetime.strptime(my_date, "%Y-%m-%d").date()
         price = input_float('Price')
-        self.prices.update(self.secs.find_stock(stock), my_date, price)
+        self.prices.update(self.secs.find(stock), my_date, price)
 
     def savings(self):
         tmp_default = self.last_day_of_last_month(datetime.date.today() - relativedelta(months=1)).strftime('%Y-%m-%d')
@@ -631,5 +631,5 @@ class UI:
         nom = input_float('Nominale')
         price = input_float('Price')
         cost = input_float('Cost')
-        self.transaction.add(type, self.secs.get_stock_id_from_isin_id(self.secs.find_stock(stock)), date, nom, price,
+        self.transaction.add(type, self.secs.get_stock_id_from_isin_id(self.secs.find(stock)), date, nom, price,
                              cost, portfolio)

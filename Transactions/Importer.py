@@ -56,7 +56,10 @@ class CortalConsors(Importer):
                 data = self.get_data_from_text(
                     subprocess.check_output(['/usr/local/bin/pdf2txt.py', self.base_path + '/' + file]).decode("utf-8"))
                 transactions_update.append(data)
-            os.remove(self.base_path + '/' + file)
+            try:
+                os.remove(self.base_path + '/' + file)
+            except:
+                pass
 #        print(file_counter, 'files successfully imported.')
         return price_updates, transactions_update
 

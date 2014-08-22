@@ -60,21 +60,22 @@ class Transaction(models.Model):
         """
         print(transaction_update)
         for trans in transaction_update:
-            if trans['type'] == 'b':
-                total = -trans['nominale'] * trans['value'] - trans['cost']
-            elif trans['type'] == 's':
-                total = trans['nominale'] * trans['value'] - trans['cost']
-            elif trans['type'] == 'd':
-                total = trans['value']
-            sec = self.secs.find(trans['name'])
-            Transaction.objects.get_or_create(type=trans['type'],
-                                              portfolio=self.pf.find('All'),
-                                              stock_id=sec,
-                                              date=trans['date'],
-                                              nominal=trans['nominale'],
-                                              price=trans['value'],
-                                              cost=trans['cost'],
-                                              total=total)
+            if trans:
+                if trans['type'] == 'b':
+                    total = -trans['nominale'] * trans['value'] - trans['cost']
+                elif trans['type'] == 's':
+                    total = trans['nominale'] * trans['value'] - trans['cost']
+                elif trans['type'] == 'd':
+                    total = trans['value']
+                sec = self.secs.find(trans['name'])
+                Transaction.objects.get_or_create(type=trans['type'],
+                                                  portfolio=self.pf.find('All'),
+                                                  stock_id=sec,
+                                                  date=trans['date'],
+                                                  nominal=trans['nominale'],
+                                                  price=trans['value'],
+                                                  cost=trans['cost'],
+                                                  total=total)
 
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)

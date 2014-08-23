@@ -24,12 +24,17 @@ class CortalConsors(Importer):
         for file in os.listdir(self.base_path):
             if file.startswith('PERSONAL') and file.endswith('.pdf'):
                 print('Import ' + file)
-                subprocess.check_output(
+                try:
+                    subprocess.check_output(
                     ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
                      self.base_path + '/data.txt'])
-                with open(self.base_path + '/data.txt', 'rb') as myfile:
-                    data = myfile.read()
-                data = self.get_data_from_personal_investment_report(data)
+                except:
+                    print('Error while importing.')
+                    data = None
+                else:
+                    with open(self.base_path + '/data.txt', 'rb') as myfile:
+                        data = myfile.read()
+                    data = self.get_data_from_personal_investment_report(data)
                 if data:
                     price_updates.append(data)
                     file_counter += 1

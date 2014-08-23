@@ -73,4 +73,4 @@ class Price(models.Model):
                 Price.objects.create(stock_id=sec, date=date, price=price)
 
     def __str__(self):
-        return self.stock_id, self.date, self.price
+        return str(self.stock_id) + str(self.date) + str(self.price)

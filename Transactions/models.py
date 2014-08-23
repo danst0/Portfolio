@@ -92,8 +92,6 @@ class Transaction(models.Model):
                                                   cost=0.0,
                                                   total=total)
 
-
-
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)
         in_divest += self.get_total(portfolio, 's', from_date, to_date, stock_id)

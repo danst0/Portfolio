@@ -5,20 +5,7 @@ from Transactions.models import Transaction
 
 class UI:
     def rolling_profitability(self):
-        portfolio = input('Portfolio [All] ')
-        if portfolio == '':
-            portfolio = 'All'
-        time_span = 360
-        tmp_default = (datetime.date.today() - datetime.timedelta(days=time_span)).strftime('%Y-%m-%d')
-        from_date = input('Start date [' + tmp_default + '] ')
-        if from_date == '':
-            from_date = tmp_default
-        from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
-        tmp_default = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-        to_date = input('End date [' + tmp_default + '] ')
-        if to_date == '':
-            to_date = tmp_default
-        to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
+        
         dates = []
         roi_list = []
         for i in range(int(time_span / 30)):

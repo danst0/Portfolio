@@ -9,11 +9,12 @@ from core.forms import RollingProfitabilityForm
 
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the core index.")
+    return render(request, 'index.html')
 
 
 def update(request):
-    return HttpResponse("Hello, world. You're at the m2/update index.")
+    #return HttpResponse("Hello, world. You're at the m2/update index.")
+    return render(request, 'update.html')
 
 
 def rolling_profitability(request):
@@ -26,7 +27,9 @@ def rolling_profitability(request):
             # process the data in form.cleaned_data as required
             # ...
             # redirect to a new URL:
-            return HttpResponseRedirect('/thanks/')
+            print('clean', form.cleaned_data)
+            return render(request, 'rolling_profitability.html', {'form': form})
+            #return HttpResponseRedirect('/thanks/')
 
     # if a GET (or any other method) we'll create a blank form
     else:

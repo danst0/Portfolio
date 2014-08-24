@@ -1,0 +1,16 @@
+<html>
+    <head></head>
+    <body>
+
+        {% block nav %}
+        <ul id="nav">
+            <li>{% block nav-home %}<a href="{% url 'index' %}">Home</a>{% endblock %}</li>
+            <li>{% block nav-update %}<a href="{% url 'update' %}">Update</a>{% endblock %}</li>
+            <li>{% block nav-rolling_profitability %}<a href="{% url 'rolling_profitability' %}">Rolling Profitability</a>{% endblock %}</li>
+        </ul>
+        {% endblock %}
+        {% block content %}
+            Say my name
+        {% endblock %}
+    </body>
+</html>

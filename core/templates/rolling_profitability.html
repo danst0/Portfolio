@@ -1,5 +1,11 @@
-<form action="/your-name/" method="post">
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="/rolling_profitability/" method="post">
     {% csrf_token %}
     {{ form }}
-    <input type="submit" value="Submit" />
-</form>
+    <input type="submit" value="Execute" />
+    Say hello
+    </form>
+{% endblock %}
+

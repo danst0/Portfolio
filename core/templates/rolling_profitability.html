@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <form action="/rolling_profitability/" method="post">
+    <form action="/core/rolling_profitability/" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Execute" />
-    Say hello
+    {{ content }}
     </form>
 {% endblock %}
-

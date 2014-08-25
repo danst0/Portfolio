@@ -1,6 +1,7 @@
 from django.db import models
 from core.helper_functions import Helper
 import datetime
+from decimal import Decimal
 
 # Create your models here.
 class Security(models.Model):
@@ -74,3 +75,26 @@ class Price(models.Model):
 
     def __str__(self):
         return str(self.stock_id) + str(self.date) + str(self.price)
+
+    def get_prices(self, stock_id, before_date=None):
+        if before_date:
+            return Price.objects.filter(stock_id=stock_id, date__lte=before_date)
+        else:
+            return Price.objects.filter(stock_id=stock_id)
+
+
+    def get_last_price(self, isin_id, before_date=None, none_equals_zero=False):
+        stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
+        return self.get_last_price_from_stock_id(stock_id, before_date, none_equals_zero)
+
+    def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
+        """Return last price available, if given, return last price available before given date"""
+        prices = self.get_prices(stock_id, before_date)
+        if prices:
+            max_key = max(prices.keys())
+            return prices[max_key]
+        else:
+            if none_equals_zero:
+                return Decimal(0.0)
+            else:
+                return None

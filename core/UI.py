@@ -11,7 +11,7 @@ import codecs
 from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
 import ystockquote
-import matplotlib.pyplot as plt
+
 
 from Securities import Security
 from input_methods import *

@@ -86,17 +86,7 @@ class Transaction:
             result = 0.0
         return result
 
-    def get_portfolio(self, portfolio, date):
-        """Get portfolio contents on that specific date, incl. all transactions from that date"""
-        result = self.data.c.execute(
-            """SELECT stock_id, nominal FROM transactions WHERE portfolio = ? AND (type = 'b' OR type = 's') AND date <= ?""",
-            (portfolio, date)).fetchall()
-        stocks = {}
-        for item in result:
-            if item[0] not in stocks.keys():
-                stocks[item[0]] = 0.0
-            stocks[item[0]] = stocks[item[0]] + item[1]
-        return stocks
+
 
     def get_total_for_portfolio(self, portfolio):
         result = self.data.c.execute(

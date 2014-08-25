@@ -1,7 +1,12 @@
-<html>
-    <head></head>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{ block_title }}</title>
+        <!-- <link rel="stylesheet" href="style.css">
+        <script src="script.js"></script> -->
+    </head>
     <body>
-
         {% block nav %}
         <ul id="nav">
             <li>{% block nav-home %}<a href="{% url 'index' %}">Home</a>{% endblock %}</li>

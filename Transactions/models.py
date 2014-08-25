@@ -107,11 +107,19 @@ class Transaction(models.Model):
         return self.get_total(portfolio, 'd', from_date, to_date)
 
     def get_total(self, portfolio, type, from_date, to_date, stock_id=None):
+        total = Decimal(0)
         if stock_id:
-            return Transaction.objects.filter(portfolio__name=portfolio, type=type, date__range=[from_date, to_date],
-                                              stock_id=stock_id)
+            for item in Transaction.objects.filter(portfolio__name=portfolio,
+                                                     type=type,
+                                                     date__range=[from_date, to_date],
+                                                     stock_id=stock_id):
+                total += item.total
         else:
-            return Transaction.objects.filter(portfolio__name=portfolio, type=type, date__range=[from_date, to_date])
+            for item in Transaction.objects.filter(portfolio__name=portfolio,
+                                                     type=type,
+                                                     date__range=[from_date, to_date]):
+                total += item.total
+        return total
 
 
     def get_stocks_in_portfolio(self, portfolio, date):

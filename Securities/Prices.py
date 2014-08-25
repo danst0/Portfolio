@@ -106,30 +106,7 @@ class Prices:
                 pass
         return price
 
-    def get_prices(self, stock_id, before_date=None):
-        prices = None
-        if stock_id in self.numbers.keys():
-            prices = self.numbers[stock_id]
-            # print(prices)
-        if prices and before_date:
-            prices = {k: v for k, v in prices.items() if k <= before_date}
-        return prices
 
-    def get_last_price(self, isin_id, before_date=None, none_equals_zero=False):
-        stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
-        return self.get_last_price_from_stock_id(stock_id, before_date, none_equals_zero)
-
-    def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
-        """Return last price available, if given, return last price available before given date"""
-        prices = self.get_prices(stock_id, before_date)
-        if prices:
-            max_key = max(prices.keys())
-            return prices[max_key]
-        else:
-            if none_equals_zero:
-                return 0.0
-            else:
-                return None
 
     def get_quote(self, symbol):
         print(symbol)

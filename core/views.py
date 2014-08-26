@@ -26,7 +26,6 @@ def update(request):
 def rolling_profitability_png(request, portfolio, from_date, to_date):
     fig=Figure()
     ax=fig.add_subplot(111)
-
     ui = UI()
     dates, roi_list = ui.rolling_profitability(portfolio,
                                                datetime.datetime.strptime(from_date, '%Y-%m-%d'),
@@ -55,7 +54,9 @@ def rolling_profitability(request):
             return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                                   'form': form,
                                                                   'content': content,
-                                                                  'pic_url': pic_url})
+                                                                  'portfolio': form.cleaned_data['portfolio'],
+                                                                  'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
+                                                                  'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d')})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = RollingProfitabilityForm()

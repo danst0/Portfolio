@@ -3,19 +3,20 @@ import datetime
 from Transactions.models import Transaction
 from Securities.models import Price
 from decimal import Decimal
-import matplotlib.pyplot as plt
+
 
 class UI:
     def __init__(self):
         self.transaction = Transaction()
         self.prices = Price()
     def rolling_profitability(self, portfolio, from_date, to_date):
-        time_span = 360
+        time_span = (to_date - from_date).days
+        interval = int(time_span / 12)
         dates = []
         roi_list = []
-        for i in range(int(time_span / 30)):
-            loop_to_date = (datetime.date.today() - datetime.timedelta(days=1 + i * 30))
-            loop_from_date = (datetime.date.today() - datetime.timedelta(days=time_span + i * 30))
+        for i in range(int(time_span / interval)):
+            loop_to_date = (to_date - datetime.timedelta(days=1 + i * 30))
+            loop_from_date = (to_date - datetime.timedelta(days=time_span + i * 30))
             stocks_at_start = self.transaction.get_stocks_in_portfolio(portfolio, loop_from_date.strftime("%Y-%m-%d"))
             portfolio_value_at_start = Decimal(0.0)
             for key in stocks_at_start.keys():
@@ -43,14 +44,7 @@ class UI:
             dates.append(loop_to_date)
             roi_list.append(tmp)
             # print('Date', loop_to_date, 'ROI', tmp)
-        plt.plot(dates, roi_list, 'r')
-        # plt.axis(dates)
-        plt.title('Rolling Return-on-Investment; range: ' + from_date.strftime('%Y-%m-%d') + ' -- ' + to_date.strftime(
-            '%Y-%m-%d'))
-        plt.xlabel('%')
-        plt.xticks(rotation=15)
-        plt.xlabel('Date')
-        plt.savefig('rolling_profitability.png')
+        return dates, roi_list
 
 
 

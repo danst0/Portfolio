@@ -5,6 +5,8 @@ Portfolio wealth management app for the command line.
 
 Todos
 =====
+* How to integrate current scripts into django?
+* How to display multiple information at once (__str__)
 * App Design
  * Switch to django for the data model 
 * UI Design
@@ -36,3 +38,13 @@ Todos
  * More logic
  * Less chaos
  * make dates into python dates and only convert to string if required
+
+Install
+===
+Commands to get it running
+---
+python3 manage.py runserver
+python3 manage.py syncdb
+python3 manage.py startapp m2
+python3 manage.py sql m2 - Show commands to build databases
+python manage.py validate – Checks for any errors in the construction of your models.

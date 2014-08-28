@@ -65,8 +65,6 @@ class Price(models.Model):
     def import_prices(self, price_updates):
         for file in price_updates:
             for name, date, price in file:
-                date = datetime.datetime.strptime(date, '%d.%m.%Y').strftime('%Y-%m-%d')
-                #print(name, date, price)
                 sec = self.securities.find(name)
                 if not sec:
                     self.securities.add_stump(name)

@@ -207,12 +207,13 @@ class CortalConsors(Importer):
         if not valid:
             return None
         elif type == 'dividende':
-            return {'type': 'd', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'value': value}
+            return {'type': 'd', 'name': name, 'date': date, 'nominal': Decimal(0), 'value': value,
+                    'cost': Decimal(0)}
         elif type == 'kauf':
-            return {'type': 'b', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'nominale': nominale, 'value': value,
+            return {'type': 'b', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
                     'cost': charge}
         elif type == 'verkauf':
-            return {'type': 's', 'name': name, 'date': date.strftime('%Y-%m-%d'), 'nominale': nominale, 'value': value,
+            return {'type': 's', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
                     'cost': charge}
 
     def get_data_from_personal_investment_report(self, text):
@@ -240,9 +241,10 @@ class CortalConsors(Importer):
                         '([0-9\.]{1,7},[0-9]{2}\s*)([A-Z0-9]{6})\s*(.*?)\s{2,}([0-9,]*)\s{2,}([0-9,]*)\s{2,}([0-9]{2}.[0-9]{2}.[0-9]{4})',
                         line)
                     if table_line:
-                        name_date_price.append(
-                            (table_line.group(3), table_line.group(6), float(table_line.group(5).replace(',', '.'))))
-                    #						print(table_line.group(3), table_line.group(5), table_line.group(6))
+                        sec_name = table_line.group(3)
+                        sec_price = float(table_line.group(5).replace(',', '.'))
+                        sec_date = datetime.datetime.strptime(table_line.group(6), '%d.%m.%Y')
+                        name_date_price.append((sec_name, sec_date, sec_price))
                     if line.lower().find('WERTENTWICKLUNG FÜR IHR DEPOT'.lower()) != -1:
                         found_start = False
                 elif line.lower().find('IHR DEPOT (ALPHABETISCH GEORDNET)'.lower()) != -1:

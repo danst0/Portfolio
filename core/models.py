@@ -1,7 +1,7 @@
 # Create your models here.
 import datetime
-from Transactions.models import Transaction
-from Securities.models import Price
+from transactions.models import Transaction
+from securities.models import Price
 from decimal import Decimal
 
 

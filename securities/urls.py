@@ -1,10 +1,13 @@
 from django.conf.urls import patterns, url
 
-from Transactions import views
+import core.views
+import transactions.views
 
 urlpatterns = patterns('',
-                       url(r'^$', views.test, name='test'),
-                       url(r'/update/$', views.update, name='update'),
+                       url(r'^$', core.views.index, name='index'),
+                       url(r'^update/$', core.views.update, name='update'),
+                       url(r'^test/$', Transactions.views.test, name='test'),
+
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
                        # ex: /polls/5/results/

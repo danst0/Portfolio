@@ -3,10 +3,10 @@ from decimal import *
 
 from django.db import models
 
-from Securities.models import Security
-from Securities.models import Price
-from Transactions.Importer import CortalConsors
-
+from securities.models import Security
+from securities.models import Price
+from transactions.Importer import CortalConsors
+from django.utils import timezone
 
 # from django.core.exceptions import ValidationError
 
@@ -42,7 +42,7 @@ class Transaction(models.Model):
 
     def __str__(self):
         return ';'.join((
-        str(self.portfolio), self.type, str(self.stock_id), str(self.date), str(self.nominal), str(self.price),
+        str(self.portfolio), self.transaction_type, str(self.stock_id), str(self.date), str(self.nominal), str(self.price),
         str(self.cost), str(self.total)))
 
     def import_sources(self):
@@ -75,27 +75,28 @@ class Transaction(models.Model):
                 if trans['type'] in ['b', 's']:
                     total = -trans['nominale'] * trans['value'] - trans['cost']
                     Transaction.objects.get_or_create(type=trans['type'],
-                                                  portfolio=pf,
-                                                  stock_id=sec,
-                                                  date=trans['date'],
-                                                  nominal=trans['nominale'],
-                                                  price=trans['value'],
-                                                  cost=trans['cost'],
-                                                  total=total)
+                                                      portfolio=pf,
+                                                      stock_id=sec,
+                                                      date=trans['date'],
+                                                      nominal=trans['nominale'],
+                                                      price=trans['value'],
+                                                      cost=trans['cost'],
+                                                      total=total)
                 else:
                     Transaction.objects.get_or_create(type=trans['type'],
-                                                  portfolio=pf,
-                                                  stock_id=sec,
-                                                  date=trans['date'],
-                                                  nominal=0.0,
-                                                  price=trans['value'],
-                                                  cost=0.0,
-                                                  total=total)
-    def add(Transaction.objects.get_or_create(transaction_type, portfolio, stock_id, date, nominal, price, cost):
+                                                      portfolio=pf,
+                                                      stock_id=sec,
+                                                      date=trans['date'],
+                                                      nominal=0.0,
+                                                      price=trans['value'],
+                                                      cost=0.0,
+                                                      total=total)
+
+    def add(self, transaction_type, portfolio, stock_id, date, nominal, price, cost):
         nominal = abs(nominal)
         price = abs(price)
         cost = abs(cost)
-        if tansaction_type == 'b':
+        if transaction_type == 'b':
             total = -(nominal * price) - cost
         elif transaction_type == 's':
             total = (nominal * price) - cost
@@ -105,13 +106,18 @@ class Transaction(models.Model):
             cost = Decimal(0)
         else:
             raise NameError('Not a valid transaction type (' + str(transaction_type) +')')
-        
+        if date > timezone.now():
+            raise NameError('Date in the future (' + str(date) +')')
+
         return Transaction.objects.get_or_create(transaction_type=transaction_type,
-                                                 portfolio=portfolio, stock_id=stock_id, date=date,
+                                                 portfolio=portfolio,
+                                                 stock_id=stock_id,
+                                                 date=date,
                                                  nominal=nominal,
                                                  price=price,
                                                  cost=cost,
-                                                 total=total)
+                                                 total=total)[0]
+
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)
         in_divest += self.get_total(portfolio, 's', from_date, to_date, stock_id)
@@ -130,23 +136,26 @@ class Transaction(models.Model):
         total = Decimal(0)
         if stock_id:
             for item in Transaction.objects.filter(portfolio__name=portfolio,
-                                                     type=type,
-                                                     date__range=[from_date, to_date],
-                                                     stock_id=stock_id):
+                                                   type=type,
+                                                   date__range=[from_date, to_date],
+                                                   stock_id=stock_id):
                 total += item.total
         else:
             for item in Transaction.objects.filter(portfolio__name=portfolio,
-                                                     type=type,
-                                                     date__range=[from_date, to_date]):
+                                                   type=type,
+                                                   date__range=[from_date, to_date]):
                 total += item.total
         return total
 
 
     def get_stocks_in_portfolio(self, portfolio, date):
         """Get portfolio contents on that specific date, incl. all transactions from that date"""
-        result = Transaction.objects.filter(portfolio__name=portfolio, type='b',
-                                            date__lte=date) | Transaction.objects.filter(portfolio__name=portfolio,
-                                                                                         type='s', date__lte=date)
+        result = Transaction.objects.filter(portfolio__name=portfolio,
+                                            type='b',
+                                            date__lte=date) |\
+                 Transaction.objects.filter(portfolio__name=portfolio,
+                                            type='s',
+                                            date__lte=date)
         stocks = {}
         for item in result:
             if item.id not in stocks.keys():

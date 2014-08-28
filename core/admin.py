@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from Securities.models import Security, Price
-from Money.models import Money
-from Transactions.models import Transaction, Portfolio
+from securities.models import Price
+from money.models import Money
+from transactions.models import Transaction, Portfolio
 
 
 

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from Transactions.models import Transaction
+from transactions.models import Transaction
 
 # Create your views here.
 

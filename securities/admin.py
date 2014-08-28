@@ -1,5 +1,5 @@
 from django.contrib import admin
-from Securities.models import Security
+from securities.models import Security
 
 # Register your models here.
 

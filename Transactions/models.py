@@ -28,7 +28,7 @@ class Portfolio(models.Model):
 
 class Transaction(models.Model):
     # id = models.CharField(max_length=100, blank=True, unique=True, default=uuid.uuid4)
-    type = models.CharField(max_length=1)
+    transaction_type = models.CharField(max_length=1)
     portfolio = models.ForeignKey(Portfolio)
     stock_id = models.ForeignKey(Security)
     date = models.DateField('date of transaction')
@@ -91,7 +91,14 @@ class Transaction(models.Model):
                                                   price=trans['value'],
                                                   cost=0.0,
                                                   total=total)
-
+    def add(Transaction.objects.get_or_create(transaction_type, portfolio, stock_id, date, nominal, price, cost, total):
+        
+        return Transaction.objects.get_or_create(transaction_type=transaction_type,
+                                                 portfolio=portfolio, stock_id=stock_id, date=date,
+                                                 nominal=nominal,
+                                                 price=price,
+                                                 cost=cost,
+                                                 total=total)
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)
         in_divest += self.get_total(portfolio, 's', from_date, to_date, stock_id)

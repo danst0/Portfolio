@@ -7,6 +7,7 @@ import re
 import datetime
 #from Securities.models import Security
 #from Transactions.models import Transaction
+from decimal import *
 
 
 class Importer:

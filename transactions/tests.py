@@ -18,7 +18,8 @@ class TransactionTests(TestCase):
     def test_transaction_total_with_odd_values(self):
         """Adding Transaction should lead to correct total"""
         time = timezone.now()
-        sec = Security.objects.create(name='TestSec', aliases='Test Alias', isin_id='DETest', yahoo_id='ABC', type='Stock')
+        sec = Security.objects.create(name='TestSec', aliases='Test Alias', isin_id='DETest', yahoo_id='ABC',
+                                      type='Stock')
         pf = Portfolio.objects.create(name='Test')
         t = Transaction()
         transaction = t.add('b', pf, sec, time, 100, 100, 100)
@@ -27,7 +28,8 @@ class TransactionTests(TestCase):
     def test_adding_transaction_with_future_date(self):
         """Adding Transaction with future date should return None"""
         time = timezone.now() + datetime.timedelta(days=30)
-        sec = Security.objects.create(name='TestSec', aliases='Test Alias', isin_id='DETest', yahoo_id='ABC', type='Stock')
+        sec = Security.objects.create(name='TestSec', aliases='Test Alias', isin_id='DETest', yahoo_id='ABC',
+                                      type='Stock')
         pf = Portfolio.objects.create(name='Test')
         t = Transaction()
         self.assertRaises(NameError, t.add, 'b', pf, sec, time, 100, 100, 100)

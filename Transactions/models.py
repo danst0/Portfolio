@@ -91,7 +91,20 @@ class Transaction(models.Model):
                                                   price=trans['value'],
                                                   cost=0.0,
                                                   total=total)
-    def add(Transaction.objects.get_or_create(transaction_type, portfolio, stock_id, date, nominal, price, cost, total):
+    def add(Transaction.objects.get_or_create(transaction_type, portfolio, stock_id, date, nominal, price, cost):
+        nominal = abs(nominal)
+        price = abs(price)
+        cost = abs(cost)
+        if tansaction_type == 'b':
+            total = -(nominal * price) - cost
+        elif transaction_type == 's':
+            total = (nominal * price) - cost
+        elif transaction_type == 'd':
+            total = price
+            nominal = Decimal(0)
+            cost = Decimal(0)
+        else:
+            raise NameError('Not a valid transaction type (' + str(transaction_type) +')')
         
         return Transaction.objects.get_or_create(transaction_type=transaction_type,
                                                  portfolio=portfolio, stock_id=stock_id, date=date,

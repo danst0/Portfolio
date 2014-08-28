@@ -52,45 +52,21 @@ class Transaction(models.Model):
         self.prices.import_prices(price_updates)
 
     def import_transactions(self, transaction_update):
-        """
-
-        :param transaction_update:
-        [{'type': 'b', 'name': 'SGA DIV.STARS EUR.ZT04/UN', 'date': '2012-04-04', 'cost': 15.16, 'nominale': 45.0, 'value': 90.72}]
-        :return:
-        """
-        #print(transaction_update)
         for trans in transaction_update:
             if trans:
-                if trans['type'] == 'b':
-                    total = -trans['nominale'] * trans['value'] - trans['cost']
-                elif trans['type'] == 's':
-                    total = trans['nominale'] * trans['value'] - trans['cost']
-                elif trans['type'] == 'd':
-                    total = trans['value']
                 sec = self.secs.find(trans['name'])
                 if not sec:
                     self.secs.add_stump(trans['name'])
                     sec = self.secs.find(trans['name'])
                 pf = self.pf.find('All')
-                if trans['type'] in ['b', 's']:
-                    total = -trans['nominale'] * trans['value'] - trans['cost']
-                    Transaction.objects.get_or_create(type=trans['type'],
-                                                      portfolio=pf,
-                                                      stock_id=sec,
-                                                      date=trans['date'],
-                                                      nominal=trans['nominale'],
-                                                      price=trans['value'],
-                                                      cost=trans['cost'],
-                                                      total=total)
-                else:
-                    Transaction.objects.get_or_create(type=trans['type'],
-                                                      portfolio=pf,
-                                                      stock_id=sec,
-                                                      date=trans['date'],
-                                                      nominal=0.0,
-                                                      price=trans['value'],
-                                                      cost=0.0,
-                                                      total=total)
+                self.add(transaction_type=trans['type'],
+                         portfolio=pf,
+                         stock_id=sec,
+                         date=trans['date'],
+                         nominal=trans['nominal'],
+                         price=trans['value'],
+                         cost=trans['cost'])
+
 
     def add(self, transaction_type, portfolio, stock_id, date, nominal, price, cost):
         nominal = abs(nominal)

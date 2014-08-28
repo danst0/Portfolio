@@ -13,45 +13,6 @@ class Transaction:
 
 
 
-    def add(self, type, stock_id, date, nominal, price, cost, portfolio):
-        if stock_id != None:
-            if price < 0:
-                price = -1 * price
-            if cost < 0:
-                cost = -1 * cost
-            if type == 'b':
-                if nominal < 0:
-                    nominal = -1 * nominal
-                total = -1 * price * nominal - cost
-            elif type == 's':
-                if nominal > 0:
-                    nominal = -1 * nominal
-                total = -1 * price * nominal + cost
-            elif type == 'd':
-                if nominal != 0:
-                    price = price * nominal
-                    nominal = 0
-                cost = 0
-                total = price
-            result = self.data.c.execute(
-                '''SELECT id FROM transactions WHERE type = ? AND portfolio = ? AND stock_id = ? AND date = ? AND nominal = ? AND price = ? AND cost = ? AND total = ?''',
-                (type, portfolio, stock_id, date, nominal, price, cost, total)).fetchall()
-
-            if result == []:
-                self.data.c.execute(
-                    'INSERT INTO transactions (id, type, portfolio, stock_id, date, nominal, price, cost, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (uuid.uuid4(), type, portfolio, stock_id, date, nominal, price, cost, total))
-                self.money.update('settlement', date, total)
-                if type != 'd' and price != 0.0:
-                    self.prices.update(self.secs.get_isin_id_from_stock_id(stock_id), date, price)
-                print('Cash addition ' + str(total))
-                return True
-            else:
-                print('Transaction already seems to exist: ' + str(result))
-                return False
-        else:
-            return False
-
     # self.data.commit()
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)

@@ -1,7 +1,10 @@
 from django.db import models
 from core.helper_functions import Helper
 import datetime
+from django.utils import timezone
 from decimal import Decimal
+import ystockquote
+import urllib
 
 # Create your models here.
 class Security(models.Model):
@@ -69,7 +72,7 @@ class Price(models.Model):
                 if not sec:
                     self.securities.add_stump(name)
                     sec = self.securities.find(name)
-                Price.objects.create(stock_id=sec, date=date, price=price)
+                Price.objects.get_or_create(stock_id=sec, date=date, price=price)
 
     def __str__(self):
         return str(self.stock_id) + str(self.date) + str(self.price)
@@ -96,3 +99,27 @@ class Price(models.Model):
                 return Decimal(0.0)
             else:
                 return None
+
+    def import_historic_quotes(self):
+        print('Start update')
+
+        today = datetime.date.today()
+        first_day = datetime.date.today() - datetime.timedelta(days=15 * 365)
+        today_str = today.strftime('%Y-%m-%d')
+        first_day_str = first_day.strftime('%Y-%m-%d')
+        for sec in Security.objects.all():
+            if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
+                print('Updating', sec.yahoo_id)
+                quote = None
+                try:
+                    quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
+                except urllib.error.HTTPError:
+                    print('No quotes found for:', sec.name)
+                    self.last_update += datetime.timedelta(seconds=-90)
+                else:
+                    for key in quote:
+                        #print(quote, key)
+                        Price.objects.get_or_create(stock_id=sec, date=key, price=quote[key]['Close'])
+            else:
+                print('No Yahoo ID for', sec.name)
+        print('Update finished')

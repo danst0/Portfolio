@@ -1,11 +1,11 @@
 from django.conf.urls import patterns, url
 
-import core.views
-import transactions.views
+import securities.views
+
 
 urlpatterns = patterns('',
                        url(r'^$', core.views.index, name='index'),
-                       url(r'^update/$', core.views.update, name='update'),
+                       url(r'^import_historic_quotes/$', securities.views.import_historic_quotes, name='import'),
                        url(r'^test/$', Transactions.views.test, name='test'),
 
                        # ex: /polls/5/

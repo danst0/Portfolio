@@ -4,13 +4,12 @@
 import datetime
 import os
 import subprocess
-import urllib
 import sys
 import codecs
 
 from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
-import ystockquote
+
 
 
 from Securities import Security
@@ -33,36 +32,7 @@ class UI:
             go_on = self.main_menu()
         random.seed()
 
-    def get_historic_quotes(self):
-        print('Start update')
 
-        now = datetime.datetime.now()
-        # print(now, self.last_update)
-        if now < self.last_update + datetime.timedelta(seconds=90):
-            print('Please leave at least 30 secs between each update.')
-            return
-        else:
-            self.last_update = now
-        today = datetime.date.today()
-        first_day = datetime.date.today() - datetime.timedelta(days=15 * 365)
-        today_str = today.strftime('%Y-%m-%d')
-        first_day_str = first_day.strftime('%Y-%m-%d')
-        for sec in self.secs:
-            if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
-                print('Updating', sec.yahoo_id)
-                quote = None
-                try:
-                    quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
-                except urllib.error.HTTPError:
-                    print('No quotes found for:', sec.name)
-                    self.last_update += datetime.timedelta(seconds=-90)
-                else:
-                    #					  print(quote)
-                    for key in quote:
-                        self.prices.update(sec.isin_id, key, quote[key]['Close'])
-            else:
-                print('No Yahoo ID for', sec.name)
-        print('Update finished')
 
     def update_stocks(self):
         print('Start update')

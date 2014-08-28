@@ -11,6 +11,7 @@ import datetime
 import random
 from django.http import HttpResponse
 
+from securities.models import Price
 # Create your views here.
 
 
@@ -18,6 +19,12 @@ from django.http import HttpResponse
 def index(request):
     return render(request, 'index.html')
 
+
+def import_historic_quotes(request):
+    # import pdb; pdb.set_trace()
+    p = Price()
+    p.import_historic_quotes()
+    return render(request, 'import_historic_quotes.html', {'block_title': 'Import Historic Quotes'})
 
 def update(request):
     #return HttpResponse("Hello, world. You're at the m2/update index.")

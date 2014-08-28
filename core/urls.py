@@ -6,6 +6,7 @@ urlpatterns = patterns('',
                        url(r'^/$', views.index, name='index'),
                        url(r'/update/$', views.update, name='update'),
                        url(r'/rolling_profitability', views.rolling_profitability, name='rolling_profitability'),
+                       url(r'/import_historic_quotes', views.import_historic_quotes, name='import_historic_quotes'),
                        url(r'(?P<portfolio>[A-Z0-9a-z]+)/(?P<from_date>[0-9\-]+)/(?P<to_date>[0-9\-]+)/diagram.png$', views.rolling_profitability_png, name='rolling_profitabiliy_png'),
 
                        # ex: /polls/5/

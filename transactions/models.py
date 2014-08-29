@@ -7,6 +7,7 @@ from securities.models import Security
 from securities.models import Price
 from transactions.Importer import CortalConsors
 from django.utils import timezone
+import datetime
 
 # from django.core.exceptions import ValidationError
 
@@ -20,8 +21,8 @@ class Portfolio(models.Model):
         :param name_alias_id:
         :return: ISIN_ID based on any (useful) information
         """
-        find_something = Portfolio.objects.get(name=name)
-        return None if not find_something else find_something
+        find_something = Portfolio.objects.get_or_create(name=name)[0]
+        return find_something
     def __str__(self):
         return 'Model:PF:' + str(self.name)
 
@@ -83,7 +84,12 @@ class Transaction(models.Model):
         else:
             raise NameError('Not a valid transaction type (' + str(transaction_type) +')')
         #import pdb; pdb.set_trace()
-        if date > timezone.now():
+
+        if not isinstance(date, datetime.datetime):
+            now = timezone.now().date()
+        else:
+            now = timezone.now()
+        if date > now:
             raise NameError('Date in the future (' + str(date) +')')
 
         t = Transaction.objects.get_or_create(transaction_type=transaction_type,
@@ -112,17 +118,17 @@ class Transaction(models.Model):
     def get_total_dividend(self, portfolio, from_date, to_date):
         return self.get_total(portfolio, 'd', from_date, to_date)
 
-    def get_total(self, portfolio, type, from_date, to_date, stock_id=None):
+    def get_total(self, portfolio, transaction_type, from_date, to_date, stock_id=None):
         total = Decimal(0)
         if stock_id:
             for item in Transaction.objects.filter(portfolio__name=portfolio,
-                                                   type=type,
+                                                   transaction_type=transaction_type,
                                                    date__range=[from_date, to_date],
                                                    stock_id=stock_id):
                 total += item.total
         else:
             for item in Transaction.objects.filter(portfolio__name=portfolio,
-                                                   type=type,
+                                                   transaction_type=transaction_type,
                                                    date__range=[from_date, to_date]):
                 total += item.total
         return total
@@ -131,10 +137,10 @@ class Transaction(models.Model):
     def get_stocks_in_portfolio(self, portfolio, date):
         """Get portfolio contents on that specific date, incl. all transactions from that date"""
         result = Transaction.objects.filter(portfolio__name=portfolio,
-                                            type='b',
+                                            transaction_type='b',
                                             date__lte=date) |\
                  Transaction.objects.filter(portfolio__name=portfolio,
-                                            type='s',
+                                            transaction_type='s',
                                             date__lte=date)
         stocks = {}
         for item in result:
@@ -143,10 +149,20 @@ class Transaction(models.Model):
             stocks[item.id] = stocks[item.id] + item.nominal
         return stocks
 
-    def get_total_for_portfolio(self, portfolio):
+    def get_total_for_portfolio(self, portfolio, date):
         """NOT YET FINAL"""
-        result = Transaction.objects.filter(portfolio__name=portfolio)
+        result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date)
+        per_stock = {}
+        for item in result:
+            if item.stock_id not in per_stock.keys():
+                per_stock[item.stock_id] = {'nominal': item.nominal, 'cost': item.cost, 'total': item.total}
+            else:
+                per_stock[item.stock_id]['nominal'] += item.nominal
+                per_stock[item.stock_id]['cost'] += item.cost
+                per_stock[item.stock_id]['total'] += item.total
+        # print(per_stock)
         aggregate = {}
-        # self.data.c.execute('''SELECT name, SUM(nominal), SUM(cost), SUM(total) FROM transactions INNER JOIN stocks ON stocks.id = transactions.stock_id WHERE portfolio = ? GROUP BY stock_id''', (portfolio,)).fetchall()
+        # self.data.c.execute('''SELECT name, SUM(nominal), SUM(cost), SUM(total) FROM transactions
+        # INNER JOIN stocks ON stocks.id = transactions.stock_id WHERE portfolio = ? GROUP BY stock_id''', (portfolio,)).fetchall()
         # #		for item in result
-        return result
+        return per_stock

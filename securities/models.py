@@ -97,7 +97,7 @@ class Price(models.Model):
         """Return last price available, if given, return last price available before given date"""
         prices = self.get_prices(stock_id, before_date, order_by_date=True)
         if prices:
-            return prices[0]
+            return prices[0].price
         else:
             if none_equals_zero:
                 return Decimal(0.0)

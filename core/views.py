@@ -7,6 +7,8 @@ from core.models import UI
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.dates import DateFormatter
+from matplotlib.ticker import ScalarFormatter
+
 import datetime
 import random
 from django.http import HttpResponse
@@ -25,10 +27,6 @@ def import_historic_quotes(request):
     p = Price()
     result = p.import_historic_quotes()
     return render(request, 'import_historic_quotes.html', {'block_title': 'Import Historic Quotes', 'import_results': result})
-
-def update(request):
-    #return HttpResponse("Hello, world. You're at the m2/update index.")
-    return render(request, 'update.html')
 
 def rolling_profitability_png(request, portfolio, from_date, to_date):
     fig=Figure()
@@ -70,11 +68,12 @@ def portfolio_development_png(request, portfolio, from_date, to_date):
     fig=Figure()
     ax=fig.add_subplot(111)
     ui = UI()
-    dates, roi_list = ui.rolling_profitability(portfolio,
+    dates, pf_values = ui.portfolio_development(portfolio,
                                                datetime.datetime.strptime(from_date, '%Y-%m-%d'),
                                                datetime.datetime.strptime(to_date, '%Y-%m-%d'))
-    ax.plot_date(dates, roi_list, '-')
+    ax.plot_date(dates, pf_values, '-')
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     response = HttpResponse(content_type='image/png')
@@ -88,7 +87,7 @@ def portfolio_development(request):
         form = PortfolioForm(request.POST)
         # check whether it's valid:
         if form.is_valid():
-            return render(request, 'portfolio_development.html', {'block_title': 'Rolling Profitability',
+            return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                                   'form': form,
                                                                   'portfolio': form.cleaned_data['portfolio'],
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
@@ -97,5 +96,5 @@ def portfolio_development(request):
     else:
         form = PortfolioForm()
 
-    return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
+    return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                           'form': form})

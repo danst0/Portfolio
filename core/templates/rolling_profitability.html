@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <form action="{% url 'core.views.rolling_profitability' %}/" method="post">
+    <form action="{% url 'core.views.rolling_profitability' %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Execute" />

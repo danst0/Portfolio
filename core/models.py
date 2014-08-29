@@ -1,7 +1,7 @@
 # Create your models here.
 import datetime
 from transactions.models import Transaction
-from securities.models import Price
+from securities.models import Security, Price
 from decimal import Decimal
 
 
@@ -9,6 +9,7 @@ class UI:
     def __init__(self):
         self.transaction = Transaction()
         self.prices = Price()
+        self.secs = Security()
     def rolling_profitability(self, portfolio, from_date, to_date):
         time_span = (to_date - from_date).days
         interval = int(time_span / 12)
@@ -20,10 +21,10 @@ class UI:
             stocks_at_start = self.transaction.get_stocks_in_portfolio(portfolio, loop_from_date.strftime("%Y-%m-%d"))
             portfolio_value_at_start = Decimal(0.0)
             for key in stocks_at_start.keys():
-                portfolio_value_at_start += stocks_at_start[key] * self.prices.get_last_price_from_stock_id(key,
-                                                                                                            loop_from_date.strftime(
-                                                                                                                "%Y-%m-%d"),
-                                                                                                            none_equals_zero=True)
+                portfolio_value_at_start += stocks_at_start[key] *\
+                                            self.prices.get_last_price_from_stock_id(key,
+                                                                                     loop_from_date.strftime("%Y-%m-%d"),
+                                                                                     none_equals_zero=True)
             stocks_at_end = self.transaction.get_stocks_in_portfolio(portfolio, loop_to_date.strftime("%Y-%m-%d"))
             portfolio_value_at_end = Decimal(0.0)
             for key in stocks_at_end.keys():
@@ -55,15 +56,14 @@ class UI:
         total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)
         for i in range(int((to_date - from_date).days / time_intervall)):
             loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * 30))
-            stocks_at_date = self.transaction.get_portfolio('All', loop_date.strftime("%Y-%m-%d"))
-            portfolio_value_at_date = 0.0
+            stocks_at_date = self.transaction.get_total_for_portfolio('All', loop_date.strftime("%Y-%m-%d"))
+            portfolio_value_at_date = Decimal(0)
             stocks = []
-            for key in stocks_at_date.keys():
-                nominale = stocks_at_date[key]
-                price = self.prices.get_last_price_from_stock_id(key, loop_date.strftime("%Y-%m-%d"),
+            for stock_id in stocks_at_date.keys():
+                price = self.prices.get_last_price_from_stock_id(stock_id, loop_date.strftime("%Y-%m-%d"),
                                                                  none_equals_zero=True)
-                portfolio_value_at_date += nominale * price
-                stocks.append((key, nominale, price))
+                portfolio_value_at_date += stocks_at_date[stock_id]['nominal'] * price
+                stocks.append((stock_id, stocks_at_date[stock_id]['nominal'], price))
 
             invest = self.transaction.get_total_invest('All', loop_date, to_date)
             divest = self.transaction.get_total_divest('All', loop_date, to_date)
@@ -73,9 +73,7 @@ class UI:
             pf_details.append(stocks)
             # Logic of tmp_value: PF Value: reduce invests that happend after that date; further reduce by all dividends that will happen until end of horizon (vs. what already came)
             tmp_value = portfolio_value_at_date - invest + divest - (total_dividend - dividend_before)
-            # 			print(tmp_value)
             pf_value.append(tmp_value)
-
 
         # Drivers vs. 1 intervall earlier
         delta_keys = []
@@ -90,13 +88,10 @@ class UI:
                     delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest(
                         'All', cur_key, dates[1], dates[0])
                     delta_keys.append([cur_key, delta, abs(delta)])
-        # print(delta_keys)
         delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
-        print('Total deviation vs. prior interval:', nice_number(pf_value[0] - pf_value[1]), '; major drivers:')
+        print('Total deviation vs. prior interval:', pf_value[0] - pf_value[1], '; major drivers:')
         for i in range(3):
-            print(i + 1, ': ' + self.secs.get_name_from_stock_id(delta_keys[i][0]), '(', nice_number(delta_keys[i][1]),
-                  ')')
-            # print(delta_keys)
+            print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]), ')')
 
         # Drivers vs. 2 intervall earlier
         delta_keys = []
@@ -111,17 +106,10 @@ class UI:
                     delta_keys.append([cur_key, delta, abs(delta)])
         # print(delta_keys)
         delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
-        print('Total deviation vs. pre-prior interval:', nice_number(pf_value[0] - pf_value[2]), '; major drivers:')
+        print('Total deviation vs. pre-prior interval:', pf_value[0] - pf_value[2], '; major drivers:')
         for i in range(3):
-            print(i + 1, ': ' + self.secs.get_name_from_stock_id(delta_keys[i][0]), '(', nice_number(delta_keys[i][1]),
-                  ')')
+            print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]),')')
             # print(delta_keys)
 
-        plt.plot(dates, pf_value, 'r')
-        plt.title('Portfolio values adj. by invest/divest/dividends; range: ' + loop_date.strftime(
-            '%Y-%m-%d') + ' -- ' + to_date.strftime('%Y-%m-%d'))
-        plt.xlabel('%')
-        plt.xticks(rotation=15)
-        plt.xlabel('Date')
-        plt.show()
+        return dates, pf_value
 

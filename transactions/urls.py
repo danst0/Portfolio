@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url
 from transactions import views
 
 urlpatterns = patterns('',
-                       url(r'/update/$', views.update, name='update'),
+                       url(r'update/$', views.update, name='update'),
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
                        # ex: /polls/5/results/

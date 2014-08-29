@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="{% url 'core.views.portfolio_development' %}/" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Execute" />
+    {{ content }}
+    {% if portfolio %}
+        <img src='{% url 'portfolio_development_png' portfolio from_date to_date %}' />
+    {% endif %}
+
+    </form>
+{% endblock %}

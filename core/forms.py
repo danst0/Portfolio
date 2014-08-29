@@ -2,7 +2,7 @@ from django import forms
 import datetime
 # Forms
 
-class RollingProfitabilityForm(forms.Form):
+class PortfolioForm(forms.Form):
     portfolio = forms.CharField(label='Portfolio', max_length=100, initial='All')
     time_span = 360
     tmp_default = (datetime.date.today() - datetime.timedelta(days=time_span)).strftime('%Y-%m-%d')

@@ -47,6 +47,81 @@ class UI:
         return dates, roi_list
 
 
+    def portfolio_development(self, portfolio, from_date, to_date):
+        dates = []
+        pf_details = []
+        pf_value = []
+        time_intervall = 30
+        total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)
+        for i in range(int((to_date - from_date).days / time_intervall)):
+            loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * 30))
+            stocks_at_date = self.transaction.get_portfolio('All', loop_date.strftime("%Y-%m-%d"))
+            portfolio_value_at_date = 0.0
+            stocks = []
+            for key in stocks_at_date.keys():
+                nominale = stocks_at_date[key]
+                price = self.prices.get_last_price_from_stock_id(key, loop_date.strftime("%Y-%m-%d"),
+                                                                 none_equals_zero=True)
+                portfolio_value_at_date += nominale * price
+                stocks.append((key, nominale, price))
+
+            invest = self.transaction.get_total_invest('All', loop_date, to_date)
+            divest = self.transaction.get_total_divest('All', loop_date, to_date)
+            dividend_before = self.transaction.get_total_dividend('All', from_date, loop_date)
+
+            dates.append(loop_date)
+            pf_details.append(stocks)
+            # Logic of tmp_value: PF Value: reduce invests that happend after that date; further reduce by all dividends that will happen until end of horizon (vs. what already came)
+            tmp_value = portfolio_value_at_date - invest + divest - (total_dividend - dividend_before)
+            # 			print(tmp_value)
+            pf_value.append(tmp_value)
 
 
+        # Drivers vs. 1 intervall earlier
+        delta_keys = []
+        for stock in pf_details[0]:
+            cur_key = stock[0]
+            cur_nom = stock[1]
+            cur_price = stock[2]
+            for old_stock in pf_details[1]:
+                if cur_key == old_stock[0]:
+                    # print(cur_nom * cur_price - old_stock[1] * old_stock[2], old_stock[1] * old_stock[2], cur_nom * cur_price, 'Nom', old_stock[1], cur_nom, 'EUR', old_stock[2],  cur_price)
+                    #					print(cur_key, '::', self.transaction.get_invest_divest('All', cur_key, dates[1], dates[0]))
+                    delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest(
+                        'All', cur_key, dates[1], dates[0])
+                    delta_keys.append([cur_key, delta, abs(delta)])
+        # print(delta_keys)
+        delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
+        print('Total deviation vs. prior interval:', nice_number(pf_value[0] - pf_value[1]), '; major drivers:')
+        for i in range(3):
+            print(i + 1, ': ' + self.secs.get_name_from_stock_id(delta_keys[i][0]), '(', nice_number(delta_keys[i][1]),
+                  ')')
+            # print(delta_keys)
+
+        # Drivers vs. 2 intervall earlier
+        delta_keys = []
+        for stock in pf_details[0]:
+            cur_key = stock[0]
+            cur_nom = stock[1]
+            cur_price = stock[2]
+            for old_stock in pf_details[2]:
+                if cur_key == old_stock[0]:
+                    delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest(
+                        'All', cur_key, dates[2], dates[0])
+                    delta_keys.append([cur_key, delta, abs(delta)])
+        # print(delta_keys)
+        delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
+        print('Total deviation vs. pre-prior interval:', nice_number(pf_value[0] - pf_value[2]), '; major drivers:')
+        for i in range(3):
+            print(i + 1, ': ' + self.secs.get_name_from_stock_id(delta_keys[i][0]), '(', nice_number(delta_keys[i][1]),
+                  ')')
+            # print(delta_keys)
+
+        plt.plot(dates, pf_value, 'r')
+        plt.title('Portfolio values adj. by invest/divest/dividends; range: ' + loop_date.strftime(
+            '%Y-%m-%d') + ' -- ' + to_date.strftime('%Y-%m-%d'))
+        plt.xlabel('%')
+        plt.xticks(rotation=15)
+        plt.xlabel('Date')
+        plt.show()
 

@@ -82,7 +82,8 @@ class Transaction(models.Model):
             cost = Decimal(0)
         else:
             raise NameError('Not a valid transaction type (' + str(transaction_type) +')')
-        if date > timezone.now().date():
+        #import pdb; pdb.set_trace()
+        if date > timezone.now():
             raise NameError('Date in the future (' + str(date) +')')
 
         t = Transaction.objects.get_or_create(transaction_type=transaction_type,

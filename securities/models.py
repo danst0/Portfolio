@@ -78,11 +78,15 @@ class Price(models.Model):
     def __str__(self):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
-    def get_prices(self, stock_id, before_date=None):
+    def get_prices(self, stock_id, before_date=None, order_by_date=False):
+        result = None
         if before_date:
-            return Price.objects.filter(stock_id=stock_id, date__lte=before_date)
+            result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
         else:
-            return Price.objects.filter(stock_id=stock_id)
+            result = Price.objects.filter(stock_id=stock_id)
+        if order_by_date:
+            result = result.order_by('-date')
+        return result
 
 
     def get_last_price(self, isin_id, before_date=None, none_equals_zero=False):
@@ -91,10 +95,9 @@ class Price(models.Model):
 
     def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
         """Return last price available, if given, return last price available before given date"""
-        prices = self.get_prices(stock_id, before_date)
+        prices = self.get_prices(stock_id, before_date, order_by_date=True)
         if prices:
-            max_key = max(prices.keys())
-            return prices[max_key]
+            return prices[0]
         else:
             if none_equals_zero:
                 return Decimal(0.0)
@@ -111,13 +114,12 @@ class Price(models.Model):
             no_quote = False
             no_yahoo_id = False
             if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
-                quote = None
+
                 try:
                     quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
                 except urllib.error.HTTPError:
                     no_quote = True
                 else:
-
                     for key in quote:
                         #print(quote, key)
                         Price.objects.get_or_create(stock_id=sec, date=key, price=quote[key]['Close'])

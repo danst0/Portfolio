@@ -41,7 +41,7 @@ class Security(models.Model):
                          Security.objects.filter(yahoo_id=name_alias_id)
         return None if not find_something else find_something[0]
     def add(self, name, aliases, isin_id, yahoo_id, type):
-        Security.objects.create(name=name, aliases=aliases, isin_id=isin_id, yahoo_id=yahoo_id, type=type)
+        Security.objects.get_or_create(name=name, aliases=aliases, isin_id=isin_id, yahoo_id=yahoo_id, type=type)
     def add_stump(self, name=None, aliases=None, isin_id=None, yahoo_id=None, type=None):
         unavailable = 'unknown' + Helper.rand_str()
         if not name:
@@ -101,10 +101,10 @@ class Price(models.Model):
             else:
                 return None
 
-    def import_historic_quotes(self):
+    def import_historic_quotes(self, years=15):
         result = []
         today = datetime.date.today()
-        first_day = datetime.date.today() - datetime.timedelta(days=15 * 365)
+        first_day = datetime.date.today() - datetime.timedelta(days=int(years * 365))
         today_str = today.strftime('%Y-%m-%d')
         first_day_str = first_day.strftime('%Y-%m-%d')
         for sec in Security.objects.all():

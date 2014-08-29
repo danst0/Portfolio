@@ -23,8 +23,8 @@ def index(request):
 def import_historic_quotes(request):
     # import pdb; pdb.set_trace()
     p = Price()
-    p.import_historic_quotes()
-    return render(request, 'import_historic_quotes.html', {'block_title': 'Import Historic Quotes'})
+    result = p.import_historic_quotes()
+    return render(request, 'import_historic_quotes.html', {'block_title': 'Import Historic Quotes', 'import_results': result})
 
 def update(request):
     #return HttpResponse("Hello, world. You're at the m2/update index.")

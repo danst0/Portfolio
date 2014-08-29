@@ -101,25 +101,30 @@ class Price(models.Model):
                 return None
 
     def import_historic_quotes(self):
-        print('Start update')
-
+        result = []
         today = datetime.date.today()
         first_day = datetime.date.today() - datetime.timedelta(days=15 * 365)
         today_str = today.strftime('%Y-%m-%d')
         first_day_str = first_day.strftime('%Y-%m-%d')
         for sec in Security.objects.all():
+            no_quote = False
+            no_yahoo_id = False
             if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
-                print('Updating', sec.yahoo_id)
                 quote = None
                 try:
                     quote = ystockquote.get_historical_prices(sec.yahoo_id, first_day_str, today_str)
                 except urllib.error.HTTPError:
-                    print('No quotes found for:', sec.name)
-                    self.last_update += datetime.timedelta(seconds=-90)
+                    no_quote = True
                 else:
+
                     for key in quote:
                         #print(quote, key)
                         Price.objects.get_or_create(stock_id=sec, date=key, price=quote[key]['Close'])
             else:
-                print('No Yahoo ID for', sec.name)
-        print('Update finished')
+                no_yahoo_id = True
+            result.append({'stock_id': sec,
+                           'yahoo_id': sec.yahoo_id,
+                           'name': sec.name,
+                           'no_quote': no_quote,
+                           'no_yahoo_id': no_yahoo_id})
+        return result

@@ -1,5 +1,16 @@
 {% extends "base.html" %}
+{% load admin_urls %}
 
 {% block content %}
-    We do some importing of historic quotes
+    We do some importing of historic quotes, these are the results:
+    {% for item in import_results %}
+        <div class="quote_item">
+        {% if item.no_yahoo_id %}
+            Please add yahoo id {{ item.name }} {{ item.yahoo_id }} {% url opts|admin_urlname:'change' item.stock_id %}
+        {% endif %}
+        {% if item.no_quote %}
+            Please verify yahoo id {{ item.name }} {{ item.yahoo_id }}, could not retrieve quote
+        {% endif %}
+        </div>
+    {% endfor %}
 {% endblock %}

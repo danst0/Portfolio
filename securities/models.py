@@ -5,6 +5,7 @@ from django.utils import timezone
 from decimal import Decimal
 import ystockquote
 import urllib
+from django.core.urlresolvers import reverse
 
 # Create your models here.
 class Security(models.Model):
@@ -122,7 +123,7 @@ class Price(models.Model):
                         Price.objects.get_or_create(stock_id=sec, date=key, price=quote[key]['Close'])
             else:
                 no_yahoo_id = True
-            result.append({'stock_id': sec,
+            result.append({'stock_id': sec.id,
                            'yahoo_id': sec.yahoo_id,
                            'name': sec.name,
                            'no_quote': no_quote,

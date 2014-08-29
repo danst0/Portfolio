@@ -75,7 +75,7 @@ class UI:
         # print(aliases)
         for num in range(len(aliases)):
             aliases[num] = aliases[num].strip()
-        rand_id = 'unknown' + rand_str()
+        rand_id = 'n/a' + rand_str()
         isin_id = input_string('ISIN', '[A-Z]{2}[0-9]{10}', rand_id)
         yahoo_id = input_string('Yahoo ID', '[A-Z0-9]{1,10}', rand_id)
         type = input_string('Type', 'Stock|Bond|REIT')

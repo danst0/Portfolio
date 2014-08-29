@@ -3,8 +3,6 @@ from securities.models import Security
 
 # Register your models here.
 
-
-
 class SecurityAdmin(admin.ModelAdmin):
     actions = ('merge', )
     fields = ['name', 'aliases', 'type', 'isin_id', 'yahoo_id']

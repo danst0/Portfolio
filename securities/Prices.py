@@ -48,21 +48,7 @@ class Prices:
             values.append(item[1])
         return dates, values
 
-    def find_split_date(self, isin_id):
-        stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
-        prices = self.get_prices(stock_id)
-        old_price = None
-        last_unsplit_date = None
-        suggested_ratio = None
-        for date in reversed(sorted(prices)):
-            new_price = prices[date]
-            if old_price != None:
-                if new_price / float(old_price) > 1.5:
-                    last_unsplit_date = date
-                    suggested_ratio = int(round(new_price / float(old_price), 0))
-                    break
-            old_price = new_price
-        return last_unsplit_date, suggested_ratio
+
 
     def row_exists(self, stock_id, date):
         result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''',

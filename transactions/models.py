@@ -162,25 +162,30 @@ class Transaction(models.Model):
                 per_stock[item.stock_id]['total'] += item.total
         return per_stock
 
-    def list_pf(self, portfolio, at_date):
-        stocks = self.get_total_for_portfolio(portfolio, at_date)
+    def list_pf(self, portfolio, from_date, to_date):
+        stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date)
+        stocks_at_end = self.get_total_for_portfolio(portfolio, to_date)
         values = []
-        tmp = Decimal(0)
-        for key in sorted(stocks.keys(), key=lambda x: x.name):
-            price = self.prices.get_last_price_from_stock_id(key, at_date)
-            value = Decimal(0)
-            if price:
-                value = stocks[key]['nominal'] * price
-            else:
-                pass
+        total_value = Decimal(0)
+        total_profit = Decimal(0)
+        for key in sorted(stocks_at_end.keys(), key=lambda x: x.name):
+            price_at_beginning = self.prices.get_last_price_from_stock_id(key, from_date)
+            price_at_end = self.prices.get_last_price_from_stock_id(key, to_date)
+            value_at_beginning = Decimal(0)
+            value_at_end = Decimal(0)
+            if price_at_beginning and key in stock_at_beginning.keys():
+                value_at_beginning = stock_at_beginning[key]['nominal'] * price_at_beginning
+            if price_at_end:
+                value_at_end = stocks_at_end[key]['nominal'] * price_at_end
 
             values.append({'name': key.name,
-                           'nominal': stocks[key]['nominal'],
-                           'cost': stocks[key]['cost'],
-                           'price': price,
-                           'invest': stocks[key]['total'],
-                           'value': value,
-                           'profit': value+stocks[key]['total']})
-            tmp += value
-        values.append({'name': 'Total', 'value': tmp})
+                           'nominal': stocks_at_end[key]['nominal'],
+                           'cost': stocks_at_end[key]['cost'],
+                           'price': price_at_end,
+                           'value_at_beginning': value_at_beginning,
+                           'value_at_end': value_at_end,
+                           'profit': value_at_end-value_at_beginning})
+            total_value += value_at_end
+            total_profit += value_at_end - value_at_beginning
+        values.append({'name': 'Total', 'value_at_end': total_value, 'profit': total_profit})
         return values

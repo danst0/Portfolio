@@ -104,30 +104,30 @@ def portfolio_overview(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = PortfolioFormOneDate(request.POST)
+        form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
             t = Transaction()
-            content = t.list_pf(form.cleaned_data['portfolio'], form.cleaned_data['from_date'].strftime('%Y-%m-%d'))
-            for num, line in enumerate(content):
-                for item in line:
-                    item = ''
+            content = t.list_pf(form.cleaned_data['portfolio'],
+                                form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
+                                form.cleaned_data['to_date'].strftime('%Y-%m-%d'))
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                                'form': form,
                                                                'portfolio': form.cleaned_data['portfolio'],
                                                                'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
+                                                               'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
                                                                'header': ['Name', 'Nominal', 'Price',
-                                                                          'Investment', 'Value', 'Profit', 'Cost'],
+                                                                          'Last value', 'Current value', 'Profit'],
                                                                'walk_through_header': ['name',
                                                                                        'nominal',
                                                                                        'price',
-                                                                                       'invest',
-                                                                                       'value',
-                                                                                       'profit', 'cost'],
+                                                                                       'value_at_beginning',
+                                                                                       'value_at_end',
+                                                                                       'profit'],
                                                                'portfolio_content': content})
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = PortfolioFormOneDate()
+        form = PortfolioFormTwoDates()
 
     return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                        'form': form})

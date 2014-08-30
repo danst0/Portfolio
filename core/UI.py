@@ -239,8 +239,6 @@ class UI:
         self.money.add_income(my_date, my_income)
         self.money.add_total(my_date, my_total)
 
-
-
     def savings(self):
         tmp_default = self.last_day_of_last_month(datetime.date.today() - relativedelta(months=1)).strftime('%Y-%m-%d')
         from_date = input('From date [' + tmp_default + '] ')

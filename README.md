@@ -7,7 +7,7 @@ Todos
 =====
 * How to integrate current scripts into django? --> done
 * Give update view a few informations
-* Write tests for aliases
+* Write tests for aliases --> done
 * How to display multiple information at once (__str__)
 * App Design
  * Switch to django for the data model -- > done

@@ -160,9 +160,25 @@ class Transaction(models.Model):
                 per_stock[item.stock_id]['nominal'] += item.nominal
                 per_stock[item.stock_id]['cost'] += item.cost
                 per_stock[item.stock_id]['total'] += item.total
-        # print(per_stock)
-        aggregate = {}
-        # self.data.c.execute('''SELECT name, SUM(nominal), SUM(cost), SUM(total) FROM transactions
-        # INNER JOIN stocks ON stocks.id = transactions.stock_id WHERE portfolio = ? GROUP BY stock_id''', (portfolio,)).fetchall()
-        # #		for item in result
         return per_stock
+
+    def list_pf(self, portfolio, at_date):
+        stocks = self.get_total_for_portfolio(portfolio, at_date)
+        values = []
+        tmp = Decimal(0)
+        for key in sorted(stocks.keys(), key=lambda x: x.name):
+            price = self.prices.get_last_price_from_stock_id(key, at_date)
+            value = Decimal(0)
+            if price:
+                value = stocks[key]['nominal'] * price
+            else:
+                pass
+
+            values.append((key.name,
+                           stocks[key],
+                           price,
+                           value))
+            tmp += value
+        print(4 * ['====='])
+        print(['Total', '----', '----', tmp])
+        return values

@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
-from core.forms import PortfolioForm
+from core.forms import PortfolioFormOneDate, PortfolioFormTwoDates
 from core.models import UI
+from transactions.models import Transaction
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -47,7 +48,7 @@ def rolling_profitability(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = PortfolioForm(request.POST)
+        form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
             content = 'You are great <a href="http://google.com">so great</a>'
@@ -59,7 +60,7 @@ def rolling_profitability(request):
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d')})
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = PortfolioForm()
+        form = PortfolioFormTwoDates()
 
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                           'form': form})
@@ -84,7 +85,7 @@ def portfolio_development(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = PortfolioForm(request.POST)
+        form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
@@ -94,7 +95,30 @@ def portfolio_development(request):
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d')})
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = PortfolioForm()
+        form = PortfolioFormTwoDates()
 
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                           'form': form})
+
+def portfolio_overview(request):
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = PortfolioFormOneDate(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            t = Transaction()
+            content = t.list_pf(form.cleaned_data['portfolio'], form.cleaned_data['from_date'].strftime('%Y-%m-%d'))
+            return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
+                                                               'form': form,
+                                                               'portfolio': form.cleaned_data['portfolio'],
+                                                               'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
+                                                               'content': content})
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = PortfolioFormOneDate()
+
+    return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
+                                                       'form': form})
+
+    self.portfolio.print_pf(my_date)

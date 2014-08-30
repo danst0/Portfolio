@@ -116,8 +116,14 @@ def portfolio_overview(request):
                                                                'form': form,
                                                                'portfolio': form.cleaned_data['portfolio'],
                                                                'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
-                                                               'header': ['Name', 'Nominal', 'Cost', 'Price',
-                                                                          'Investment', 'Value', 'Profit'],
+                                                               'header': ['Name', 'Nominal', 'Price',
+                                                                          'Investment', 'Value', 'Profit', 'Cost'],
+                                                               'walk_through_header': ['name',
+                                                                                       'nominal',
+                                                                                       'price',
+                                                                                       'invest',
+                                                                                       'value',
+                                                                                       'profit', 'cost'],
                                                                'portfolio_content': content})
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -125,5 +131,3 @@ def portfolio_overview(request):
 
     return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                        'form': form})
-
-    self.portfolio.print_pf(my_date)

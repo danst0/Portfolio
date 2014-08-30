@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load filters %}
 
 {% block content %}
     <form action="{% url 'core.views.portfolio_overview' %}" method="post">
@@ -18,8 +19,8 @@
         <tbody>
             {% for line in portfolio_content %}
                <tr>
-                    {% for item in line %}
-                        <td>{{ item }}</td>
+                    {% for key in walk_through_header %}
+                        <td>{{ line|keyvalue:key|nicenumber }}</td>
                     {% endfor %}
                 </tr>
             {% endfor %}

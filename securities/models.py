@@ -6,28 +6,48 @@ from decimal import Decimal
 import ystockquote
 import urllib
 from django.core.urlresolvers import reverse
+import pickle
+import base64
+
+
+class ListField(models.TextField):
+    __metaclass__ = models.SubfieldBase
+
+    def __init__(self, *args, **kwargs):
+        self.token = kwargs.pop('token', ':::')
+        kwargs['max_length'] = 400
+        super(ListField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if isinstance(value, list):
+            return value
+        result = value.split(self.token).pop('')
+        return result
+    def get_prep_value(self, value):
+        # print('value', value)
+        if isinstance(value, list) or isinstance(value, tuple):
+            value = self.token.join(value)
+        elif value.find(':::') != -1:
+            value = value.strip(':::')
+        else:
+            value = ''
+        # print('newval', value)
+        return value
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return self.get_db_prep_value(value)
+
 
 # Create your models here.
 class Security(models.Model):
     name = models.CharField(max_length=200)
-    aliases = models.CharField(max_length=400)
+    aliases = ListField(blank=True, null=True)
     isin_id = models.CharField(max_length=10)
     yahoo_id = models.CharField(max_length=10)
     type = models.CharField(max_length=10)
 
     search_fields = ['name', 'aliases']
-
-    def set_aliases(self, x):
-        if x and not isinstance(x, str):
-            self.aliases = ':::'.join(x)
-        else:
-            self.aliases = ''
-
-    def get_aliases(self):
-        if self.aliases == '':
-            return []
-        else:
-            return self.aliases.split(':::')
 
     def find(self, name_alias_id):
         """
@@ -41,7 +61,7 @@ class Security(models.Model):
                          Security.objects.filter(yahoo_id=name_alias_id)
         return None if not find_something else find_something[0]
     def add(self, name, aliases, isin_id, yahoo_id, type):
-        Security.objects.get_or_create(name=name, aliases=aliases, isin_id=isin_id, yahoo_id=yahoo_id, type=type)
+        return Security.objects.get_or_create(name=name, aliases=aliases, isin_id=isin_id, yahoo_id=yahoo_id, type=type)[0]
     def add_stump(self, name=None, aliases=None, isin_id=None, yahoo_id=None, type=None):
         unavailable = 'unknown' + Helper.rand_str()
         if not name:
@@ -131,3 +151,7 @@ class Price(models.Model):
                            'no_quote': no_quote,
                            'no_yahoo_id': no_yahoo_id})
         return result
+
+
+
+

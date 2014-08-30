@@ -174,14 +174,13 @@ class Transaction(models.Model):
             else:
                 pass
 
-            values.append((key.name,
-                           stocks[key]['nominal'],
-                           stocks[key]['cost'],
-                           price,
-                           -stocks[key]['total'],
-                           value,
-                           value-stocks[key]['total']))
+            values.append({'name': key.name,
+                           'nominal': stocks[key]['nominal'],
+                           'cost': stocks[key]['cost'],
+                           'price': price,
+                           'invest': stocks[key]['total'],
+                           'value': value,
+                           'profit': value+stocks[key]['total']})
             tmp += value
-        print(4 * ['====='])
-        print(['Total', '----', '----', tmp])
+        values.append({'name': 'Total', 'value': tmp})
         return values

@@ -109,11 +109,16 @@ def portfolio_overview(request):
         if form.is_valid():
             t = Transaction()
             content = t.list_pf(form.cleaned_data['portfolio'], form.cleaned_data['from_date'].strftime('%Y-%m-%d'))
+            for num, line in enumerate(content):
+                for item in line:
+                    item = ''
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                                'form': form,
                                                                'portfolio': form.cleaned_data['portfolio'],
                                                                'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
-                                                               'content': content})
+                                                               'header': ['Name', 'Nominal', 'Cost', 'Price',
+                                                                          'Investment', 'Value', 'Profit'],
+                                                               'portfolio_content': content})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormOneDate()

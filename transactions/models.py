@@ -175,9 +175,12 @@ class Transaction(models.Model):
                 pass
 
             values.append((key.name,
-                           stocks[key],
+                           stocks[key]['nominal'],
+                           stocks[key]['cost'],
                            price,
-                           value))
+                           -stocks[key]['total'],
+                           value,
+                           value-stocks[key]['total']))
             tmp += value
         print(4 * ['====='])
         print(['Total', '----', '----', tmp])

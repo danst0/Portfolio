@@ -5,7 +5,28 @@
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Execute" />
-    {{ content }}
+    {% if portfolio_content %}
+        <div id="table">
+        <table border=1>
+        <thead>
+            <tr>
+            {% for attr_head in header %}
+               <th>{{ attr_head }}</th>
+            {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in portfolio_content %}
+               <tr>
+                    {% for item in line %}
+                        <td>{{ item }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        </div>
+    {% endif %}
 
     </form>
 {% endblock %}

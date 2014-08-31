@@ -47,7 +47,7 @@ class PriceTests(TestCase):
         result = Security.objects.get(name='Test')
         self.assertEqual(result.aliases, 'SomeAliasString')
 
-    def test_stock_splits(self):
+    def test_stock_splits_price(self):
         sec = Security()
         price = Price()
         mysec = sec.add('Test', ['SomeAliasString'], '', 'APC.DE', 'Stock')

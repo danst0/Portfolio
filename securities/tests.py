@@ -29,25 +29,25 @@ class PriceTests(TestCase):
         price = p.get_last_price_from_stock_id(mysec, date)
         self.assertEqual(price, Decimal('70.93'))
 
-    def a_test_assignment_of_str_as_alias(self):
+    def test_assignment_of_str_as_alias(self):
         sec = Security()
         sec.add('Test', 'SomeAliasString', '', 'APC.DE', 'Stock')
         result = Security.objects.get(name='Test')
         self.assertEqual(result.aliases, '')
 
-    def a_test_assignment_of_str_with_token_as_alias(self):
+    def test_assignment_of_str_with_token_as_alias(self):
         sec = Security()
         sec.add('Test', 'SomeAliasString:::', '', 'APC.DE', 'Stock')
         result = Security.objects.get(name='Test')
         self.assertEqual(result.aliases, 'SomeAliasString')
 
-    def a_test_assignment_of_alias(self):
+    def test_assignment_of_alias(self):
         sec = Security()
         sec.add('Test', ['SomeAliasString'], '', 'APC.DE', 'Stock')
         result = Security.objects.get(name='Test')
         self.assertEqual(result.aliases, 'SomeAliasString')
 
-    def a_test_stock_splits(self):
+    def test_stock_splits(self):
         sec = Security()
         price = Price()
         mysec = sec.add('Test', ['SomeAliasString'], '', 'APC.DE', 'Stock')

@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 import pickle
 import base64
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 
 
@@ -92,9 +92,10 @@ class Price(models.Model):
     date = models.DateField('date of price')
     price = models.DecimalField(max_digits=20, decimal_places=4)
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.securities = Security()
         self.securitysplit = SecuritySplit()
+        super().__init__(*args, **kwargs)
 
     def import_prices(self, price_updates):
         for file in price_updates:

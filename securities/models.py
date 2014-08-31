@@ -8,6 +8,10 @@ import urllib
 from django.core.urlresolvers import reverse
 import pickle
 import base64
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 
 class ListField(models.TextField):
@@ -23,6 +27,7 @@ class ListField(models.TextField):
             return value
         result = value.split(self.token).pop('')
         return result
+
     def get_prep_value(self, value):
         # print('value', value)
         if isinstance(value, list) or isinstance(value, tuple):
@@ -60,8 +65,10 @@ class Security(models.Model):
                          Security.objects.filter(isin_id=name_alias_id) |\
                          Security.objects.filter(yahoo_id=name_alias_id)
         return None if not find_something else find_something[0]
+
     def add(self, name, aliases, isin_id, yahoo_id, type):
         return Security.objects.get_or_create(name=name, aliases=aliases, isin_id=isin_id, yahoo_id=yahoo_id, type=type)[0]
+
     def add_stump(self, name=None, aliases=None, isin_id=None, yahoo_id=None, type=None):
         unavailable = 'unknown' + Helper.rand_str()
         if not name:
@@ -75,9 +82,9 @@ class Security(models.Model):
         if not type:
             type = unavailable
         self.add(name, aliases, isin_id, yahoo_id, type)
+
     def __str__(self):
         return self.name
-
 
 
 class Price(models.Model):
@@ -102,6 +109,8 @@ class Price(models.Model):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
+        splits = SecuritySplits()
+        stock_splits = splits.get_splits_before_date(stock_id, before_date)
         if before_date:
             result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
         else:
@@ -109,7 +118,6 @@ class Price(models.Model):
         if order_by_date:
             result = result.order_by('-date')
         return result
-
 
     def get_last_price(self, isin_id, before_date=None, none_equals_zero=False):
         stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
@@ -133,7 +141,9 @@ class Price(models.Model):
         first_day = datetime.date.today() - datetime.timedelta(days=int(years * 365))
         today_str = today.strftime('%Y-%m-%d')
         first_day_str = first_day.strftime('%Y-%m-%d')
+        logger.info('Start import of historic quotes')
         for sec in Security.objects.all():
+            logger.debug('Security ' + str(sec))
             no_quote = False
             no_yahoo_id = False
             if sec.yahoo_id != '' and not sec.yahoo_id.startswith('unknown'):
@@ -143,8 +153,10 @@ class Price(models.Model):
                 except urllib.error.HTTPError:
                     no_quote = True
                 else:
+                    logger.debug('Found quotes')
                     for key in quote:
-                        Price.objects.get_or_create(stock_id=sec, date=key, price=quote[key]['Close'])
+                        
+                        self.add(sec, key, quote[key]['Close'])
             else:
                 no_yahoo_id = True
             result.append({'stock_id': sec.id,
@@ -154,6 +166,15 @@ class Price(models.Model):
                            'no_yahoo_id': no_yahoo_id})
         return result
 
+    def add(self, stock_id, date, price):
+        logger.debug('Adding new price ' + str(stock_id) + ', date ' + str(date) + ', ' + str(price))
+        if isinstance(date, str):
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+        if not isinstance(date, datetime.date):
+            date = date.date()
+        logger.debug('Adding new price ' + str(stock_id) + ', date ' + str(date) + ', ' + str(price))
+        return Price.objects.get_or_create(stock_id=stock_id, date=date, price=price)
+
 
 class SecuritySplits(models.Model):
     stock_id = models.ForeignKey(Security)
@@ -161,12 +182,11 @@ class SecuritySplits(models.Model):
     # Splitratio 7.0 --> 1 old stock for 7 new ones
     ratio = models.DecimalField(max_digits=20, decimal_places=4)
 
-    def split_before_date(self, stock_id, before_date):
-        result = SecuritySplits.objects.filter(stock_id=stock_id, date__gte=before_date)
-        if result:
-            return True
-        else:
-            return False
+    def get_splits_before_date(self, stock_id, before_date):
+        return SecuritySplits.objects.filter(stock_id=stock_id, date__lte=before_date)
+
+    def add(self, stock_id, date, ratio):
+        return SecuritySplits.objects.get_or_create(stock_id=stock_id, date=date, ratio=ratio)
 
     def find_split_date(self, stock_id):
         prices = self.get_prices(stock_id)

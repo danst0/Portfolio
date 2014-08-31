@@ -94,7 +94,7 @@ class Price(models.Model):
 
     def __init__(self):
         self.securities = Security()
-        self.securitysplit = SecuritySplits()
+        self.securitysplit = SecuritySplit()
 
     def import_prices(self, price_updates):
         for file in price_updates:
@@ -109,7 +109,7 @@ class Price(models.Model):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
-        splits = SecuritySplits()
+        splits = SecuritySplit()
         stock_splits = splits.get_splits_before_date(stock_id, before_date)
         if before_date:
             result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
@@ -125,7 +125,7 @@ class Price(models.Model):
 
     def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
         """Return last price available, if given, return last price available before given date"""
-        relevant_split = self.securitysplit.split_before_date(stock_id, before_date)
+        relevant_split = self.securitysplit.get_splits_before_date(stock_id, before_date)
         prices = self.get_prices(stock_id, before_date, order_by_date=True)
         if prices:
             return prices[0].price
@@ -155,7 +155,7 @@ class Price(models.Model):
                 else:
                     logger.debug('Found quotes')
                     for key in quote:
-                        
+                        logger.debug('Security ' + str(sec))
                         self.add(sec, key, quote[key]['Close'])
             else:
                 no_yahoo_id = True
@@ -169,38 +169,38 @@ class Price(models.Model):
     def add(self, stock_id, date, price):
         logger.debug('Adding new price ' + str(stock_id) + ', date ' + str(date) + ', ' + str(price))
         if isinstance(date, str):
-            date = datetime.datetime.strptime(date, '%Y-%m-%d')
-        if not isinstance(date, datetime.date):
-            date = date.date()
-        logger.debug('Adding new price ' + str(stock_id) + ', date ' + str(date) + ', ' + str(price))
+            date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        if isinstance(price, str):
+            price = Decimal(price)
+        # print(type(stock_id), type(date), type(price))
         return Price.objects.get_or_create(stock_id=stock_id, date=date, price=price)
 
 
-class SecuritySplits(models.Model):
+class SecuritySplit(models.Model):
     stock_id = models.ForeignKey(Security)
     date = models.DateField('date of split')
     # Splitratio 7.0 --> 1 old stock for 7 new ones
     ratio = models.DecimalField(max_digits=20, decimal_places=4)
 
     def get_splits_before_date(self, stock_id, before_date):
-        return SecuritySplits.objects.filter(stock_id=stock_id, date__lte=before_date)
+        return SecuritySplit.objects.filter(stock_id=stock_id, date__lte=before_date)
 
     def add(self, stock_id, date, ratio):
-        return SecuritySplits.objects.get_or_create(stock_id=stock_id, date=date, ratio=ratio)
+        return SecuritySplit.objects.get_or_create(stock_id=stock_id, date=date, ratio=ratio)
 
-    def find_split_date(self, stock_id):
-        prices = self.get_prices(stock_id)
-        old_price = None
-        last_unsplit_date = None
-        suggested_ratio = None
-        for date in reversed(sorted(prices)):
-            new_price = prices[date]
-            if old_price != None:
-                if new_price / float(old_price) > 1.5:
-                    last_unsplit_date = date
-                    suggested_ratio = int(round(new_price / float(old_price), 0))
-                    break
-            old_price = new_price
-        return last_unsplit_date, suggested_ratio
+    # def find_split_date(self, stock_id):
+    #     prices = self.get_prices(stock_id)
+    #     old_price = None
+    #     last_unsplit_date = None
+    #     suggested_ratio = None
+    #     for date in reversed(sorted(prices)):
+    #         new_price = prices[date]
+    #         if old_price != None:
+    #             if new_price / float(old_price) > 1.5:
+    #                 last_unsplit_date = date
+    #                 suggested_ratio = int(round(new_price / float(old_price), 0))
+    #                 break
+    #         old_price = new_price
+    #     return last_unsplit_date, suggested_ratio
 
 

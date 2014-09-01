@@ -2,7 +2,7 @@ from django.test import TestCase
 import datetime
 from decimal import *
 from transactions.models import Portfolio, Transaction
-from securities.models import Security, Price
+from securities.models import Security, Price, SecuritySplit
 from django.utils import timezone
 
 # Create your tests here.
@@ -56,3 +56,34 @@ class TransactionTests(TestCase):
                              {
                                  'name': 'Total',
                                  'value': Decimal('11100')}])
+
+    def test_stock_splits_quantity(self):
+
+        pf = Portfolio.objects.create(name='Test')
+        sec = Security()
+        price = Price()
+        mysec = sec.add('Test', ['SomeAliasString'], '', 'APC.DE', 'Stock')
+        split = SecuritySplit()
+        time_price_1 = timezone.now() - datetime.timedelta(days=20)
+        time_split = timezone.now() - datetime.timedelta(days=10)
+        time_price_2 = timezone.now() - datetime.timedelta(days=5)
+        price.add(mysec, time_price_1, 100)
+        price.add(mysec, time_price_2, 15)
+        split.add(mysec, time_split, 7)
+        t = Transaction()
+        t.add('b', pf, mysec, time_price_1, 100, 100, 100)
+        t.add('b', pf, mysec, time_split, 90, 100, 100)
+        t.add('b', pf, mysec, time_price_2, 80, 100, 100)
+
+        result = t.get_total_for_portfolio(pf.name, time_price_1)
+        # print(result[mysec]['nominal'])
+        self.assertEqual(result[mysec]['nominal'], Decimal('700'))
+
+        # import pdb; pdb.set_trace()
+        result = t.get_total_for_portfolio(pf.name, time_split)
+        # print(result[mysec]['nominal'])
+        self.assertEqual(result[mysec]['nominal'], Decimal('790'))
+
+        result = t.get_total_for_portfolio(pf.name, time_price_2)
+        # print(result[mysec]['nominal'])
+        self.assertEqual(result[mysec]['nominal'], Decimal('870'))

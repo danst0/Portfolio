@@ -110,14 +110,23 @@ class Price(models.Model):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
-        splits = SecuritySplit()
-        stock_splits = splits.get_splits_before_date(stock_id, before_date)
+
+        ss = SecuritySplit()
+        splits = ss.get_splits(stock_id)
         if before_date:
             result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
         else:
             result = Price.objects.filter(stock_id=stock_id)
         if order_by_date:
             result = result.order_by('-date')
+        if splits:
+            new_prices = []
+            for split in splits:
+                for price in result:
+                    if price.date < split.date:
+                        price.price = price.price / split.ratio
+                    new_prices.append(price)
+            result = new_prices
         return result
 
     def get_last_price(self, isin_id, before_date=None, none_equals_zero=False):
@@ -126,7 +135,6 @@ class Price(models.Model):
 
     def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
         """Return last price available, if given, return last price available before given date"""
-        relevant_split = self.securitysplit.get_splits_before_date(stock_id, before_date)
         prices = self.get_prices(stock_id, before_date, order_by_date=True)
         if prices:
             return prices[0].price
@@ -185,6 +193,16 @@ class SecuritySplit(models.Model):
 
     def get_splits_before_date(self, stock_id, before_date):
         return SecuritySplit.objects.filter(stock_id=stock_id, date__lte=before_date)
+
+    def get_splits(self, stock_id):
+        return SecuritySplit.objects.filter(stock_id=stock_id)
+
+    def get_ratio_before_date(self, stock_id, before_date):
+        splits = self.get_splits_before_date(stock_id, before_date)
+        ratio = Decimal(1)
+        for split in splits:
+            ratio = ratio * split.ratio
+        return ratio
 
     def add(self, stock_id, date, ratio):
         return SecuritySplit.objects.get_or_create(stock_id=stock_id, date=date, ratio=ratio)

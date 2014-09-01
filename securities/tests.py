@@ -47,7 +47,8 @@ class PriceTests(TestCase):
         result = Security.objects.get(name='Test')
         self.assertEqual(result.aliases, 'SomeAliasString')
 
-    def test_stock_splits(self):
+    def test_stock_splits_price(self):
+        # import pdb; pdb.set_trace()
         sec = Security()
         price = Price()
         mysec = sec.add('Test', ['SomeAliasString'], '', 'APC.DE', 'Stock')
@@ -59,4 +60,5 @@ class PriceTests(TestCase):
         price.add(mysec, time_price_2, 15)
         split.add(mysec, time_split, 7)
         result = price.get_prices(mysec)
-        self.assertEqual(result, 'SomeAliasString')
+        # print(result)
+        self.assertEqual(result[0].price, Decimal('14.28571428571428571428571429'))

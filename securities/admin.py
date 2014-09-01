@@ -15,10 +15,10 @@ class SecurityAdmin(admin.ModelAdmin):
         for r in related:
             valnames.setdefault(r.model, []).append(r.field.name)
         for sec in tail:
-            print(main.name, sec.name)
+            
             if main.name.lower() != sec.name.lower():
                 main.name =main.name + '::' + sec.name
-            main.set_aliases(list(set(main.get_aliases() + sec.get_aliases())))
+            main.aliases = list(set(main.aliases + sec.aliases))
             if main.isin_id.lower() != sec.isin_id.lower():
                 main.isin_id = main.isin_id + '::' + sec.isin_id
             if main.yahoo_id.lower() != sec.yahoo_id.lower():

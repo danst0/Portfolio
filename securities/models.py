@@ -110,15 +110,14 @@ class Price(models.Model):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
-
-        ss = SecuritySplit()
-        splits = ss.get_splits(stock_id)
         if before_date:
             result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
         else:
             result = Price.objects.filter(stock_id=stock_id)
         if order_by_date:
             result = result.order_by('-date')
+        ss = SecuritySplit()
+        splits = ss.get_splits(stock_id)
         if splits:
             new_prices = []
             for split in splits:

@@ -4,6 +4,7 @@ from decimal import *
 from django.db import models
 
 from securities.models import Security
+from securities.models import SecuritySplit
 from securities.models import Price
 from transactions.Importer import CortalConsors
 from django.utils import timezone
@@ -149,15 +150,29 @@ class Transaction(models.Model):
             stocks[item.id] = stocks[item.id] + item.nominal
         return stocks
 
+    def rectify_nominal_with_stock_split(self, stock_id, stock_date, nominal):
+        ss = SecuritySplit()
+        splits = ss.get_splits(stock_id)
+        if splits:
+            for split in splits:
+                if stock_date < split.date:
+                    nominal = nominal * split.ratio
+        return nominal
+
     def get_total_for_portfolio(self, portfolio, date):
-        """NOT YET FINAL"""
         result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date)
         per_stock = {}
         for item in result:
             if item.stock_id not in per_stock.keys():
-                per_stock[item.stock_id] = {'nominal': item.nominal, 'cost': item.cost, 'total': item.total}
+                per_stock[item.stock_id] = {'nominal': self.rectify_nominal_with_stock_split(item.stock_id,
+                                                                                             item.date,
+                                                                                             item.nominal),
+                                            'cost': item.cost,
+                                            'total': item.total}
             else:
-                per_stock[item.stock_id]['nominal'] += item.nominal
+                per_stock[item.stock_id]['nominal'] += self.rectify_nominal_with_stock_split(item.stock_id,
+                                                                                             item.date,
+                                                                                             item.nominal)
                 per_stock[item.stock_id]['cost'] += item.cost
                 per_stock[item.stock_id]['total'] += item.total
         return per_stock

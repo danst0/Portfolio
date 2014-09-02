@@ -186,25 +186,43 @@ class Transaction(models.Model):
         stocks_at_end = self.get_total_for_portfolio(portfolio, to_date)
         values = []
         total_value = Decimal(0)
+        total_value_at_beginning = Decimal(0)
         total_profit = Decimal(0)
-        for key in sorted(stocks_at_end.keys(), key=lambda x: x.name):
-            price_at_beginning = self.prices.get_last_price_from_stock_id(key, from_date)
-            price_at_end = self.prices.get_last_price_from_stock_id(key, to_date)
+        for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name):
+            price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id, from_date)
+            price_at_end = self.prices.get_last_price_from_stock_id(stock_id, to_date)
             value_at_beginning = Decimal(0)
             value_at_end = Decimal(0)
-            if price_at_beginning and key in stock_at_beginning.keys():
-                value_at_beginning = stock_at_beginning[key]['nominal'] * price_at_beginning
+            if price_at_beginning and stock_id in stock_at_beginning.keys():
+                value_at_beginning = stock_at_beginning[stock_id]['nominal'] * price_at_beginning
+            # print('value_at_beginning', value_at_beginning)
+            if value_at_beginning == 0:
+                # print('howdy')
+                value_at_beginning = -self.get_invest_divest(portfolio, stock_id, from_date, to_date)
             if price_at_end:
-                value_at_end = stocks_at_end[key]['nominal'] * price_at_end
-
-            values.append({'name': key.name,
-                           'nominal': stocks_at_end[key]['nominal'],
-                           'cost': stocks_at_end[key]['cost'],
+                value_at_end = stocks_at_end[stock_id]['nominal'] * price_at_end
+            try:
+                roi = str(round((value_at_end-value_at_beginning)/value_at_beginning * 100, 1)) + '%'
+            except InvalidOperation:
+                roi = 'n/a'
+            values.append({'name': stock_id.name,
+                           'nominal': stocks_at_end[stock_id]['nominal'],
+                           'cost': stocks_at_end[stock_id]['cost'],
                            'price': price_at_end,
                            'value_at_beginning': value_at_beginning,
                            'value_at_end': value_at_end,
-                           'profit': value_at_end-value_at_beginning})
+                           'profit': value_at_end-value_at_beginning,
+                           'roi': roi})
+            total_value_at_beginning += value_at_beginning
             total_value += value_at_end
             total_profit += value_at_end - value_at_beginning
-        values.append({'name': 'Total', 'value_at_end': total_value, 'profit': total_profit})
+        try:
+            total_roi = str(round((total_value-total_value_at_beginning)/total_value_at_beginning * 100, 1)) + '%'
+        except InvalidOperation:
+            total_roi = 'n/a'
+        values.append({'name': 'Total',
+                       'value_at_beginning': total_value_at_beginning,
+                       'value_at_end': total_value,
+                       'profit': total_profit,
+                       'roi': total_roi})
         return values

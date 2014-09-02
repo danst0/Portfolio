@@ -9,6 +9,7 @@ from securities.models import Price
 from transactions.Importer import CortalConsors
 from django.utils import timezone
 import datetime
+import jellyfish
 
 # from django.core.exceptions import ValidationError
 
@@ -56,7 +57,10 @@ class Transaction(models.Model):
     def import_transactions(self, transaction_update):
         for trans in transaction_update:
             if trans:
-                sec = self.secs.find(trans['name'])
+                sec, score = self.secs.find(trans['name'], fuzzy=True)
+                print('Trans', trans['name'])
+                print('Found', sec)
+                print('Score', score)
                 if not sec:
                     self.secs.add_stump(trans['name'])
                     sec = self.secs.find(trans['name'])

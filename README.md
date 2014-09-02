@@ -5,12 +5,9 @@ Portfolio wealth management app for the command line.
 
 Todos
 =====
-* How to integrate current scripts into django? --> done
-* Give update view a few informations
-* Write tests for aliases --> done
+* Add graph function for stocks/portfolio/profitability
+* Give update view a few informations more
 * How to display multiple information at once (__str__)
-* App Design
- * Switch to django for the data model -- > done
 * UI Design
  * Make nice
 * Testing
@@ -40,6 +37,13 @@ Todos
  * More logic
  * Less chaos
  * make dates into python dates and only convert to string if required
+
+Done
+---
+* How to integrate current scripts into django? --> done
+* Write tests for aliases --> done
+* App Design
+ * Switch to django for the data model -- > done
 
 Install
 ===

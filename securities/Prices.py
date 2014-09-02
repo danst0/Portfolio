@@ -94,18 +94,7 @@ class Prices:
 
 
 
-    def get_quote(self, symbol):
-        print(symbol)
-        base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='
-        content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')  # .replace('\n','')
 
-        quote = None
-        m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
-        if m:
-            quote = float(m.group(1))
-        else:
-            print('Error: could not retrieve quote')
-        return quote
 
     def __str__(self):
         keys = ['ID', 'Date', 'Price']

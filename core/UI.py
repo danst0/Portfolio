@@ -34,32 +34,7 @@ class UI:
 
 
 
-    def update_stocks(self):
-        print('Start update')
-        now = datetime.datetime.now()
-        if now < self.last_update + datetime.timedelta(seconds=30):
-            print('Please leave at least 30 secs between each update.')
-            return
-        else:
-            self.last_update = now
-        today = datetime.date.today()
-        if today.weekday() >= 5:
-            today = today + datetime.timedelta(days=4 - today.weekday())
-        yesterday = today + datetime.timedelta(days=-1)
-        day_str = today.strftime('%Y-%m-%d')
-        yesterday_str = yesterday.strftime('%Y-%m-%d')
-        for sec in self.secs:
-            if not sec.isin_id.startswith('unknown'):
-                quote = None
-                quote = self.prices.get_quote(sec.isin_id)
-                if not quote:
-                    print('No quotes found for:', sec.name)
-                    self.last_update += datetime.timedelta(seconds=-30)
-                else:
-                    self.prices.update(sec.isin_id, day_str, quote)
-            else:
-                print('No ISIN for', sec.name)
-        print('Update finished')
+
 
     def list_stocks(self):
         if not self.secs.empty():

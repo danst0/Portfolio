@@ -131,3 +131,10 @@ def portfolio_overview(request):
 
     return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                        'form': form})
+
+
+def update_stocks_boerse_frankfurt(request):
+    # import pdb; pdb.set_trace()
+    p = Price()
+    result = p.import_boerse_frankfurt()
+    return render(request, 'import_quotes.html', {'block_title': 'Import Quotes from Börse Frankfurt', 'import_results': result})

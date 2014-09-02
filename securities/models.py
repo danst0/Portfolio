@@ -2,6 +2,8 @@ from django.db import models
 from core.helper_functions import Helper
 import datetime
 from django.utils import timezone
+import urllib.request
+import re
 from decimal import Decimal
 import ystockquote
 import urllib
@@ -50,8 +52,8 @@ class ListField(models.TextField):
 class Security(models.Model):
     name = models.CharField(max_length=200)
     aliases = ListField(blank=True, null=True)
-    isin_id = models.CharField(max_length=10)
-    yahoo_id = models.CharField(max_length=10)
+    isin_id = models.CharField(max_length=12)
+    yahoo_id = models.CharField(max_length=12)
     type = models.CharField(max_length=10)
 
     search_fields = ['name', 'aliases']
@@ -171,6 +173,51 @@ class Price(models.Model):
                 return Decimal(0.0)
             else:
                 return None
+
+    def get_quote_boerse_frankfurt(self, symbol):
+        # print(symbol)
+        base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='
+        # print(base_url+symbol)
+        request = urllib.request.Request(base_url + symbol)
+        response = urllib.request.urlopen(request)
+        content = response.read().decode('utf-8')
+        # content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')  # .replace('\n','')
+        # import pdb; pdb.set_trace()
+
+        m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
+        if m:
+            quote = Decimal(m.group(1))
+        else:
+            m = re.search('The search for .{5,25}; delivered no results', content, re.DOTALL)
+            if m:
+                print('No results found for', symbol)
+            else:
+                print('Other unknown error while retrieving the quote')
+            quote = None
+        return quote
+
+    def update(self, sec, date, price):
+        Price.objects.get_or_create(stock_id=sec, date=date, price=price)
+
+    def import_boerse_frankfurt(self):
+        print('Start update')
+        today = datetime.date.today()
+        if today.weekday() >= 5:
+            today = today + datetime.timedelta(days=4 - today.weekday())
+        # yesterday = today + datetime.timedelta(days=-1)
+        for sec in Security.objects.all():
+            if not sec.isin_id.startswith('unknown'):
+                if not self.get_prices(sec):
+                    quote = self.get_quote_boerse_frankfurt(sec.isin_id)
+                    if not quote:
+                        print('No quotes found for:', sec.name)
+                    else:
+                        self.update(sec, today, quote)
+                else:
+                    print('Already have quote for', sec.name)
+            else:
+                print('No ISIN for', sec.name)
+        print('Update finished')
 
     def import_historic_quotes(self, years=15):
         result = []

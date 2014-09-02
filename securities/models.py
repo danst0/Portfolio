@@ -23,7 +23,11 @@ class ListField(models.TextField):
     def to_python(self, value):
         if isinstance(value, list):
             return value
-        result = value.split(self.token).pop('')
+        result = value.split(self.token)
+        try:
+            result = result.remove('')
+        except ValueError:
+            pass
         return result
 
     def get_prep_value(self, value):

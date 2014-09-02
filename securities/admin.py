@@ -31,7 +31,7 @@ class SecurityAdmin(admin.ModelAdmin):
             main.save()
             for model, field_names in valnames.items():
                 for field_name in field_names:
-                    print('field', model, 'abc', field_name)
+                    # print('field', model, 'abc', field_name)
                     model.objects.filter(**{field_name: sec}).update(**{field_name: main})
             sec.delete()
         self.message_user(request, "%s is merged with other securities" % main)

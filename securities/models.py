@@ -5,9 +5,7 @@ from django.utils import timezone
 from decimal import Decimal
 import ystockquote
 import urllib
-from django.core.urlresolvers import reverse
-import pickle
-import base64
+import jellyfish
 import logging
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
@@ -54,17 +52,44 @@ class Security(models.Model):
 
     search_fields = ['name', 'aliases']
 
-    def find(self, name_alias_id):
+    def find(self, name_alias_id, fuzzy=False):
         """
         Find securities
         :param name_alias_id:
         :return: ISIN_ID based on any (useful) information
         """
-        find_something = Security.objects.filter(name=name_alias_id) |\
-                         Security.objects.filter(aliases__contains=name_alias_id) |\
-                         Security.objects.filter(isin_id=name_alias_id) |\
-                         Security.objects.filter(yahoo_id=name_alias_id)
-        return None if not find_something else find_something[0]
+        if not fuzzy:
+            find_something = Security.objects.filter(name=name_alias_id) |\
+                             Security.objects.filter(aliases__contains=name_alias_id) |\
+                             Security.objects.filter(isin_id=name_alias_id) |\
+                             Security.objects.filter(yahoo_id=name_alias_id)
+            result = None if not find_something else find_something[0]
+        else:
+            # import pdb; pdb.set_trace()
+            min_score = 2.5
+            min_score_sec = None
+            # print('Trans', name_alias_id)
+            for sec in Security.objects.all():
+                if not isinstance(sec.aliases, list):
+                    all_names = [sec.name]
+                else:
+                    all_names = sec.aliases + [sec.name]
+                for alias in all_names:
+                    # print('analyzing sec', alias)
+                    score = jellyfish.damerau_levenshtein_distance(name_alias_id.lower(), alias.lower())
+                    # print('Score', score)
+                    if score < min_score:
+                        min_score = score
+                        min_score_sec = sec
+            result = min_score_sec, min_score
+
+            # >>> jellyfish.levenshtein_distance('jellyfish', 'smellyfish')
+            # 2
+            # >>> jellyfish.jaro_distance('jellyfish', 'smellyfish')
+            # 0.89629629629629637
+            # >>> jellyfish.damerau_levenshtein_distance('jellyfish', 'jellyfihs')
+            # 1
+        return result
 
     def add(self, name, aliases, isin_id, yahoo_id, type):
         return Security.objects.get_or_create(name=name, aliases=aliases, isin_id=isin_id, yahoo_id=yahoo_id, type=type)[0]

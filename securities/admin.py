@@ -15,9 +15,12 @@ class SecurityAdmin(admin.ModelAdmin):
         for r in related:
             valnames.setdefault(r.model, []).append(r.field.name)
         for sec in tail:
-            
+            if not isinstance(main.aliases, list):
+                main.aliases = []
+            if not isinstance(sec.aliases, list):
+                sec.aliases = []
             if main.name.lower() != sec.name.lower():
-                main.name =main.name + '::' + sec.name
+                main.aliases.append(sec.name)
             main.aliases = list(set(main.aliases + sec.aliases))
             if main.isin_id.lower() != sec.isin_id.lower():
                 main.isin_id = main.isin_id + '::' + sec.isin_id

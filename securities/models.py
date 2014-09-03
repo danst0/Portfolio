@@ -207,7 +207,9 @@ class Price(models.Model):
         # yesterday = today + datetime.timedelta(days=-1)
         for sec in Security.objects.all():
             if not sec.isin_id.startswith('unknown'):
-                if not self.get_prices(sec):
+                # import pdb; pdb.set_trace()
+                old_price_date = self.get_prices(sec, order_by_date=True)[0].date
+                if old_price_date != today:
                     quote = self.get_quote_boerse_frankfurt(sec.isin_id)
                     if not quote:
                         print('No quotes found for:', sec.name)

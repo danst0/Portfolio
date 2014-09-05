@@ -14,7 +14,7 @@
             <li>{% block nav-portfolio_overview %}<a href="{% url 'portfolio_overview' %}">Portfolio Overview</a>{% endblock %}</li>
             <li>{% block nav-update-yahoo %}<a href="{% url 'import_historic_quotes' %}">Update from Yahoo</a>{% endblock %}</li>
             <li>{% block nav-update-bf %}<a href="{% url 'update_stocks_boerse_frankfurt' %}">Update from Börse Frankfurt</a>{% endblock %}</li>
-            <li>{% block import_historic_quotes %}<a href="{% url 'import_historic_quotes' %}">Import Historic Quotes</a>{% endblock %}</li>
+            <li>{% block import_pdf %}<a href="{% url 'update' %}">Import PDFs (CortalConsors)</a>{% endblock %}</li>
             <li>{% block nav-rolling_profitability %}<a href="{% url 'rolling_profitability' %}">Rolling Profitability</a>{% endblock %}</li>
             <li>{% block nav-portfolio_development %}<a href="{% url 'portfolio_development' %}">Portfolio Development</a>{% endblock %}</li>
         </ul>

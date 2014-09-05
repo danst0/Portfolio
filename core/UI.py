@@ -20,70 +20,6 @@ from helper_functions import *
 class UI:
     """Class to display user interface."""
 
-    def __init__(self, securities, portfolio, prices, transaction, money):
-        self.secs = securities
-        self.portfolio = portfolio
-        self.prices = prices
-        self.transaction = transaction
-        self.money = money
-        self.last_update = datetime.datetime.now() + datetime.timedelta(days=-1)
-        go_on = True
-        while go_on:
-            go_on = self.main_menu()
-        random.seed()
-
-
-
-
-
-    def list_stocks(self):
-        if not self.secs.empty():
-            print(self.secs)
-        else:
-            print('No stocks in database.')
-
-    def new_stock(self):
-        print('Name ', )
-        name = input()
-        print('Aliases (comma separated) ', )
-        aliases = input().split(',')
-        # print(aliases)
-        for num in range(len(aliases)):
-            aliases[num] = aliases[num].strip()
-        rand_id = 'n/a' + rand_str()
-        isin_id = input_string('ISIN', '[A-Z]{2}[0-9]{10}', rand_id)
-        yahoo_id = input_string('Yahoo ID', '[A-Z0-9]{1,10}', rand_id)
-        type = input_string('Type', 'Stock|Bond|REIT')
-        self.secs.add(name, aliases, isin_id, yahoo_id, type)
-
-    def list_content(self):
-
-        pf = input('Portfolio [All] ')
-        if pf == '':
-            pf = 'All'
-        transactions = self.transaction.get_total_for_portfolio(pf)
-        # print(transactions)
-
-        x = PrettyTable(['Name', 'Nominal', 'Cost', 'Value'])
-        x.align['Invested'] = "l"  # Left align city names
-        x.padding_width = 1  # One space between column edges and contents (default)
-        #		  print(transactions)
-        for i in sorted(transactions, key=lambda x: x[0].lower()):
-            #			  print(i)
-            x.add_row(i[:-1] + (self.prices.get_last_price(i[0], none_equals_zero=True) * i[1],))
-        print(x)
-
-
-    def new_portfolio(self):
-        print(self.portfolio)
-        print('Parent ', )
-        parent = input()
-
-        print('Name ', )
-        name = input()
-
-        self.portfolio.add(parent, name)
-
     def new_graph(self):
         print('Security', )
         stock = input()
@@ -106,41 +42,6 @@ class UI:
         plt.xlabel('Date')
         plt.show()
 
-    def new_split(self):
-        print('Security', )
-        stock = input()
-        last_unsplit_date, suggested_ratio = self.prices.find_split_date(self.secs.find(stock))
-        print('Last unsplit date [' + last_unsplit_date + ']', )
-        split_date = input()
-        if split_date == '':
-            split_date = last_unsplit_date
-        print('Split ratio [' + str(suggested_ratio) + '] for one existing stock')
-        ratio = input()
-        if ratio == '':
-            ratio = suggested_ratio
-        dates, values = self.prices.get_dates_and_prices(self.secs.find(stock), None, split_date)
-        # print(dates)
-        #		print('Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(ratio))
-        #		print('Please manually add a corresponding transaction to internalize the value reduction in the stock nominale.')
-        go_on = input_yes(
-            'Update all security prices starting ' + last_unsplit_date + ' into all past available; price is divided by ' + str(
-                ratio))
-        if go_on:
-            print('Changing prices')
-            for i in range(len(dates)):
-                self.prices.update(self.secs.find(stock), dates[i], values[i] / float(ratio))
-            stocks_at_split = self.transaction.get_portfolio('All', split_date)
-            stock_id = self.secs.get_stock_id_from_isin_id(self.secs.find(stock))
-            number_before_split = stocks_at_split[stock_id]
-            #			print(stocks_at_split)
-            #			print(stock_id)
-            #		print(number_before_split)
-            number_after_split = number_before_split * ratio
-            date_after_split = (
-            datetime.datetime.strptime(split_date, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-            print('Adding additional stocks')
-            self.transaction.add('b', stock_id, date_after_split, number_after_split - number_before_split, 0.0, 0.0,
-                                 'All')
 
 
     def profitability(self):

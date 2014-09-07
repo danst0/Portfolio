@@ -2,7 +2,7 @@
 {% load admin_urls %}
 
 {% block content %}
-    We do some importing of historic quotes, these are the results:
+    We did some importing of historic quotes, these are the results:
     {% for item in import_results %}
         <div class="quote_item">
         {% if item.no_yahoo_id %}

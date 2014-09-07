@@ -9,5 +9,5 @@ from transactions.models import Transaction
 def update(request):
     # import pdb; pdb.set_trace()
     t = Transaction()
-    t.import_sources()
-    return render(request, 'update.html')
+    result = t.import_sources()
+    return render(request, 'update.html', {'block_title': 'Import PDFs', 'import_results': result})

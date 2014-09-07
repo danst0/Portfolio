@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load filters %}
+{% load admin_urls %}
 
 {% block content %}
     <form action="{% url 'core.views.portfolio_overview' %}" method="post">
@@ -20,7 +21,16 @@
             {% for line in portfolio_content %}
                <tr>
                     {% for key in walk_through_header %}
-                        <td>{{ line|keyvalue:key|nicenumber }}</td>
+                        <td>
+                        {% if key == 'name' and line|keyvalue:key != 'Total' %}
+                            <a href="{% url 'admin:securities_security_change' line.stock_id %}">
+                        {% endif %}
+                        {{ line|keyvalue:key|nicenumber }}
+                        {% if key == 'name' %}
+                            </a>
+                        {% endif %}
+                        </td>
+
                     {% endfor %}
                 </tr>
             {% endfor %}

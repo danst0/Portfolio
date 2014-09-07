@@ -117,11 +117,12 @@ def portfolio_overview(request):
                                                                'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
                                                                'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
                                                                'header': ['Name', 'Nominal', 'Price',
-                                                                          'Last value', 'Current value', 'Profit', 'ROI'],
+                                                                          'Last value', 'Dividends', 'Current value', 'Profit', 'ROI'],
                                                                'walk_through_header': ['name',
                                                                                        'nominal',
                                                                                        'price',
                                                                                        'value_at_beginning',
+                                                                                       'dividends',
                                                                                        'value_at_end',
                                                                                        'profit', 'roi'],
                                                                'portfolio_content': content})

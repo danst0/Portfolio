@@ -129,13 +129,21 @@ class Price(models.Model):
         super().__init__(*args, **kwargs)
 
     def import_prices(self, price_updates):
+        output = []
         for file in price_updates:
             for name, date, price in file:
                 sec = self.securities.find(name)
                 if not sec:
                     self.securities.add_stump(name)
                     sec = self.securities.find(name)
-                Price.objects.get_or_create(stock_id=sec, date=date, price=price)
+                    output.append({'name': sec.name, 'status': 'Created stock'})
+                p = Price.objects.filter(stock_id=sec, date=date, price=price)
+                if not p:
+                    Price.objects.create(stock_id=sec, date=date, price=price)
+                    output.append({'name': sec.name, 'date': date, 'price': price, 'status': 'Newly created'})
+        if len(output) == 0:
+            output.append({'name': '', 'status': 'No prices had to be added'})
+        return output
 
     def __str__(self):
         return str(self.stock_id) + str(self.date) + str(self.price)

@@ -9,6 +9,8 @@ from securities.models import Price
 from transactions.Importer import CortalConsors
 from django.utils import timezone
 import datetime
+from transactions.validators import *
+
 import jellyfish
 
 # from django.core.exceptions import ValidationError
@@ -51,27 +53,35 @@ class Transaction(models.Model):
     def import_sources(self):
         i = CortalConsors()
         price_updates, transactions_update = i.read_pdfs()
-        self.import_transactions(transactions_update)
-        self.prices.import_prices(price_updates)
+        output_transactions_updates = self.import_transactions(transactions_update)
+        output_price_updates = self.prices.import_prices(price_updates)
+        output_price_updates = sorted(output_price_updates, key=lambda x: x['name'])
+        return {'prices': output_price_updates, 'transactions': output_transactions_updates}
 
     def import_transactions(self, transaction_update):
+        output = []
         for trans in transaction_update:
             if trans:
-                sec, score = self.secs.find(trans['name'], fuzzy=True)
-                print('Trans', trans['name'])
-                print('Found', sec)
-                print('Score', score)
+                sec = self.secs.find(trans['name'])
+                print('Adding transaction for', trans['name'])
                 if not sec:
                     self.secs.add_stump(trans['name'])
                     sec = self.secs.find(trans['name'])
+                    output.append({'name': trans['name'], 'status': 'Added stock'})
                 pf = self.pf.find('All')
-                self.add(transaction_type=trans['type'],
-                         portfolio=pf,
-                         stock_id=sec,
-                         date=trans['date'],
-                         nominal=trans['nominal'],
-                         price=trans['value'],
-                         cost=trans['cost'])
+                success = self.add(transaction_type=trans['type'],
+                                   portfolio=pf,
+                                   stock_id=sec,
+                                   date=trans['date'],
+                                   nominal=trans['nominal'],
+                                   price=trans['value'],
+                                   cost=trans['cost'])
+                if success:
+                    output.append(trans)
+                else:
+                    trans['status'] = 'Transaction already existed, no new transaction created'
+                    output.append(trans)
+        return output
 
 
     def add(self, transaction_type, portfolio, stock_id, date, nominal, price, cost):
@@ -87,27 +97,35 @@ class Transaction(models.Model):
             nominal = Decimal(0)
             cost = Decimal(0)
         else:
-            raise NameError('Not a valid transaction type (' + str(transaction_type) +')')
-        #import pdb; pdb.set_trace()
+            raise NameError('Not a valid transaction type (' + str(transaction_type) + ')')
 
         if not isinstance(date, datetime.datetime):
             now = timezone.now().date()
         else:
             now = timezone.now()
         if date > now:
-            raise NameError('Date in the future (' + str(date) +')')
-
-        t = Transaction.objects.get_or_create(transaction_type=transaction_type,
-                                              portfolio=portfolio,
-                                              stock_id=stock_id,
-                                              date=date,
-                                              nominal=nominal,
-                                              price=price,
-                                              cost=cost,
-                                              total=total)
-        if len(t) > 0:
-            return t[0]
-
+            raise NameError('Date in the future (' + str(date) + ')')
+        # import pdb; pdb.set_trace()
+        t = Transaction.objects.filter(transaction_type=transaction_type,
+                                       portfolio=portfolio,
+                                       stock_id=stock_id,
+                                       date=date,
+                                       nominal=nominal,
+                                       price=price,
+                                       cost=cost,
+                                       total=total)
+        if t:
+            return None
+        else:
+            t = Transaction.objects.create(transaction_type=transaction_type,
+                                           portfolio=portfolio,
+                                           stock_id=stock_id,
+                                           date=date,
+                                           nominal=nominal,
+                                           price=price,
+                                           cost=cost,
+                                           total=total)
+            return t
 
     def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
         in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)
@@ -120,8 +138,8 @@ class Transaction(models.Model):
     def get_total_divest(self, portfolio, from_date, to_date):
         return self.get_total(portfolio, 's', from_date, to_date)
 
-    def get_total_dividend(self, portfolio, from_date, to_date):
-        return self.get_total(portfolio, 'd', from_date, to_date)
+    def get_total_dividend(self, portfolio, from_date, to_date, stock_id=None):
+        return self.get_total(portfolio, 'd', from_date, to_date, stock_id)
 
     def get_total(self, portfolio, transaction_type, from_date, to_date, stock_id=None):
         total = Decimal(0)
@@ -167,18 +185,25 @@ class Transaction(models.Model):
         result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date)
         per_stock = {}
         for item in result:
+            sign = 1
+            if item.transaction_type == 's':
+                sign = -1
             if item.stock_id not in per_stock.keys():
-                per_stock[item.stock_id] = {'nominal': self.rectify_nominal_with_stock_split(item.stock_id,
+                per_stock[item.stock_id] = {'nominal': sign * self.rectify_nominal_with_stock_split(item.stock_id,
                                                                                              item.date,
                                                                                              item.nominal),
                                             'cost': item.cost,
                                             'total': item.total}
             else:
-                per_stock[item.stock_id]['nominal'] += self.rectify_nominal_with_stock_split(item.stock_id,
+                per_stock[item.stock_id]['nominal'] += sign * self.rectify_nominal_with_stock_split(item.stock_id,
                                                                                              item.date,
                                                                                              item.nominal)
                 per_stock[item.stock_id]['cost'] += item.cost
                 per_stock[item.stock_id]['total'] += item.total
+        # Remove securities with zero nominale
+        for key, value in per_stock.copy().items():
+            if value['nominal'] == 0:
+                del per_stock[key]
         return per_stock
 
     def list_pf(self, portfolio, from_date, to_date):
@@ -188,6 +213,8 @@ class Transaction(models.Model):
         total_value = Decimal(0)
         total_value_at_beginning = Decimal(0)
         total_profit = Decimal(0)
+        total_dividends = Decimal(0)
+
         for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name):
             price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id, from_date)
             price_at_end = self.prices.get_last_price_from_stock_id(stock_id, to_date)
@@ -199,29 +226,38 @@ class Transaction(models.Model):
             if value_at_beginning == 0:
                 # print('howdy')
                 value_at_beginning = -self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+            # Calculate dividends
+            dividends = self.get_total_dividend(portfolio, from_date, to_date, stock_id)
+            # Calculate Value at end
             if price_at_end:
                 value_at_end = stocks_at_end[stock_id]['nominal'] * price_at_end
+            # Calculate profit
+            profit = value_at_end - value_at_beginning + dividends
             try:
-                roi = str(round((value_at_end-value_at_beginning)/value_at_beginning * 100, 1)) + '%'
+                roi = str(round(profit/value_at_beginning * 100, 1)) + '%'
             except InvalidOperation:
                 roi = 'n/a'
-            values.append({'name': stock_id.name,
+            values.append({'stock_id': stock_id.id,
+                           'name': stock_id.name,
                            'nominal': stocks_at_end[stock_id]['nominal'],
                            'cost': stocks_at_end[stock_id]['cost'],
                            'price': price_at_end,
                            'value_at_beginning': value_at_beginning,
                            'value_at_end': value_at_end,
-                           'profit': value_at_end-value_at_beginning,
+                           'dividends': dividends,
+                           'profit': profit,
                            'roi': roi})
             total_value_at_beginning += value_at_beginning
             total_value += value_at_end
-            total_profit += value_at_end - value_at_beginning
+            total_dividends += dividends
+            total_profit += profit
         try:
             total_roi = str(round((total_value-total_value_at_beginning)/total_value_at_beginning * 100, 1)) + '%'
         except InvalidOperation:
             total_roi = 'n/a'
         values.append({'name': 'Total',
                        'value_at_beginning': total_value_at_beginning,
+                       'dividends': total_dividends,
                        'value_at_end': total_value,
                        'profit': total_profit,
                        'roi': total_roi})

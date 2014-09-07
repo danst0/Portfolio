@@ -77,9 +77,9 @@ class CortalConsors(Importer):
         print_all = False
         total_value = None
         currency = ''
-        value = 0.0
+        value = Decimal(0)
         wert_found = False
-        charge = 0.0
+        charge = Decimal(0)
         while line_counter < len(lines):
             line = lines[line_counter]
             if (line.find('Daniel Dumke') != -1 or
@@ -120,7 +120,7 @@ class CortalConsors(Importer):
                         if currency != 'EUR':
                             print('Error while importing, currency not EUR')
                             sys.exit()
-                        value = float(result.group(2).replace('.', '').replace(',', '.'))
+                        value = Decimal(result.group(2).replace('.', '').replace(',', '.'))
                         wert_found = True
                     elif line.find('WERT') != -1:
                         # print(line)
@@ -135,9 +135,9 @@ class CortalConsors(Importer):
                             print('Error while importing, currency not EUR')
                             sys.exit()
                         try:
-                            value = float(result.group(3).replace('.', '').replace(',', '.'))
+                            value = Decimal(result.group(3).replace('.', '').replace(',', '.'))
                         except:
-                            if value == 0.0:
+                            if value == Decimal(0):
                                 print('Error while importing values')
                                 sys.exit()
                         wert_found = True
@@ -150,7 +150,7 @@ class CortalConsors(Importer):
                         line_counter += 1
                         line = lines[line_counter]
                         #						  print(line)
-                        nominale = float(line.replace(',', '.'))
+                        nominale = Decimal(line.replace(',', '.'))
                         # print(nominale)
                     elif line == 'Wertpapier':
                         # Nominale when buying
@@ -173,7 +173,7 @@ class CortalConsors(Importer):
                         line_counter += 2
                         line = lines[line_counter]
                         #						  print(line)
-                        value = float(line.split(' ')[0].replace(',', '.'))
+                        value = Decimal(line.split(' ')[0].replace(',', '.'))
                         #						  print(value)
                         total_value = value * nominale
                         # print(total_value)
@@ -186,19 +186,19 @@ class CortalConsors(Importer):
                             # print(line)
                             line_counter += 1
                             line = lines[line_counter]
-                            charge += float(line.replace('.', '').replace(',', '.'))
+                            charge += Decimal(line.replace('.', '').replace(',', '.'))
                             # print(charge)
                         line_counter += 1
                         line = lines[line_counter]
                         # print(line)
-                        total = float(line.replace('.', '').replace(',', '.'))
+                        total = Decimal(line.replace('.', '').replace(',', '.'))
                         #						  print(total)
                         #						  print(total_value + charge, total)
                         #						  print(abs(total - (total_value + charge)))
                         #						  print(lines[line_counter+1])
                         #						  print(lines[line_counter+2])
                         #						  print(lines[line_counter+3])
-                        if abs(total - (total_value + charge)) > 0.01:
+                        if abs(total - (total_value + charge)) != 0:
                             print('Error while importing, totals do not match')
                             sys.exit()
                         #						  print(line)
@@ -243,7 +243,7 @@ class CortalConsors(Importer):
                         line)
                     if table_line:
                         sec_name = table_line.group(3)
-                        sec_price = float(table_line.group(5).replace(',', '.'))
+                        sec_price = Decimal(table_line.group(5).replace(',', '.'))
                         sec_date = datetime.datetime.strptime(table_line.group(6), '%d.%m.%Y')
                         name_date_price.append((sec_name, sec_date, sec_price))
                     if line.lower().find('WERTENTWICKLUNG FÜR IHR DEPOT'.lower()) != -1:

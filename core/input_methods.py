@@ -27,7 +27,7 @@ def input_float(text):
         if feedback.find(',') != -1:
             feedback = feedback.replace(',', '.')
         try:
-            feedback = float(feedback)
+            feedback = Decimal(feedback)
         except:
             print('I did not understand, please input a float')
         else:

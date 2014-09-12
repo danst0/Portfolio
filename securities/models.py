@@ -64,6 +64,7 @@ class Security(models.Model):
         :param name_alias_id:
         :return: ISIN_ID based on any (useful) information
         """
+        # import pdb; pdb.set_trace()
         if not fuzzy:
             find_something = Security.objects.filter(name=name_alias_id) |\
                              Security.objects.filter(aliases__contains=name_alias_id) |\

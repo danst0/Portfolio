@@ -15,31 +15,32 @@ class SecurityAdmin(admin.ModelAdmin):
         for r in related:
             valnames.setdefault(r.model, []).append(r.field.name)
         for sec in tail:
+            # import pdb; pdb.set_trace()
             if not isinstance(main.aliases, list):
-                main.aliases = []
+                main.aliases = main.aliases.split(':::')
             if not isinstance(sec.aliases, list):
-                sec.aliases = []
+                sec.aliases = sec.aliases.split(':::')
             if main.name.lower() != sec.name.lower():
                 main.aliases.append(sec.name)
             main.aliases = list(set(main.aliases + sec.aliases))
-
+            main.aliases.remove('')
             if not sec.isin_id.startswith('unknown') and main.isin_id.startswith('unknown'):
                 main.isin_id = sec.isin_id
-            elif sec.isin_id.startswith('unknown') and not main.isin_id.startswith('unknown'):
+            elif sec.isin_id.startswith('unknown'):
                 main.isin_id = main.isin_id
             elif main.isin_id.lower() != sec.isin_id.lower():
                 main.isin_id = main.isin_id + '::' + sec.isin_id
 
             if not sec.yahoo_id.startswith('unknown') and main.yahoo_id.startswith('unknown'):
                 main.yahoo_id = sec.yahoo_id
-            elif sec.yahoo_id.startswith('unknown') and not main.yahoo_id.startswith('unknown'):
+            elif sec.yahoo_id.startswith('unknown'):
                 main.yahoo_id = main.yahoo_id
             elif main.yahoo_id.lower() != sec.yahoo_id.lower():
                 main.yahoo_id = main.yahoo_id + '::' + sec.yahoo_id
 
             if not sec.type.startswith('unknown') and main.type.startswith('unknown'):
                 main.type = sec.type
-            elif sec.type.startswith('unknown') and not main.type.startswith('unknown'):
+            elif sec.type.startswith('unknown'):
                 main.type = main.type
             elif main.type.lower() != sec.type.lower():
                 main.type = main.type + '::' + sec.type

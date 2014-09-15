@@ -9,7 +9,7 @@ import sys
 #from Securities.models import Security
 #from Transactions.models import Transaction
 from decimal import *
-
+import csv
 
 class Importer:
     def __init__(self):
@@ -19,7 +19,10 @@ class Importer:
         print(self.base_path)
 
 def make_float(str):
-    return str.replace('.', '').replace(',','.')
+    str = str.replace('.', '').replace(',', '.')
+    if str == '':
+        str = '0.0'
+    return str
 
 def remove_multiple_spaces(str):
     while str.find('  ') != -1:
@@ -27,6 +30,50 @@ def remove_multiple_spaces(str):
     return str
 
 class CortalConsors(Importer):
+
+    def read_csv(self):
+        ext_path = 'Depotverwaltung 2010'
+        file = 'Sheet 1-Table 2.csv'
+        short_name_long_name = {}
+        with open(self.base_path + '/' + ext_path + '/' + file, encoding='utf-8') as f:
+            reader = csv.reader(f, delimiter=';')
+            for row in reader:
+                short_name_long_name[row[1]] = row[0]
+
+        file = 'Sheet 1-Table 1.csv'
+        relevant_rows = []
+        with open(self.base_path + '/' + ext_path + '/' + file, encoding='utf-8') as f:
+            reader = csv.reader(f, delimiter=';')
+            for row in reader:
+                if not row[0].startswith('Datum') and row[0] != (''):
+                    # target format:
+                    # {'type': 'd', 'name': name, 'date': date, 'nominal': Decimal(0), 'value': value,
+                    #     'cost': Decimal(0), 'isin': isin}
+                    name = short_name_long_name[row[1]]
+                    date = datetime.datetime.strptime(row[0], "%d.%m.%Y").date()
+                    nominal = Decimal(make_float(row[2]))
+                    value = Decimal(make_float(row[3].replace(u'\xa0€', u'')))
+                    cost = Decimal(make_float(row[4].replace(u'\xa0€', u'')))
+                    total = Decimal(make_float(row[5].replace(u'\xa0€', u'')))
+                    if value == 0:
+                        value = total
+                    # import pdb; pdb.set_trace()
+                    if total > 0:
+                        type = 'b'
+                    else:
+                        type = 'd'
+                    relevant_rows.append({'type': type,
+                                          'date': date,
+                                          'name': name,
+                                          'nominal': nominal,
+                                          'value': abs(value),
+                                          'cost': abs(cost),
+                                          'isin': None})
+        # print(relevant_rows)
+        return relevant_rows
+
+
+
     def read_pdfs(self):
         file_counter = 0
         price_updates = []

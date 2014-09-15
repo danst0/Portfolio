@@ -52,7 +52,9 @@ class Transaction(models.Model):
 
     def import_sources(self):
         i = CortalConsors()
-        price_updates, transactions_update = i.read_pdfs()
+        price_updates, transactions_update_pdf = i.read_pdfs()
+        transaction_update_csv = i.read_csv()
+        transactions_update = transactions_update_pdf + transaction_update_csv
         output_transactions_updates = self.import_transactions(transactions_update)
         output_price_updates = self.prices.import_prices(price_updates)
         output_price_updates = sorted(output_price_updates, key=lambda x: x['name'])
@@ -112,12 +114,9 @@ class Transaction(models.Model):
         # import pdb; pdb.set_trace()
         t = Transaction.objects.filter(transaction_type=transaction_type,
                                        portfolio=portfolio,
-                                       stock_id=stock_id,
                                        date=date,
                                        nominal=nominal,
-                                       price=price,
-                                       cost=cost,
-                                       total=total)
+                                       price=price)
         if t:
             return None
         else:

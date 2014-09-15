@@ -21,6 +21,11 @@ class Importer:
 def make_float(str):
     return str.replace('.', '').replace(',','.')
 
+def remove_multiple_spaces(str):
+    while str.find('  ') != -1:
+        str = str.replace('  ', ' ')
+    return str
+
 class CortalConsors(Importer):
     def read_pdfs(self):
         file_counter = 0
@@ -28,7 +33,7 @@ class CortalConsors(Importer):
 
         for file in os.listdir(self.base_path):
             if file.startswith('PERSONAL') and file.endswith('.pdf'):
-                print('Import ' + file)
+                # print('Import ' + file)
                 try:
                     subprocess.check_output(
                     ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
@@ -59,10 +64,10 @@ class CortalConsors(Importer):
                     file.startswith('VERLUSTVER') or
                     file.startswith('VERTRAGSRE')):
                 # Remove invalid PDFs
-                print('Ignore ' + file)
+                # print('Ignore ' + file)
                 os.remove(self.base_path + '/' + file)
             elif file.endswith('.pdf'):
-                print('Import ' + file)
+                # print('Import ' + file)
                 try:
                     subprocess.check_output(
                     ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
@@ -73,11 +78,18 @@ class CortalConsors(Importer):
                 else:
                     with open(self.base_path + '/data.txt', 'rb') as myfile:
                         data = myfile.read()
-                    data = self.get_data_from_text(data)
-                    if data:
-                        transactions_update.append(data)
-                        file_counter += 1
-                    os.remove(self.base_path + '/' + file)
+                    data = self.prepare_data(data)
+                    if self.check_if_mine(data):
+                        data = self.get_data_from_text(data)
+                        if data:
+                            transactions_update.append(data)
+                            file_counter += 1
+                            os.remove(self.base_path + '/' + file)
+                        else:
+                            print('Above errors occured with', file)
+                    else:
+                        os.remove(self.base_path + '/' + file)
+
             try:
                 os.remove(self.base_path + '/data.txt')
             except:
@@ -85,9 +97,7 @@ class CortalConsors(Importer):
 #        print(file_counter, 'files successfully imported.')
         return price_updates, transactions_update
 
-    def get_data_from_text(self, text):
-        valid = False
-        type = ''
+    def prepare_data(self, text):
         # lines = text.split('\n')
         lines = text.decode('latin-1').splitlines()
         # print(lines)
@@ -96,83 +106,126 @@ class CortalConsors(Importer):
             if line != '':
                 new_lines.append(line)
         lines = '\n'.join(new_lines)
+        return lines
+    def check_if_mine(self, lines):
+        result = re.search('daniel\s(stengel|dumke)', lines, re.IGNORECASE)
+        return True if result else False
+
+
+
+    def get_data_from_text(self, lines):
+        valid = False
+        type = ''
         # print(lines)
         total_value = Decimal(0)
         total = Decimal(0)
         value = Decimal(0)
         charge = Decimal(0)
-        result = re.search('daniel\s(stengel|dumke)', lines, re.IGNORECASE)
         error = 0
+        if lines.find('DIVIDENDENGUTSCHRIFT') != -1:
+            type = 'dividende'
+        elif lines.find('ERTRAGSGUTSCHRIFT') != -1:
+            type = 'dividende'
+        elif lines.lower().find('wertpapierabrechnung') != -1:
+            if lines.lower().find('kauf') != -1:
+                type = 'kauf'
+            elif lines.lower().find('verkauf') != -1:
+                type = 'verkauf'
+        # import pdb; pdb.set_trace()
+        if type == 'dividende':
+            search = '[A-Z]{2,4}\s*?([0-9\.]{1,},[0-9]{1,})\s*?WKN.*?([A-Z0-9]{6})\s*(.*?)\n.*?'
+        else:
+            search = 'wertpapier\s{1,100}wkn\s{1,100}isin.*?\n+(.*?)\s{3,}[\s0\.]{1,100}([A-Z0-9]{6})\s{3}\s{1,100}([A-Z]{2}[A-Z0-9]{10})'
+        result = re.search(search, lines, re.DOTALL | re.IGNORECASE)
         if result:
-            if lines.lower().find('dividendengutschrift ') != -1:
-                type = 'dividende'
-            elif lines.lower().find('ertragsgutschrift') != -1:
-                type = 'dividende'
-            elif lines.lower().find('wertpapierabrechnung') != -1:
-                if lines.lower().find('kauf') != -1:
-                    type = 'kauf'
-                elif lines.lower().find('verkauf') != -1:
-                    type = 'verkauf'
-            # import pdb; pdb.set_trace()
-            result = re.search('wertpapier\s{1,100}wkn\s{1,100}isin.*?\n([%,/A-Z\.\s\-0-9]{5,35})\s{3}[\s0\.]{1,100}([A-Z0-9]{6})\s{3}\s{1,100}([A-Z]{2}[A-Z0-9]{10})', lines, re.DOTALL | re.IGNORECASE)
-            if result:
+            if type == 'dividende':
+                nominale = result.group(1)
+                wkn = result.group(2)
+                name = remove_multiple_spaces(result.group(3))
+            else:
                 name = result.group(1)
                 wkn = result.group(2)
                 isin = result.group(3)
+        else:
+            print('No name/wkn/isin found')
+
+            error += 1
+        search = 'ST\s{1,20}([0-9]{1,6},[0-9]{5}).*Kurs\s{1,20}([0-9]{1,6},[0-9]{6})'
+        result = re.search(search, lines, re.DOTALL)
+        if result:
+            nominale = Decimal(make_float(result.group(1)))
+            value = Decimal(make_float(result.group(2)))
+        elif type == 'dividende':
+            pass
+        else:
+            print('No nominale/value found')
+            error += 1
+
+        if type == 'dividende':
+            search_domestic = 'WERT\s*?([0-9]{2}\.[0-9]{2}\.[0-9]{4})\s*?EUR\s*?([0-9]{1,6},[0-9]{1,2})'
+            search_foreign = 'UMGER.ZUM.*?EUR\s*([0-9]+,[0-9]{2})\s*WERT\s*?([0-9]{2}\.[0-9]{2}\.[0-9]{4})'
+            result_domestic = re.search(search_domestic, lines, re.DOTALL)
+            result_foreign = re.search(search_foreign, lines, re.DOTALL)
+            if result_domestic:
+                date = datetime.datetime.strptime(result_domestic.group(1), "%d.%m.%Y").date()
+                value = Decimal(make_float(result_domestic.group(2)))
+            elif result_foreign:
+                value = Decimal(make_float(result_foreign.group(1)))
+                date = datetime.datetime.strptime(result_foreign.group(2), "%d.%m.%Y").date()
             else:
-                print('No name/wkn/isin found')
-                error += 1
-
-            result = re.search('ST\s{1,20}([0-9]{1,6},[0-9]{5}).*Kurs\s{1,20}([0-9]{1,6},[0-9]{6})', lines, re.DOTALL)
-            if result:
-                nominale = Decimal(make_float(result.group(1)))
-                value = Decimal(make_float(result.group(2)))
-            else:
-                print('No nominale/value found')
-                error += 1
-
-            result = re.search('KAUF\s{1,40}AM\s([0-9]{2}\.[0-9]{2}\.[0-9]{4})\s{1,20}UM', lines)
-            if result:
-                date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y").date()
-            else:
-                print('No date found')
-                error += 1
-
-            result = re.search('Kurswert\s{1,}EUR\s{1,}([0-9\.]{1,8},[0-9]{2})', lines)
-            if result:
-                total_value = Decimal(make_float(result.group(1)))
-                if total_value != nominale * value:
-                    print('Error while importing, total value does not match')
-
-            else:
-                print('No total value found')
+                print('No date/total_value found')
                 error += 1
 
 
-            result = re.search('Kurswert.*?([0-9\.]{1,8},[0-9]{2}).*?Wert.*?([0-9\.]{1,8},[0-9]{2})', lines, re.DOTALL)
-            if result:
-                total = Decimal(make_float(result.group(2)))
-                charge = total - total_value
-            else:
-                print('No charge found')
-                error += 1
+        result = re.search('KAUF\s{1,40}AM\s([0-9]{2}\.[0-9]{2}\.[0-9]{4})\s{1,20}UM', lines)
+        if result:
+            date = datetime.datetime.strptime(result.group(1), "%d.%m.%Y").date()
+        elif type == 'dividende':
+            pass
+        else:
+            print('No date found')
+            error += 1
 
-            if abs(total - (total_value + charge)) != 0:
-                print('Error while importing, totals do not match')
-                error += 1
+        result = re.search('Kurswert\s{1,}EUR(\s*|\s*[A-Z]{3})\s{1,}([0-9\.]{1,8},[0-9]{2})', lines)
+        if result:
+            total_value = Decimal(make_float(result.group(2)))
+            if total_value != nominale * value:
+                print('Error while importing, total value does not match')
+        elif type == 'dividende':
+            pass
+        else:
+            print('No total value found')
+            error += 1
 
 
+        result = re.search('Kurswert.*?([0-9\.]{1,8},[0-9]{2}).*?Wert.*?([0-9\.]{1,8},[0-9]{2})', lines, re.DOTALL)
+        if result:
+            total = Decimal(make_float(result.group(2)))
+            charge = total - total_value
+        elif type == 'dividende':
+            pass
+        else:
+            print('No charge found')
+            error += 1
 
-            if error == 0:
-                if type == 'dividende':
-                    return {'type': 'd', 'name': name, 'date': date, 'nominal': Decimal(0), 'value': value,
-                            'cost': Decimal(0)}
-                elif type == 'kauf':
-                    return {'type': 'b', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
-                            'cost': charge}
-                elif type == 'verkauf':
-                    return {'type': 's', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
-                            'cost': charge}
+        if abs(total - (total_value + charge)) != 0:
+            print('Error while importing, totals do not match')
+            error += 1
+
+
+        if error == 0:
+            name = name.strip()
+            if type == 'dividende':
+                return {'type': 'd', 'name': name, 'date': date, 'nominal': Decimal(0), 'value': value,
+                        'cost': Decimal(0)}
+            elif type == 'kauf':
+                return {'type': 'b', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
+                        'cost': charge}
+            elif type == 'verkauf':
+                return {'type': 's', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
+                        'cost': charge}
+        else:
+            print('No importable data found')
         return None
 
     def get_data_from_personal_investment_report(self, text):

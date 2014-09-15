@@ -74,7 +74,6 @@ class CortalConsors(Importer):
                      self.base_path + '/data.txt'])
                 except:
                     print('Error while importing.')
-                    data = None
                 else:
                     with open(self.base_path + '/data.txt', 'rb') as myfile:
                         data = myfile.read()
@@ -121,6 +120,7 @@ class CortalConsors(Importer):
         total = Decimal(0)
         value = Decimal(0)
         charge = Decimal(0)
+        isin = None
         error = 0
         if lines.find('DIVIDENDENGUTSCHRIFT') != -1:
             type = 'dividende'
@@ -146,6 +146,7 @@ class CortalConsors(Importer):
                 name = result.group(1)
                 wkn = result.group(2)
                 isin = result.group(3)
+                print(isin)
         else:
             print('No name/wkn/isin found')
 
@@ -217,13 +218,13 @@ class CortalConsors(Importer):
             name = name.strip()
             if type == 'dividende':
                 return {'type': 'd', 'name': name, 'date': date, 'nominal': Decimal(0), 'value': value,
-                        'cost': Decimal(0)}
+                        'cost': Decimal(0), 'isin': isin}
             elif type == 'kauf':
                 return {'type': 'b', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
-                        'cost': charge}
+                        'cost': charge, 'isin': isin}
             elif type == 'verkauf':
                 return {'type': 's', 'name': name, 'date': date, 'nominal': nominale, 'value': value,
-                        'cost': charge}
+                        'cost': charge, 'isin': isin}
         else:
             print('No importable data found')
         return None

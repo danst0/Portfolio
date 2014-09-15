@@ -62,12 +62,16 @@ class Transaction(models.Model):
         output = []
         for trans in transaction_update:
             if trans:
-                sec = self.secs.find(trans['name'])
                 print('Adding transaction for', trans['name'])
+                sec = self.secs.find(trans['name'])
                 if not sec:
-                    self.secs.add_stump(trans['name'])
+                    self.secs.add_stump(name=trans['name'], isin_id=trans['isin'])
                     sec = self.secs.find(trans['name'])
                     output.append({'name': trans['name'], 'status': 'Added stock'})
+                elif sec and trans['isin']:
+                    sec.isin_id = trans['isin']
+                    sec.save()
+                    print('Added ISIN')
                 pf = self.pf.find('All')
                 success = self.add(transaction_type=trans['type'],
                                    portfolio=pf,

@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
-from core.forms import PortfolioFormOneDate, PortfolioFormTwoDates
+from core.forms import PortfolioFormOneDate, PortfolioFormTwoDates, PortfolioFormStockTwoDates
 from core.models import UI
+from securities.models import Security
 from transactions.models import Transaction
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -28,6 +29,48 @@ def import_historic_quotes(request):
     p = Price()
     result = p.import_historic_quotes()
     return render(request, 'import_historic_quotes.html', {'block_title': 'Import Historic Quotes', 'import_results': result})
+
+def stock_graph_png(request, security, from_date, to_date):
+    s = Security()
+    sec = s.find(security)
+    fig=Figure()
+    ax=fig.add_subplot(111)
+
+    p = Price()
+    dates, values = p.get_dates_and_prices(sec, from_date, to_date)
+    ax.plot_date(dates, values, '-')
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    fig.autofmt_xdate()
+    # import pdb; pdb.set_trace()
+    ax.set_ylabel(sec.name)
+    ax.set_xlabel('Date')
+    canvas = FigureCanvas(fig)
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
+
+def stock_graph(request):
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = PortfolioFormStockTwoDates(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            content = 'Stock price development for shown timeframe'
+            return render(request, 'stock_graph.html', {'block_title': 'Security Graph',
+                                                                  'form': form,
+                                                                  'content': content,
+                                                                  'security': form.cleaned_data['security'],
+                                                                  'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
+                                                                  'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d')})
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = PortfolioFormStockTwoDates()
+
+    return render(request, 'stock_graph.html', {'block_title': 'Security Graph',
+                                                          'form': form})
+
+
 
 def rolling_profitability_png(request, portfolio, from_date, to_date):
     fig=Figure()

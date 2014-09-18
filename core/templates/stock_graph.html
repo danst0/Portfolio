@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <form action="{% url 'core.views.rolling_profitability' %}" method="post">
+    <form action="{% url 'core.views.stock_graph' %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Execute" />
     {{ content }}
-    {% if portfolio %}
-        <img src='{% url 'rolling_profitabiliy_png' portfolio from_date to_date %}' />
+    {% if security %}
+        <img src='{% url 'stock_graph_png' security from_date to_date %}' />
     {% endif %}
 
     </form>

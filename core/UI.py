@@ -20,28 +20,6 @@ from helper_functions import *
 class UI:
     """Class to display user interface."""
 
-    def new_graph(self):
-        print('Security', )
-        stock = input()
-        tmp_default = (datetime.date.today() - datetime.timedelta(days=12 * 30)).strftime('%Y-%m-%d')
-        print('Start date [' + tmp_default + ']', )
-        from_date = input()
-        if from_date == '':
-            from_date = tmp_default
-        from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").date()
-        tmp_default = datetime.date.today().strftime('%Y-%m-%d')
-        print('End date [' + tmp_default + ']', )
-        to_date = input()
-        if to_date == '':
-            to_date = tmp_default
-        to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").date()
-        dates, values = self.prices.get_dates_and_prices(self.secs.find(stock), from_date, to_date)
-        plt.plot(dates, values, 'r')
-        # plt.axis(dates)
-        plt.ylabel(self.secs.find(stock))
-        plt.xlabel('Date')
-        plt.show()
-
 
 
     def profitability(self):

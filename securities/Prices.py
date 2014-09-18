@@ -33,20 +33,7 @@ class Prices:
         stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
         self.data.c.execute('''DELETE FROM prices WHERE stock_id = ?''', (stock_id, ))
 
-    def get_dates_and_prices(self, isin_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
-        stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
-        if from_date == None:
-            from_date = '1900-01-01'
-        result = self.data.c.execute(
-            '''SELECT date, price FROM prices WHERE stock_id = ? AND date >= ? AND date <= ? ORDER BY date''',
-            (stock_id, from_date, to_date)).fetchall()
-        # Redo with map function
-        dates = []
-        values = []
-        for item in result:
-            dates.append(datetime.datetime.strptime(item[0], "%Y-%m-%d").date())
-            values.append(item[1])
-        return dates, values
+
 
 
 

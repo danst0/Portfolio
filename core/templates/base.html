@@ -16,6 +16,7 @@
             <li>{% block nav-update-bf %}<a href="{% url 'update_stocks_boerse_frankfurt' %}">Update from Börse Frankfurt</a>{% endblock %}</li>
             <li>{% block import_pdf %}<a href="{% url 'update' %}">Import PDFs (CortalConsors)</a>{% endblock %}</li>
             <li>{% block nav-rolling_profitability %}<a href="{% url 'rolling_profitability' %}">Rolling Profitability</a>{% endblock %}</li>
+            <li>{% block nav-stock_graph %}<a href="{% url 'stock_graph' %}">Stock Graph</a>{% endblock %}</li>
             <li>{% block nav-portfolio_development %}<a href="{% url 'portfolio_development' %}">Portfolio Development</a>{% endblock %}</li>
         </ul>
         {% endblock %}

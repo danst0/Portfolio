@@ -129,6 +129,31 @@ class Price(models.Model):
         self.securitysplit = SecuritySplit()
         super().__init__(*args, **kwargs)
 
+    def get_dates_and_prices(self, stock_id, from_date, to_date):
+        result = Price.objects.filter(stock_id=stock_id, date__gte=from_date, date__lte=to_date)
+        # import pdb; pdb.set_trace()
+        # Redo with map function
+        ss = SecuritySplit()
+        splits = ss.get_splits(stock_id)
+        if splits:
+            new_prices = []
+            for split in splits:
+                for price in result:
+                    if price.date < split.date:
+                        price.price = price.price / split.ratio
+                    new_prices.append(price)
+            result = new_prices
+
+        dates = []
+        values = []
+
+        for price in result:
+            dates.append(price.date)
+            values.append(price.price)
+
+        return dates, values
+
+
     def import_prices(self, price_updates):
         output = []
         for file in price_updates:
@@ -150,6 +175,7 @@ class Price(models.Model):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
+        # import pdb; pdb.set_trace()
         if before_date:
             result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
         else:

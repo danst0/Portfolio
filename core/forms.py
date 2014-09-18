@@ -17,3 +17,12 @@ class PortfolioFormTwoDates(forms.Form):
     tmp_default_to = (datetime.date.today() - datetime.timedelta(days=0)).strftime('%Y-%m-%d')
     from_date = forms.DateField(label='Start date', initial=tmp_default_from)
     to_date = forms.DateField(label='End date', initial=tmp_default_to)
+
+
+class PortfolioFormStockTwoDates(forms.Form):
+    time_span = 365
+    security = forms.CharField(label='Security', max_length=100, initial='Apple Inc.')
+    tmp_default_from = (datetime.date.today() - datetime.timedelta(days=time_span)).strftime('%Y-%m-%d')
+    tmp_default_to = (datetime.date.today() - datetime.timedelta(days=0)).strftime('%Y-%m-%d')
+    from_date = forms.DateField(label='Start date', initial=tmp_default_from)
+    to_date = forms.DateField(label='End date', initial=tmp_default_to)

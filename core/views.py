@@ -81,6 +81,7 @@ def rolling_profitability_png(request, portfolio, from_date, to_date):
                                                datetime.datetime.strptime(to_date, '%Y-%m-%d'))
     ax.plot_date(dates, roi_list, '-')
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.set_xlabel('Date')
     fig.autofmt_xdate()
     canvas = FigureCanvas(fig)
     response = HttpResponse(content_type='image/png')
@@ -94,7 +95,7 @@ def rolling_profitability(request):
         form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
-            content = 'You are great <a href="http://google.com">so great</a>'
+            content = 'Rolling profitability for shown timeframe'
             return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                                   'form': form,
                                                                   'content': content,
@@ -119,6 +120,7 @@ def portfolio_development_png(request, portfolio, from_date, to_date):
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
     ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
     fig.autofmt_xdate()
+    ax.set_xlabel('Date')
     canvas = FigureCanvas(fig)
     response = HttpResponse(content_type='image/png')
     canvas.print_png(response)

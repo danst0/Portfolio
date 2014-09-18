@@ -238,7 +238,7 @@ class Transaction(models.Model):
             profit = value_at_end - value_at_beginning + dividends
             try:
                 roi = str(round(profit/value_at_beginning * 100, 1)) + '%'
-            except InvalidOperation:
+            except:
                 roi = 'n/a'
             values.append({'stock_id': stock_id.id,
                            'name': stock_id.name,
@@ -256,7 +256,7 @@ class Transaction(models.Model):
             total_profit += profit
         try:
             total_roi = str(round((total_value-total_value_at_beginning)/total_value_at_beginning * 100, 1)) + '%'
-        except InvalidOperation:
+        except:
             total_roi = 'n/a'
         values.append({'name': 'Total',
                        'value_at_beginning': total_value_at_beginning,

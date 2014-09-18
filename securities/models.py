@@ -66,7 +66,7 @@ class Security(models.Model):
         """
         # import pdb; pdb.set_trace()
         if not fuzzy:
-            find_something = Security.objects.filter(name=name_alias_id) |\
+            find_something = Security.objects.filter(name__contains=name_alias_id) |\
                              Security.objects.filter(aliases__contains=name_alias_id) |\
                              Security.objects.filter(isin_id=name_alias_id) |\
                              Security.objects.filter(yahoo_id=name_alias_id)

@@ -141,7 +141,6 @@ def portfolio_development(request):
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
-
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                           'form': form})
 

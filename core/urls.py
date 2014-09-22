@@ -20,7 +20,7 @@ urlpatterns = patterns('',
                            views.portfolio_overview,
                            name='portfolio_overview'),
                        url(r'stock_graph/', views.stock_graph, name='stock_graph'),
-                       url(r'(?P<security>[A-Za-z]+)/(?P<from_date>[0-9\-]+)/(?P<to_date>[0-9\-]+)/stock_graph_diagram.png$',
+                       url(r'(?P<security>.+)/(?P<from_date>[0-9\-]+)/(?P<to_date>[0-9\-]+)/stock_graph_diagram.png$',
                            views.stock_graph_png,
                            name='stock_graph_png'),
                        # ex: /polls/5/

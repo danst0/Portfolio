@@ -130,9 +130,10 @@ class Price(models.Model):
         super().__init__(*args, **kwargs)
 
     def get_dates_and_prices(self, stock_id, from_date, to_date):
-        result = Price.objects.filter(stock_id=stock_id, date__gte=from_date, date__lte=to_date)
-        # import pdb; pdb.set_trace()
+        result = Price.objects.filter(stock_id=stock_id, date__gte=from_date, date__lte=to_date).order_by('date')
+
         # Redo with map function
+        # result.order_by('date')
         ss = SecuritySplit()
         splits = ss.get_splits(stock_id)
         if splits:
@@ -150,7 +151,7 @@ class Price(models.Model):
         for price in result:
             dates.append(price.date)
             values.append(price.price)
-
+        # import pdb; pdb.set_trace()
         return dates, values
 
 

@@ -24,6 +24,7 @@ urlpatterns = patterns('',
                        url(r'(?P<security>.+)/(?P<from_date>[0-9\-]+)/(?P<to_date>[0-9\-]+)/stock_graph_diagram.png$',
                            views.stock_graph_png,
                            name='stock_graph_png'),
+                       url(r'forecast_retirement/', views.forecast_retirement, name='forecast_retirement'),
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
                        # ex: /polls/5/results/

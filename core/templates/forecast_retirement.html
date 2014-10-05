@@ -1,19 +1,14 @@
 {% extends "base.html" %}
 {% load admin_urls %}
+{% load filters %}
 
 {% block content %}
-    We do some importing of historic quotes, these are the results:
-    {% for item in import_results %}
-        <div class="quote_item">
-        {% if item.no_yahoo_id %}
-            Please <a href="{% url 'admin:securities_security_change' item.stock_id %}">add yahoo id for {{ item.name }}</a>
-        {% endif %}
-        {% if item.no_quote %}
-            Please verify yahoo id {{ item.name }} {{ item.yahoo_id }}, could not retrieve quote
-        {% endif %}
-        {% if not item.no_quote and not item.no_yahoo_id %}
-            Successfully retrieved quotes for {{ item.name }} ({{ item.yahoo_id }})
-        {% endif %}
+    We do some forecasting, these are the results:
+
+    {% for item in forecast_results %}
+        <div class="item">
+        {{ item.text }}
+        {{ item.value|nicenumber_100 }}
         </div>
     {% endfor %}
 {% endblock %}

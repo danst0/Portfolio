@@ -217,18 +217,23 @@ class Transaction(models.Model):
         total_value_at_beginning = Decimal(0)
         total_profit = Decimal(0)
         total_dividends = Decimal(0)
-
+        # import pdb; pdb.set_trace()
         for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name):
             price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id, from_date)
             price_at_end = self.prices.get_last_price_from_stock_id(stock_id, to_date)
             value_at_beginning = Decimal(0)
             value_at_end = Decimal(0)
-            if price_at_beginning and stock_id in stock_at_beginning.keys():
-                value_at_beginning = stock_at_beginning[stock_id]['nominal'] * price_at_beginning
-            # print('value_at_beginning', value_at_beginning)
-            if value_at_beginning == 0:
-                # print('howdy')
-                value_at_beginning = -self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+
+            if price_at_beginning:
+                if stock_id in stock_at_beginning.keys():
+                    value_at_beginning = stock_at_beginning[stock_id]['nominal'] * price_at_beginning -\
+                                         self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+                else:
+                    value_at_beginning -= self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+            else:
+                value_at_beginning -= self.get_invest_divest(portfolio, stock_id, datetime.date(1900, 1, 1), from_date)
+
+
             # Calculate dividends
             dividends = self.get_total_dividend(portfolio, from_date, to_date, stock_id)
             # Calculate Value at end
@@ -255,7 +260,7 @@ class Transaction(models.Model):
             total_dividends += dividends
             total_profit += profit
         try:
-            total_roi = str(round((total_value-total_value_at_beginning)/total_value_at_beginning * 100, 1)) + '%'
+            total_roi = (total_value-total_value_at_beginning)/total_value_at_beginning * 100
         except:
             total_roi = 'n/a'
         values.append({'name': 'Total',
@@ -265,3 +270,12 @@ class Transaction(models.Model):
                        'profit': total_profit,
                        'roi': total_roi})
         return values
+
+    def get_roi(self, portfolio, from_date, to_date):
+        result = self.list_pf(portfolio, from_date, to_date)
+        return result[-1]['roi']/Decimal(100)
+
+
+    def get_pf_value(self, portfolio, to_date):
+        result = self.list_pf(portfolio, to_date, to_date)
+        return result[-1]['value_at_end']

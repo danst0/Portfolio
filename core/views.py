@@ -5,6 +5,7 @@ from core.forms import PortfolioFormOneDate, PortfolioFormTwoDates, PortfolioFor
 from core.models import UI
 from securities.models import Security
 from transactions.models import Transaction
+from money.models import Money
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -189,3 +190,9 @@ def update_stocks_boerse_frankfurt(request):
     p = Price()
     result = p.import_boerse_frankfurt()
     return render(request, 'import_quotes.html', {'block_title': 'Import Quotes from Börse Frankfurt', 'import_results': result})
+
+def forecast_retirement(request):
+    # import pdb; pdb.set_trace()
+    m = Money()
+    result = m.aggregate_results()
+    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'forecast_results': result})

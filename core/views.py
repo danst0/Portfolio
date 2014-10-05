@@ -23,6 +23,12 @@ from securities.models import Price
 def index(request):
     return render(request, 'index.html')
 
+def import_outbank(request):
+    # import pdb; pdb.set_trace()
+    m = Money()
+    result = m.import_outbank()
+    return render(request, 'import_outbank.html', {'block_title': 'Import Outbank', 'import_results': result})
+
 
 def import_historic_quotes(request):
     # import pdb; pdb.set_trace()

@@ -44,8 +44,9 @@ class CortalConsors(Importer):
         relevant_rows = []
         with open(self.base_path + '/' + ext_path + '/' + file, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
-            for row in reader:
-                if not row[0].startswith('Datum') and row[0] != (''):
+            for num, row in enumerate(reader):
+                # skip first 40 rows
+                if num > 0 and not row[0].startswith('Datum') and row[0] != (''):
                     # target format:
                     # {'type': 'd', 'name': name, 'date': date, 'nominal': Decimal(0), 'value': value,
                     #     'cost': Decimal(0), 'isin': isin}
@@ -55,11 +56,15 @@ class CortalConsors(Importer):
                     value = Decimal(make_float(row[3].replace(u'\xa0€', u'')))
                     cost = Decimal(make_float(row[4].replace(u'\xa0€', u'')))
                     total = Decimal(make_float(row[5].replace(u'\xa0€', u'')))
+                    # print(value, total)
                     if value == 0:
                         value = total
                     # import pdb; pdb.set_trace()
                     if total > 0:
                         type = 'b'
+                    elif nominal < 0:
+                        type = 's'
+                        nominal = -1 * nominal
                     else:
                         type = 'd'
                     relevant_rows.append({'type': type,

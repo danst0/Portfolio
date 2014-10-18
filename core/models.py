@@ -64,10 +64,11 @@ class UI:
         dates = []
         pf_details = []
         pf_value = []
-        time_intervall = 30
+        # import pdb; pdb.set_trace()
+        time_intervall = int((to_date - from_date).days/12/15)*15
         total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)
-        for i in range(int((to_date - from_date).days / time_intervall)):
-            loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * 30))
+        for i in range(12):
+            loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * time_intervall))
             stocks_at_date = self.transaction.get_total_for_portfolio('All', loop_date.strftime("%Y-%m-%d"))
             portfolio_value_at_date = Decimal(0)
             stocks = []
@@ -101,7 +102,7 @@ class UI:
                         'All', cur_key, dates[1], dates[0])
                     delta_keys.append([cur_key, delta, abs(delta)])
         delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
-        print('Total deviation vs. prior interval:', pf_value[0] - pf_value[1], '; major drivers:')
+        print('Total deviation vs. ' + str(time_intervall) + ' days ago:', pf_value[0] - pf_value[1], '; major drivers:')
         for i in range(3):
             print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]), ')')
 
@@ -118,7 +119,7 @@ class UI:
                     delta_keys.append([cur_key, delta, abs(delta)])
         # print(delta_keys)
         delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
-        print('Total deviation vs. pre-prior interval:', pf_value[0] - pf_value[2], '; major drivers:')
+        print('Total deviation vs. ' + str(2* time_intervall) + ' days ago:', pf_value[0] - pf_value[2], '; major drivers:')
         for i in range(3):
             print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]),')')
             # print(delta_keys)

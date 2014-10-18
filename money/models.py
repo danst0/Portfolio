@@ -54,11 +54,30 @@ class Money(models.Model):
         # import pdb; pdb.set_trace()
         incomes = []
         expenses = []
-        for date, value in my_set.items():
+        last_date = None
+        t = Transaction()
+        for date, value in sorted(my_set.items()):
+            if last_date:
+                invest = t.get_total_invest('All', last_date, date)
+                divest = t.get_total_divest('All', last_date, date)
+                dividend = t.get_total_dividend('All', last_date, date)
+            else:
+                invest, divest, dividend = 0, 0, 0
+            last_date = date
+            # print(10*'---')
+            # print(date)
+            # print('Divest', divest)
+            # print('Invest', invest)
+            # print('Dividend', dividend)
+            # print(value['income'])
+            # print(value['expense'])
+            # print(value['expense']+ divest + invest + dividend)
             incomes.append(value['income'])
-            expenses.append(value['expense'])
-        median_income = statistics.median(incomes)
-        median_expense = statistics.median(expenses)
+            expenses.append(value['expense'] + divest + invest + dividend)
+
+
+        median_income = statistics.mean(incomes)
+        median_expense = statistics.mean(expenses)
         return median_income, median_expense
 
     def get_current_wealth(self):

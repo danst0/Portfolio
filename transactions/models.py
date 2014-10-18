@@ -218,7 +218,7 @@ class Transaction(models.Model):
         total_profit = Decimal(0)
         total_dividends = Decimal(0)
         # import pdb; pdb.set_trace()
-        for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name):
+        for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name.lower()):
             price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id, from_date)
             price_at_end = self.prices.get_last_price_from_stock_id(stock_id, to_date)
             value_at_beginning = Decimal(0)

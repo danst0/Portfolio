@@ -10,6 +10,7 @@ import sys
 #from Transactions.models import Transaction
 from decimal import *
 import csv
+import os
 
 class Importer:
     def __init__(self):
@@ -35,6 +36,8 @@ class CortalConsors(Importer):
         ext_path = 'Depotverwaltung 2010'
         file = 'Sheet 1-Table 2.csv'
         short_name_long_name = {}
+        if not os.path.isfile(self.base_path + '/' + ext_path + '/' + file):
+            return []
         with open(self.base_path + '/' + ext_path + '/' + file, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
             for row in reader:

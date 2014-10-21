@@ -13,7 +13,7 @@ from matplotlib.dates import DateFormatter
 from matplotlib.ticker import ScalarFormatter
 
 import datetime
-import random
+from django.utils import timezone
 from django.http import HttpResponse
 
 from securities.models import Price
@@ -150,6 +150,21 @@ def portfolio_development(request):
         form = PortfolioFormTwoDates()
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                           'form': form})
+def new_invest(request):
+    t = Transaction()
+    m = Money()
+    today = timezone.now().date()
+    portfolio_parts = t.get_total_per_type('All', today)
+    wealth = m.get_wealth(today)
+    # print(wealth)
+    # print(portfolio_parts)
+    content = list(portfolio_parts.items())
+    content.append(('Cash', wealth))
+    content = sorted(content, key=lambda x: x[0])
+    # print(content)
+
+    ##### XXXXX HIER WEITER ARBEITEN
+    return render(request, 'new_invest.html', {'block_title': 'New Investments', 'content': content})
 
 def portfolio_overview(request):
     # if this is a POST request we need to process the form data

@@ -159,6 +159,17 @@ class Transaction(models.Model):
                 total += item.total
         return total
 
+    def get_total_per_type(self, portfolio, date):
+        total = {}
+
+        stocks = self.get_total_for_portfolio(portfolio, date)
+        # print(stocks)
+        for stock in stocks:
+            if not stock.type in total.keys():
+                total[stock.type] = Decimal(0)
+            total[stock.type] += abs(stocks[stock]['total'])
+        return total
+
 
     def get_stocks_in_portfolio(self, portfolio, date):
         """Get portfolio contents on that specific date, incl. all transactions from that date"""

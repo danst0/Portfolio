@@ -80,6 +80,12 @@ class Money(models.Model):
         median_expense = statistics.mean(expenses)
         return median_income, median_expense
 
+    def get_wealth(self, date):
+        transactions = Money.objects.filter(to_date__lte=date).order_by('-to_date')
+        transactions[0].total_in_end
+        return transactions[0].total_in_end
+
+
     def get_current_wealth(self):
         transactions = Money.objects.all().order_by('-to_date')
         transactions[0].total_in_end

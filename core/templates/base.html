@@ -13,6 +13,7 @@
             <li>{% block nav-home %}<a href="{% url 'index' %}">Home</a>{% endblock %}</li>
             <li>{% block nav-portfolio_overview %}<a href="{% url 'portfolio_overview' %}">Portfolio Overview</a>{% endblock %}</li>
             <li>{% block nav-outbank %}<a href="{% url 'import_outbank' %}">Import Outbank</a>{% endblock %}</li>
+            <li>{% block nav-new-invest %}<a href="{% url 'new_invest' %}">New Investment/Distributions</a>{% endblock %}</li>
             <li>{% block nav-update-yahoo %}<a href="{% url 'import_historic_quotes' %}">Update from Yahoo</a>{% endblock %}</li>
             <li>{% block nav-update-bf %}<a href="{% url 'update_stocks_boerse_frankfurt' %}">Update from Börse Frankfurt</a>{% endblock %}</li>
             <li>{% block import_pdf %}<a href="{% url 'update' %}">Import PDFs (CortalConsors)</a>{% endblock %}</li>

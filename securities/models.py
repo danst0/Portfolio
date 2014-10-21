@@ -9,6 +9,8 @@ import ystockquote
 import urllib
 import jellyfish
 import logging
+import os
+
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 
@@ -128,6 +130,7 @@ class Price(models.Model):
         self.securities = Security()
         self.securitysplit = SecuritySplit()
         super().__init__(*args, **kwargs)
+        self.base_path = os.path.expanduser('~') + '/Desktop/PDFs'
 
     def get_dates_and_prices(self, stock_id, from_date, to_date):
         result = Price.objects.filter(stock_id=stock_id, date__gte=from_date, date__lte=to_date).order_by('date')
@@ -215,7 +218,11 @@ class Price(models.Model):
         base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='
         # print(base_url+symbol)
         request = urllib.request.Request(base_url + symbol)
-        response = urllib.request.urlopen(request)
+        try:
+            response = urllib.request.urlopen(request)
+        except:
+            print('No connection to the internet avaliable')
+            return None
         content = response.read().decode('utf-8')
         # content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')  # .replace('\n','')
         # import pdb; pdb.set_trace()
@@ -224,11 +231,18 @@ class Price(models.Model):
         if m:
             quote = Decimal(m.group(1))
         else:
-            m = re.search('The search for .{5,25}; delivered no results', content, re.DOTALL)
-            if m:
+            m1 = re.search('The search for .{5,25}; delivered no results', content, re.DOTALL)
+            m2 = re.search('<td class="column-bid .*?>.*?\-.*?<\/td>', content, re.DOTALL)
+            if m1:
                 print('No results found for', symbol)
+            elif m2:
+                print('No quotes accessible for', symbol)
             else:
+
                 print('Other unknown error while retrieving the quote')
+                with open(self.base_path + '/' + symbol + '.html', 'w') as myfile:
+                    myfile.write(content)
+
             quote = None
         return quote
 
@@ -244,17 +258,22 @@ class Price(models.Model):
         for sec in Security.objects.all():
             if not sec.isin_id.startswith('unknown'):
                 # import pdb; pdb.set_trace()
-                old_price_date = self.get_prices(sec, order_by_date=True)[0].date
+                tmp_p = self.get_prices(sec, order_by_date=True)
+                if tmp_p:
+                    old_price_date = tmp_p[0].date
+                else:
+                    old_price_date = None
                 if old_price_date != today:
                     quote = self.get_quote_boerse_frankfurt(sec.isin_id)
+                    print('.')
                     if not quote:
-                        print('No quotes found for:', sec.name)
+                        print('x')
                     else:
                         self.update(sec, today, quote)
                 else:
-                    print('Already have quote for', sec.name)
+                    print('t')
             else:
-                print('No ISIN for', sec.name)
+                print('No ISIN', sec.name)
         print('Update finished')
 
     def import_historic_quotes(self, years=15):

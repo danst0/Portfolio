@@ -202,12 +202,20 @@ class Price(models.Model):
         stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
         return self.get_last_price_from_stock_id(stock_id, before_date, none_equals_zero)
 
-    def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False):
+    def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False, none_equals_oldest_available=False):
         """Return last price available, if given, return last price available before given date"""
         prices = self.get_prices(stock_id, before_date, order_by_date=True)
+        no_price = False
         if prices:
             return prices[0].price
         else:
+            if none_equals_oldest_available:
+                prices = self.get_prices(stock_id, order_by_date=True)
+                if prices:
+                    return prices[0].price
+            else:
+                no_price = True
+        if no_price:
             if none_equals_zero:
                 return Decimal(0.0)
             else:

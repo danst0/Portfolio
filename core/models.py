@@ -67,14 +67,20 @@ class UI:
         # import pdb; pdb.set_trace()
         time_intervall = int((to_date - from_date).days/12/15)*15
         total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)
+        # Iteration over 12 time intervals
+        loop_date = None
         for i in range(12):
+
             loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * time_intervall))
-            stocks_at_date = self.transaction.get_total_for_portfolio('All', loop_date.strftime("%Y-%m-%d"))
+            stocks_at_date = self.transaction.get_total_for_portfolio('All', loop_date)
             portfolio_value_at_date = Decimal(0)
             stocks = []
             for stock_id in stocks_at_date.keys():
-                price = self.prices.get_last_price_from_stock_id(stock_id, loop_date.strftime("%Y-%m-%d"),
-                                                                 none_equals_zero=True)
+                price = self.prices.get_last_price_from_stock_id(stock_id, loop_date,
+                                                                 none_equals_zero=True,
+                                                                 none_equals_oldest_available=True)
+                if price == 0:
+                    print(stock_id, 'price 0', loop_date)
                 portfolio_value_at_date += stocks_at_date[stock_id]['nominal'] * price
                 stocks.append((stock_id, stocks_at_date[stock_id]['nominal'], price))
 
@@ -89,38 +95,47 @@ class UI:
             pf_value.append(tmp_value)
 
         # Drivers vs. 1 intervall earlier
+        # print('Now', dates[0])
+        # print('-1 int', dates[1])
         delta_keys = []
+        interval_factor = 2
         for stock in pf_details[0]:
             cur_key = stock[0]
             cur_nom = stock[1]
             cur_price = stock[2]
-            for old_stock in pf_details[1]:
+            for old_stock in pf_details[interval_factor]:
                 if cur_key == old_stock[0]:
-                    # print(cur_nom * cur_price - old_stock[1] * old_stock[2], old_stock[1] * old_stock[2], cur_nom * cur_price, 'Nom', old_stock[1], cur_nom, 'EUR', old_stock[2],  cur_price)
-                    #					print(cur_key, '::', self.transaction.get_invest_divest('All', cur_key, dates[1], dates[0]))
-                    delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest(
-                        'All', cur_key, dates[1], dates[0])
-                    delta_keys.append([cur_key, delta, abs(delta)])
-        delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
-        print('Total deviation vs. ' + str(time_intervall) + ' days ago:', pf_value[0] - pf_value[1], '; major drivers:')
-        for i in range(3):
+                    # print(cur_key,
+                    #       'Invest', self.transaction.get_invest_divest('All', cur_key, dates[1], dates[0]))
+                    # print('Delta in value', cur_nom * cur_price - old_stock[1] * old_stock[2],
+                    #       'Old value', old_stock[1] * old_stock[2],
+                    #       'New value', cur_nom * cur_price,
+                    #       'Nom', old_stock[1], cur_nom,
+                    #       'EUR', old_stock[2],  cur_price)
+                    delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
+                            self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0])
+                    delta_keys.append([cur_key, delta])
+        delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
+        print('Total deviation vs. ' + str(interval_factor*time_intervall) + ' days ago:', pf_value[0] - pf_value[interval_factor], '; major drivers:')
+        for i in range(5):
             print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]), ')')
 
         # Drivers vs. 2 intervall earlier
         delta_keys = []
+        interval_factor = 4
         for stock in pf_details[0]:
             cur_key = stock[0]
             cur_nom = stock[1]
             cur_price = stock[2]
-            for old_stock in pf_details[2]:
+            for old_stock in pf_details[interval_factor]:
                 if cur_key == old_stock[0]:
-                    delta = cur_nom * cur_price - old_stock[1] * old_stock[2] + self.transaction.get_invest_divest(
-                        'All', cur_key, dates[2], dates[0])
-                    delta_keys.append([cur_key, delta, abs(delta)])
+                    delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
+                            self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0])
+                    delta_keys.append([cur_key, delta])
         # print(delta_keys)
-        delta_keys = sorted(delta_keys, key=lambda x: x[2], reverse=True)
-        print('Total deviation vs. ' + str(2* time_intervall) + ' days ago:', pf_value[0] - pf_value[2], '; major drivers:')
-        for i in range(3):
+        delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
+        print('Total deviation vs. ' + str(interval_factor * time_intervall) + ' days ago:', pf_value[0] - pf_value[interval_factor], '; major drivers:')
+        for i in range(5):
             print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]),')')
             # print(delta_keys)
 

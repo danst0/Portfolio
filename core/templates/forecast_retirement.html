@@ -8,7 +8,11 @@
     {% for item in forecast_results %}
         <div class="item">
         {{ item.text }}
-        {{ item.value|nicenumber_100 }}
+        {% if not item.no_cut %}
+            {{ item.value|nicenumber_100 }}
+        {% else %}
+            {{ item.value|nicenumber }}
+        {% endif %}
         </div>
     {% endfor %}
 {% endblock %}

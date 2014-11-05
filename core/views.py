@@ -179,13 +179,13 @@ def portfolio_overview(request):
         if form.is_valid():
             t = Transaction()
             content = t.list_pf(form.cleaned_data['portfolio'],
-                                form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
-                                form.cleaned_data['to_date'].strftime('%Y-%m-%d'))
+                                form.cleaned_data['from_date'],
+                                form.cleaned_data['to_date'])
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                                'form': form,
                                                                'portfolio': form.cleaned_data['portfolio'],
-                                                               'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
-                                                               'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
+                                                               'from_date': form.cleaned_data['from_date'],
+                                                               'to_date': form.cleaned_data['to_date'],
                                                                'header': ['Name', 'Nominal', 'Price',
                                                                           'Last value', 'Dividends', 'Current value', 'Profit', 'ROI'],
                                                                'walk_through_header': ['name',

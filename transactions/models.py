@@ -53,7 +53,7 @@ class Transaction(models.Model):
     def import_sources(self):
         i = CortalConsors()
         price_updates, transactions_update_pdf = i.read_pdfs()
-        transaction_update_csv = i.read_csv()
+        transaction_update_csv = i.read_old_depot_csv()
         transactions_update = transactions_update_pdf + transaction_update_csv
         output_transactions_updates = self.import_transactions(transactions_update)
         output_price_updates = self.prices.import_prices(price_updates)
@@ -74,6 +74,10 @@ class Transaction(models.Model):
                     sec.isin_id = trans['isin']
                     sec.save()
                     print('Added ISIN')
+                # Add price of transaction
+                p = Price()
+                p.add(sec, trans['date'], trans['value'])
+
                 pf = self.pf.find('All')
                 success = self.add(transaction_type=trans['type'],
                                    portfolio=pf,
@@ -147,17 +151,27 @@ class Transaction(models.Model):
         return self.get_total(portfolio, 'd', from_date, to_date, stock_id)
 
     def get_total(self, portfolio, transaction_type, from_date, to_date, stock_id=None):
+        """
+        :param portfolio: Name of portfolio
+        :param transaction_type: Types B uy, S ell, D ividend
+        :param from_date: Starting date (excluding date mentioned)
+        :param to_date: End date of analysis (including date mentioned)
+        :param stock_id: Stock ID
+        :return:
+        """
         total = Decimal(0)
         if stock_id:
             for item in Transaction.objects.filter(portfolio__name=portfolio,
                                                    transaction_type=transaction_type,
-                                                   date__range=[from_date, to_date],
+                                                   date__gt=from_date,
+                                                   date__lte=to_date,
                                                    stock_id=stock_id):
                 total += item.total
         else:
             for item in Transaction.objects.filter(portfolio__name=portfolio,
                                                    transaction_type=transaction_type,
-                                                   date__range=[from_date, to_date]):
+                                                   date__gt=from_date,
+                                                   date__lte=to_date):
                 total += item.total
         return total
 
@@ -223,6 +237,20 @@ class Transaction(models.Model):
         return per_stock
 
     def list_pf(self, portfolio, from_date, to_date):
+        """ Portfolio Overview function table of all stocks and profits since from_date
+        :param portfolio: xxx
+        :param from_date: When to start
+        :param to_date: When to end
+        :return:
+        """
+        # print(from_date, to_date)
+        # Temporary update all old prices from transaction data
+        # for trans in Transaction.objects.all():
+        #     # Add price of transaction
+        #     if trans.transaction_type != 'd':
+        #         print(trans.stock_id, trans.date, trans.price)
+        #         p = Price()
+        #         p.add(trans.stock_id, trans.date, trans.price)
         stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date)
         stocks_at_end = self.get_total_for_portfolio(portfolio, to_date)
         values = []
@@ -232,26 +260,46 @@ class Transaction(models.Model):
         total_dividends = Decimal(0)
         # import pdb; pdb.set_trace()
         for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name.lower()):
-            price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id, from_date)
-            price_at_end = self.prices.get_last_price_from_stock_id(stock_id, to_date)
+
+            price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id,
+                                                                          from_date,
+                                                                          none_equals_oldest_available=True)
+            price_at_end = self.prices.get_last_price_from_stock_id(stock_id,
+                                                                    to_date)
+            # print('Stock', stock_id)
+            # print(price_at_beginning, price_at_end)
+
             value_at_beginning = Decimal(0)
             value_at_end = Decimal(0)
 
+
+            # print('Invest', self.get_invest_divest(portfolio, stock_id, from_date, to_date))
             if price_at_beginning:
+                # print('Price', price_at_beginning)
                 if stock_id in stock_at_beginning.keys():
+                    # print('Nom', stock_at_beginning[stock_id]['nominal'])
+                    # print('Price and already existing')
+
                     value_at_beginning = stock_at_beginning[stock_id]['nominal'] * price_at_beginning -\
                                          self.get_invest_divest(portfolio, stock_id, from_date, to_date)
                 else:
                     value_at_beginning -= self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+                    # print('Price but not yet existed')
             else:
+                # print('No price')
                 value_at_beginning -= self.get_invest_divest(portfolio, stock_id, datetime.date(1900, 1, 1), from_date)
+
 
 
             # Calculate dividends
             dividends = self.get_total_dividend(portfolio, from_date, to_date, stock_id)
             # Calculate Value at end
             if price_at_end:
+                # print(stocks_at_end[stock_id]['nominal'], price_at_end)
                 value_at_end = stocks_at_end[stock_id]['nominal'] * price_at_end
+            else:
+                # print('No price', stocks_at_end[stock_id]['nominal'], price_at_end)
+                pass
             # Calculate profit
             profit = value_at_end - value_at_beginning + dividends
             try:
@@ -273,7 +321,7 @@ class Transaction(models.Model):
             total_dividends += dividends
             total_profit += profit
         try:
-            total_roi = (total_value-total_value_at_beginning)/total_value_at_beginning * 100
+            total_roi = str(round(((total_value-total_value_at_beginning)/total_value_at_beginning * 100), 1)) + '%'
         except:
             total_roi = 'n/a'
         values.append({'name': 'Total',
@@ -286,7 +334,8 @@ class Transaction(models.Model):
 
     def get_roi(self, portfolio, from_date, to_date):
         result = self.list_pf(portfolio, from_date, to_date)
-        return result[-1]['roi']/Decimal(100)
+        result = Decimal(result[-1]['roi'][:-1])
+        return result/Decimal(100)
 
 
     def get_pf_value(self, portfolio, to_date):

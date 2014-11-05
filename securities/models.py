@@ -10,6 +10,8 @@ import urllib
 import jellyfish
 import logging
 import os
+import csv
+
 
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
@@ -179,9 +181,11 @@ class Price(models.Model):
         return str(self.stock_id) + str(self.date) + str(self.price)
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
-        # import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
+        # print(type(before_date))
         if before_date:
             result = Price.objects.filter(stock_id=stock_id, date__lte=before_date)
+            # print(result)
         else:
             result = Price.objects.filter(stock_id=stock_id)
         if order_by_date:
@@ -211,8 +215,9 @@ class Price(models.Model):
         else:
             if none_equals_oldest_available:
                 prices = self.get_prices(stock_id, order_by_date=True)
+                # print(prices)
                 if prices:
-                    return prices[0].price
+                    return prices[len(prices)-1].price
             else:
                 no_price = True
         if no_price:
@@ -344,8 +349,22 @@ class Price(models.Model):
             date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         if isinstance(price, str):
             price = Decimal(price)
-        # print(type(stock_id), type(date), type(price))
-        return Price.objects.get_or_create(stock_id=stock_id, date=date, price=price)
+        prices = Price.objects.filter(stock_id=stock_id)
+        # for price1 in prices:
+        #     for price2 in prices:
+        #         if price1.date == price2.date:
+        #             if price2.id != None:
+        #                 price2.delete()
+        prices = Price.objects.filter(stock_id=stock_id, date=date)
+        if prices:
+            for price_obj in prices:
+                price_obj.price = price
+                price_obj.save()
+            price_obj = prices[0]
+
+        else:
+            price_obj = Price.objects.create(stock_id=stock_id, date=date, price=price)
+        return price_obj
 
 
 class SecuritySplit(models.Model):

@@ -32,7 +32,10 @@ def remove_multiple_spaces(str):
 
 class CortalConsors(Importer):
 
-    def read_csv(self):
+
+
+
+    def read_old_depot_csv(self):
         ext_path = 'Depotverwaltung 2010'
         file = 'Sheet 1-Table 2.csv'
         short_name_long_name = {}
@@ -101,6 +104,7 @@ class CortalConsors(Importer):
                         data = myfile.read()
                     data = self.get_data_from_personal_investment_report(data)
                 if data:
+                    # print(data)
                     price_updates.append(data)
                     file_counter += 1
                 os.remove(self.base_path + '/' + file)

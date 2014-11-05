@@ -137,6 +137,13 @@ class Money(models.Model):
         return monthly_pension
 
     def mp(self, wealth, year_of_retirement, year_of_death, interest_rate):
+        """
+        :param wealth: Starting point for wealth at retirement age
+        :param year_of_retirement: when to retire
+        :param year_of_death: when to die
+        :param interest_rate: applicable interest rate
+        :return: monthly return/pension while using up all money
+        """
         future_delta = self.month_delta(str(year_of_death)+'-12-31') - self.month_delta(str(year_of_retirement)+'-12-31')
         monthly_pension = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03))
         return monthly_pension
@@ -168,7 +175,7 @@ class Money(models.Model):
 
         result = [{'text': 'Estimated income', 'value': median_income},
                   {'text': 'Estimated expense', 'value': median_expense},
-                  {'text': 'Estimated interest rate', 'value': expected_interest_rate},
+                  {'text': 'Estimated interest rate', 'value': expected_interest_rate*100, 'no_cut': True},
                   {'text': 'Current wealth', 'value': total_wealth},
                   {'text': 'Estimated wealth 2015', 'value': wealth_in_2015}
                   ]

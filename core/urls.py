@@ -5,6 +5,7 @@ from core import views
 urlpatterns = patterns('',
                        url(r'^$', views.index, name='index'),
                        url(r'import_historic_quotes/', views.import_historic_quotes, name='import_historic_quotes'),
+                       url(r'import_cortalconsors_quotes/', views.import_cortalconsors_quotes, name='import_cortalconsors_quotes'),
                        url(r'import_quotes/', views.update_stocks_boerse_frankfurt, name='update_stocks_boerse_frankfurt'),
                        url(r'import_outbank/', views.import_outbank, name='import_outbank'),
                        url(r'new_invest/', views.new_invest, name='new_invest'),

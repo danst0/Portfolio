@@ -284,6 +284,29 @@ class Price(models.Model):
                 print('No ISIN', sec.name)
         print('Update finished')
 
+    def import_cortalconsors_quotes(self):
+        base_path = os.path.expanduser('~') + '/Desktop/PDFs'
+        file = 'depot_918717894.csv'
+        if not os.path.isfile(base_path + '/' + file):
+            return []
+        result = []
+        with open(base_path + '/' + '/' + file, encoding='utf-8') as f:
+            reader = csv.reader(f, delimiter=';')
+            for row in reader:
+                if row[0] == '':
+                    name = row[1]
+                    # print(row[5])
+                    date = datetime.datetime.strptime(row[5], '%d.%m.%Y').date()
+                    price = Decimal(row[3].replace(',', '.'))
+                    # print(name, date, price)
+                    stock_id = self.securities.find(name)
+                    self.add(stock_id, date, price)
+                    result.append({'stock_id': stock_id.id,
+                                   'name': stock_id.name,
+                                   'date': date,
+                                   'price': price})
+        return result
+
     def import_historic_quotes(self, years=15):
         result = []
         today = datetime.date.today()

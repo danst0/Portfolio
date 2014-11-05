@@ -62,3 +62,36 @@ class PriceTests(TestCase):
         result = price.get_prices(mysec)
         # print(result)
         self.assertEqual(result[0].price, Decimal('14.28571428571428571428571429'))
+
+    def test_get_last_price_from_stock_id(self):
+        sec = Security()
+        price = Price()
+        mysec = sec.add('Test', ['SomeAliasString'], '', 'APC.DE', 'Stock')
+        time_0 = timezone.now() - datetime.timedelta(days=1)
+        time_price_1 = timezone.now() - datetime.timedelta(days=5)
+        time_price_2 = timezone.now() - datetime.timedelta(days=20)
+        time_3 = timezone.now() - datetime.timedelta(days=25)
+        price.add(mysec, time_price_1, 100)
+        price.add(mysec, time_price_2, 50)
+        # get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False, none_equals_oldest_available=False)
+
+        result = price.get_last_price_from_stock_id(mysec)
+        self.assertEqual(result, Decimal('100'))
+
+        result = price.get_last_price_from_stock_id(mysec, time_price_2)
+        self.assertEqual(result, Decimal('50'))
+
+        result = price.get_last_price_from_stock_id(mysec, time_3)
+        self.assertEqual(result, None)
+
+        result = price.get_last_price_from_stock_id(mysec, time_3, none_equals_zero=True)
+        self.assertEqual(result, Decimal('0'))
+
+        result = price.get_last_price_from_stock_id(mysec, time_3, none_equals_zero=True, none_equals_oldest_available=True)
+        self.assertEqual(result, Decimal('50'))
+
+        result = price.get_last_price_from_stock_id(mysec, time_3, none_equals_oldest_available=True)
+        self.assertEqual(result, Decimal('50'))
+
+        result = price.get_last_price_from_stock_id(mysec, time_0)
+        self.assertEqual(result, Decimal('100'))

@@ -30,6 +30,10 @@ def import_outbank(request):
     result = m.import_outbank()
     return render(request, 'import_outbank.html', {'block_title': 'Import Outbank', 'import_results': result})
 
+def import_cortalconsors_quotes(request):
+    p = Price()
+    result = p.import_cortalconsors_quotes()
+    return render(request, 'import_cortalconsors_quotes.html', {'block_title': 'Import CortalConsors Quotes', 'import_results': result})
 
 def import_historic_quotes(request):
     # import pdb; pdb.set_trace()

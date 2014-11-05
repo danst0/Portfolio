@@ -68,11 +68,11 @@ class UI:
         time_intervall = int((to_date - from_date).days/12/15)*15
         total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)
         # Iteration over 12 time intervals
-        loop_date = None
         for i in range(12):
-
             loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * time_intervall))
+            # import pdb; pdb.set_trace()
             stocks_at_date = self.transaction.get_total_for_portfolio('All', loop_date)
+
             portfolio_value_at_date = Decimal(0)
             stocks = []
             for stock_id in stocks_at_date.keys():
@@ -106,7 +106,7 @@ class UI:
             for old_stock in pf_details[interval_factor]:
                 if cur_key == old_stock[0]:
                     # print(cur_key,
-                    #       'Invest', self.transaction.get_invest_divest('All', cur_key, dates[1], dates[0]))
+                    #       'Invest', self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0]))
                     # print('Delta in value', cur_nom * cur_price - old_stock[1] * old_stock[2],
                     #       'Old value', old_stock[1] * old_stock[2],
                     #       'New value', cur_nom * cur_price,
@@ -129,6 +129,13 @@ class UI:
             cur_price = stock[2]
             for old_stock in pf_details[interval_factor]:
                 if cur_key == old_stock[0]:
+                    # print(cur_key,
+                    #       'Invest', self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0]))
+                    # print('Delta in value', cur_nom * cur_price - old_stock[1] * old_stock[2],
+                    #       'Old value', old_stock[1] * old_stock[2],
+                    #       'New value', cur_nom * cur_price,
+                    #       'Nom', old_stock[1], cur_nom,
+                    #       'EUR', old_stock[2],  cur_price)
                     delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
                             self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0])
                     delta_keys.append([cur_key, delta])

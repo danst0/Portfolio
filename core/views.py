@@ -137,6 +137,24 @@ def portfolio_development_png(request, portfolio, from_date, to_date):
     canvas.print_png(response)
     return response
 
+def roi_cake_png(request, portfolio, from_date, to_date):
+    fig=Figure()
+    ax=fig.add_subplot(111)
+    ui = UI()
+    dates, pf_values = ui.portfolio_development(portfolio,
+                                               datetime.datetime.strptime(from_date, '%Y-%m-%d'),
+                                               datetime.datetime.strptime(to_date, '%Y-%m-%d'))
+    ax.plot_date(dates, pf_values, '-')
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+    fig.autofmt_xdate()
+    ax.set_xlabel('Date')
+    canvas = FigureCanvas(fig)
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
+
+
 def portfolio_development(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':

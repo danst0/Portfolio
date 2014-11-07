@@ -5,10 +5,14 @@
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Execute" />
+    </form>
     {{ content }}
+
     {% if portfolio %}
         <img src='{% url 'portfolio_development_png' portfolio from_date to_date %}' />
     {% endif %}
 
-    </form>
+
+
+
 {% endblock %}

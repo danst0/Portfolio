@@ -38,6 +38,8 @@
         </table>
         </div>
     {% endif %}
-
     </form>
+    {% if portfolio %}
+        <img src='{% url 'roi_cake_png' portfolio from_date to_date %}' />
+    {% endif %}
 {% endblock %}

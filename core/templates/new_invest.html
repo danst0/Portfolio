@@ -4,32 +4,169 @@
 {% load staticfiles %}
 
 {% block extrahead %}
-<script src="{% static "core/Chart.min.js" %}" type="text/javascript"></script>
+<script src="{% static "core/chart.min.js" %}" type="text/javascript"></script>
 <script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
+<script src="{% static "core/doughnutit.js" %}" type="text/javascript"></script>
+
 <script type="text/javascript">
 $( document ).ready(function() {
-    var data = {
-        labels: ['1', '5', '10', '15', '20', '25', '30'],
-        datasets: [
+		var doughnutData = [
+            {% for line in content %}
+			    {value:{{ line.1 }}, color:"{{ line.3 }}", highlight:"{{ line.4 }}", label:"{{ line.0 }} ({{ line.2 }})" },
+			{% endfor %}
+		];
+
+		$( "#myDoughnut" ).doughnutit({
+			dnData: doughnutData,
+		    dnSize: 400,
+		    dnInnerCutout: 60,
+		    dnAnimation: true,
+			dnAnimationSteps: 20,
+			dnAnimationEasing: 'linear',
+			dnStroke: true,
+			dnShowText: false,
+			dnFontSize: '70px',
+			dnFontColor: "#000",
+			dnText: "MOTHERFUCKER",
+			dnStartAngle: 90,
+			dnCounterClockwise: false,
+			dnRightCanvas: {
+				rcRadius: 15,
+				rcPreMargin: 100,
+				rcMargin: 20,
+				rcHeight: 100,
+				rcOffset: 15,
+				rcLineWidth: 200,
+				rcSphereColor: '#819596',
+				rcSphereStroke: '#819596',
+				rcTop:{
+					rcTopLineColor: '#819596',
+					rcTopDashLine: 5,
+					rcTopFontSize: '20px',
+					rcStrokeWidth: 3,
+					rctAbove: {
+						rctText: 'Analysis',
+						rctOffset: 5,
+						rctImageOffsetRight: 5,
+						rctImageOffsetBottom: 0,
+					},
+					rctBelow: {
+						rctText: '6.5',
+						rctFontSize: '50px',
+						rctOffset: 15,
+						rctOffset: 5,
+						rctImageOffsetRight: 5,
+						rctImageOffsetBottom: 0,
+					}
+				},
+				rcBottom:{
+					rcBottomDashLine: 0,
+					rcBottomFontSize: '15px',
+					rcBottomLineColor: '#819596',
+					rcStrokeWidth: 3,
+					rcbAbove: {
+						rcbImageOffsetBottom: 0,
+						rcbImageOffsetRight: 5,
+						rcbText: 'DATA DE G3',
+						rcbFontSize: '20px',
+						rcbOffset: 5
+					},
+					rcbBelow: {
+						rcbImage: 'calendar.png',
+						rcbImageOffsetRight: 5,
+						rcbImageOffsetBottom: 0,
+						rcbText: '20/10/2013',
+						rcbOffset: 10
+					}
+				}
+			},
+			dnLeftCanvas: {
+				lcRadius: 15,
+				lcPreMargin: 100,
+				lcMargin: 20,
+				lcHeight: 100,
+				lcOffset: 15,
+				lcLineWidth: 200,
+				lcSphereColor: '#819596',
+				lcSphereStroke: '#819596',
+				lcTop:{
+					lcTopLineColor: '#819596',
+					lcTopDashLine: 5,
+					lcTopFontSize: '20px',
+					lcStrokeWidth: 3,
+					lctAbove: {
+						lctText: 'Updates',
+						lctOffset: 5,
+						lctImageOffsetRight: 5,
+						lctImageOffsetBottom: 0,
+					},
+					lctBelow: {
+						lctText: '8.4',
+						lctFontSize: '50px',
+						lctOffset: 15,
+						lctOffset: 5,
+						lctImageOffsetRight: 5,
+						lctImageOffsetBottom: 0,
+					}
+				},
+				lcBottom:{
+					lcBottomDashLine: 0,
+					lcBottomFontSize: '15px',
+					lcBottomLineColor: '#819596',
+					lcStrokeWidth: 3,
+					lcbAbove: {
+						lcbImageOffsetBottom: 0,
+						lcbImageOffsetRight: 5,
+						lcbText: 'NOTA G2',
+						lcbFontSize: '20px',
+						lcbOffset: 5
+					},
+					lcbBelow: {
+						lcbImage: 'calendar.png',
+						lcbImageOffsetRight: -10,
+						lcbImageOffsetBottom: 1,
+						lcbText: '10/02/1994',
+						lcbOffset: 10
+					}
+				}
+			}
+		});// End Doughnut
+
+    var data = [
+        {% for line in content %}
             {
-                label: "Site Registrations in the Last 30 Days",
-                fillColor: "rgba(220,220,220,0.2)",
-                strokeColor: "rgba(220,220,220,1)",
-                pointColor: "rgba(220,220,220,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(220,220,220,1)",
-                data: [65, 59, 80, 81, 56, 55, 40]
-            }
-        ]
-    };
+
+                value: {{ line.1 }},
+                label: "{{ line.0 }} ({{ line.2 }})",
+                color: "{{ line.3 }}",
+                highlight: "{{ line.4 }}",
+            },
+        {% endfor %}
+    ];
     var ctx = document.getElementById("myChart").getContext("2d");
-    var myLineChart = new Chart(ctx).Line(data);
+
+        var myPie = new Chart(ctx).Doughnut(data, {
+            animation: false,
+            percentageInnerCutout: 60,
+            animationSteps: 30,
+        })
+        ctx.moveTo(0,0);
+        ctx.lineTo(200,100);
+        ctx.stroke();
+		var legend = myPie.generateLegend();
+        $("#legend").html(legend);
 });
+
+
 </script>
 {% endblock %}
 
 {% block content %}
-<canvas id="myChart" width="500" height="300"></canvas>
-{% endblock %}
+    <div id="container">
+        <canvas id="myChart" width="800" height="400"></canvas>
+        <div id="legend"></div>
+        <div id="myDoughnut"> </div>
+        <div id="total">{{ total|nicenumber }} €</div>
 
+    </div>
+{% endblock %}

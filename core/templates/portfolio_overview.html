@@ -1,12 +1,43 @@
 {% extends "base.html" %}
 {% load filters %}
 {% load admin_urls %}
+{% load staticfiles %}
+
+{% block extrahead %}
+<script src="{% static "core/Chart.min.js" %}" type="text/javascript"></script>
+<script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
+<script type="text/javascript">
+$( document ).ready(function() {
+    var data = [
+            {% for line in portfolio_content %}
+                {% if line|keyvalue:'name' != 'Total' %}
+                    {
+                        value: {{ line|keyvalue:'profit'|absolute|cut:0 }},
+                        label: "{{ line|keyvalue:'name' }}: {{ line|keyvalue:'profit'|cut:1 }} ({{ line|keyvalue:'roi' }})",
+                        color: "#cccccc",
+                        highlight: "#dddddd",
+                    },
+                {% endif %}
+            {% endfor %}
+
+    ];
+    var ctx = document.getElementById("roi_cake_chart").getContext("2d");
+    var myLineChart = new Chart(ctx).PolarArea(data, {tooltipTemplate: "<%if (label){%><%=label%> <% }%>",});
+});
+</script>
+{% endblock %}
+
 
 {% block content %}
+
     <form action="{% url 'core.views.portfolio_overview' %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Execute" />
+    </form>
+    {% if portfolio_content %}
+        <canvas id="roi_cake_chart" width="500" height="300"></canvas>
+    {% endif %}
     {% if portfolio_content %}
         <div id="table">
         <table border=1>
@@ -38,8 +69,9 @@
         </table>
         </div>
     {% endif %}
-    </form>
-    {% if portfolio %}
-        <img src='{% url 'roi_cake_png' portfolio from_date to_date %}' />
-    {% endif %}
+
+
 {% endblock %}
+
+
+

@@ -13,6 +13,7 @@ from matplotlib.dates import DateFormatter
 from matplotlib.ticker import ScalarFormatter
 
 import datetime
+from decimal import Decimal
 from django.utils import timezone
 from django.http import HttpResponse
 
@@ -82,23 +83,6 @@ def stock_graph(request):
                                                           'form': form})
 
 
-
-def rolling_profitability_png(request, portfolio, from_date, to_date):
-    fig=Figure()
-    ax=fig.add_subplot(111)
-    ui = UI()
-    dates, roi_list = ui.rolling_profitability(portfolio,
-                                               datetime.datetime.strptime(from_date, '%Y-%m-%d'),
-                                               datetime.datetime.strptime(to_date, '%Y-%m-%d'))
-    ax.plot_date(dates, roi_list, '-')
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.set_xlabel('Date')
-    fig.autofmt_xdate()
-    canvas = FigureCanvas(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
-
 def rolling_profitability(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -106,13 +90,20 @@ def rolling_profitability(request):
         form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
-            content = 'Rolling profitability for shown timeframe'
+            ui = UI()
+            dates, roi_list = ui.rolling_profitability(form.cleaned_data['portfolio'],
+                                                       form.cleaned_data['from_date'],
+                                                       form.cleaned_data['to_date'])
+            dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
+            roi_list = list(map(lambda x: float(round(x, 2)), roi_list))
+            # print(roi_list)
             return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                                   'form': form,
-                                                                  'content': content,
                                                                   'portfolio': form.cleaned_data['portfolio'],
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
-                                                                  'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d')})
+                                                                  'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
+                                                                  'dates': dates,
+                                                                  'roi_list': roi_list})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
@@ -120,22 +111,6 @@ def rolling_profitability(request):
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                           'form': form})
 
-def portfolio_development_png(request, portfolio, from_date, to_date):
-    fig=Figure()
-    ax=fig.add_subplot(111)
-    ui = UI()
-    dates, pf_values = ui.portfolio_development(portfolio,
-                                               datetime.datetime.strptime(from_date, '%Y-%m-%d'),
-                                               datetime.datetime.strptime(to_date, '%Y-%m-%d'))
-    ax.plot_date(dates, pf_values, '-')
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
-    fig.autofmt_xdate()
-    ax.set_xlabel('Date')
-    canvas = FigureCanvas(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
 
 def roi_cake_png(request, portfolio, from_date, to_date):
     fig=Figure()
@@ -162,31 +137,115 @@ def portfolio_development(request):
         form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
+            ui = UI()
+            dates, pf_values = ui.portfolio_development(form.cleaned_data['portfolio'],
+                                                        form.cleaned_data['from_date'],
+                                                        form.cleaned_data['to_date'])
+            dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
+            pf_values = list(map(lambda x: float(round(x,2)), pf_values))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                                   'form': form,
                                                                   'portfolio': form.cleaned_data['portfolio'],
-                                                                  'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
-                                                                  'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d')})
+                                                                  'from_date': form.cleaned_data['from_date'],
+                                                                  'to_date': form.cleaned_data['to_date'],
+                                                                  'dates': dates,
+                                                                  'pf_values': pf_values})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
-                                                          'form': form})
+                                                'form': form})
+
+def get_color_and_highlight():
+    color = {'aqua': "#00ffff",
+             'azure': "#f0ffff",
+             'beige': "#f5f5dc",
+             'black': "#000000",
+             'blue': "#0000ff",
+             'brown': "#a52a2a",
+             'cyan': "#00ffff",
+             'darkblue': "#00008b",
+             'darkcyan': "#008b8b",
+             'darkgrey': "#a9a9a9",
+             'darkgreen': "#006400",
+             'darkkhaki': "#bdb76b",
+             'darkmagenta': "#8b008b",
+             'darkolivegreen': "#556b2f",
+             'darkorange': "#ff8c00",
+             'darkorchid': "#9932cc",
+             'darkred': "#8b0000",
+             'darksalmon': "#e9967a",
+             'darkviolet': "#9400d3",
+             'fuchsia': "#ff00ff",
+             'gold': "#ffd700",
+             'green': "#008000",
+             'indigo': "#4b0082",
+             'khaki': "#f0e68c",
+             'lightblue': "#add8e6",
+             'lightcyan': "#e0ffff",
+             'lightgreen': "#90ee90",
+             'lightgrey': "#d3d3d3",
+             'lightpink': "#ffb6c1",
+             'lightyellow': "#ffffe0",
+             'lime': "#00ff00",
+             'magenta': "#ff00ff",
+             'maroon': "#800000",
+             'navy': "#000080",
+             'olive': "#808000",
+             'orange': "#ffa500",
+             'pink': "#ffc0cb",
+             'purple': "#800080",
+             'violet': "#800080",
+             'red': "#ff0000",
+             'silver': "#c0c0c0",
+             'white': "#ffffff",
+             'yellow': "#ffff00"
+    }
+    complements = {'#8FB700': '#7FA700',
+             '#6BE200': '#5BD200',
+             '#C2F400': '#B2E400',
+             '#FF9800': '#EF8800',
+             '#CB8800': '#BB7800',
+             'magenta': 'darkmagenta',
+             'lime': 'darkolivegreen',
+             'orange': 'darkorange',
+             'orchid': 'darkorchid',
+             'red': 'darkred',
+             'salmon': 'darksalmon',
+             'violet': 'darkviolet'}
+    # to preserve order
+    colors = ['#8FB700', '#6BE200', '#C2F400', '#FF9800', '#CB8800']
+    result = []
+    for normal_color in colors:
+        highlight_color = complements[normal_color]
+        result.append((normal_color, highlight_color))
+    return result
+
+
+
+
 def new_invest(request):
     t = Transaction()
     m = Money()
     today = timezone.now().date()
     portfolio_parts = t.get_total_per_type('All', today)
     wealth = m.get_wealth(today)
-    # print(wealth)
-    # print(portfolio_parts)
     content = list(portfolio_parts.items())
     content.append(('Cash', wealth))
-    content = sorted(content, key=lambda x: x[0])
-    # print(content)
+    total = Decimal(0)
+    for item in content:
+        total += item[1]
 
-    ##### XXXXX HIER WEITER ARBEITEN
-    return render(request, 'new_invest.html', {'block_title': 'New Investments', 'content': content})
+    content = sorted(content, key=lambda x: x[0])
+
+    result = []
+    pie_colors = get_color_and_highlight()
+    for num, item in enumerate(content):
+        result.append(item + (str(int(item[1]/total*100))+'%',) + pie_colors[num])
+
+    # print(result)
+
+    return render(request, 'new_invest.html', {'block_title': 'New Investments', 'content': result, 'total': total})
 
 def portfolio_overview(request):
     # if this is a POST request we need to process the form data

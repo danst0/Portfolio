@@ -1,5 +1,7 @@
 from django import template
 # import locale
+import math
+from decimal import Decimal
 
 register = template.Library()
 
@@ -35,3 +37,15 @@ def nicenumber_100(number):
     else:
         result = ''
     return result
+
+@register.filter
+def cut(number, digits):
+    multiplier = Decimal(max(math.pow(10, digits), 1))
+    rounding_factor = multiplier/Decimal(2)
+    result = int((number+rounding_factor)/multiplier)*multiplier
+    return result
+
+@register.filter
+def absolute(number):
+    number = abs(number)
+    return number

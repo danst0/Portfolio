@@ -137,7 +137,7 @@ $( document ).ready(function() {
             {
 
                 value: {{ line.1 }},
-                label: "{{ line.0 }}",
+                label: "{{ line.0 }} ({{ line.2 }})",
                 color: "{{ line.3 }}",
                 highlight: "{{ line.4 }}",
             },
@@ -145,8 +145,14 @@ $( document ).ready(function() {
     ];
     var ctx = document.getElementById("myChart").getContext("2d");
 
-        var myPie = new Chart(ctx).Doughnut(data)
-
+        var myPie = new Chart(ctx).Doughnut(data, {
+            animation: false,
+            percentageInnerCutout: 60,
+            animationSteps: 30,
+        })
+        ctx.moveTo(0,0);
+        ctx.lineTo(200,100);
+        ctx.stroke();
 		var legend = myPie.generateLegend();
         $("#legend").html(legend);
 });
@@ -157,10 +163,10 @@ $( document ).ready(function() {
 
 {% block content %}
     <div id="container">
+        <canvas id="myChart" width="800" height="400"></canvas>
+        <div id="legend"></div>
         <div id="myDoughnut"> </div>
         <div id="total">{{ total|nicenumber }} €</div>
-    <canvas id="myChart" width="800" height="300"></canvas>
-    <div id="legend"></div>
 
     </div>
 {% endblock %}

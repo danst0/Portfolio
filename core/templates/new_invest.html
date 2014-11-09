@@ -4,32 +4,30 @@
 {% load staticfiles %}
 
 {% block extrahead %}
-<script src="{% static "core/Chart.min.js" %}" type="text/javascript"></script>
+<script src="{% static "core/canvasjs.min.js" %}" type="text/javascript"></script>
 <script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {
-    var data = {
-        labels: ['1', '5', '10', '15', '20', '25', '30'],
-        datasets: [
+    var data = [
+        {% for line in content %}
             {
-                label: "Site Registrations in the Last 30 Days",
-                fillColor: "rgba(220,220,220,0.2)",
-                strokeColor: "rgba(220,220,220,1)",
-                pointColor: "rgba(220,220,220,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(220,220,220,1)",
-                data: [65, 59, 80, 81, 56, 55, 40]
-            }
-        ]
-    };
+                value: {{ line.1 }},
+                label: "{{ line.0 }}",
+                color: "{{ line.3 }}",
+                highlight: "{{ line.4 }}",
+            },
+        {% endfor %}
+    ];
     var ctx = document.getElementById("myChart").getContext("2d");
-    var myLineChart = new Chart(ctx).Line(data);
+    var myPie = new Chart(ctx).Doughnut(data)
+    var legend = myPie.generateLegend();
+    $("#legend").html(legend);
 });
 </script>
 {% endblock %}
 
 {% block content %}
-<canvas id="myChart" width="500" height="300"></canvas>
-{% endblock %}
+    <canvas id="myChart" width="400" height="400"></canvas>
 
+    <div id="legend"></div>
+{% endblock %}

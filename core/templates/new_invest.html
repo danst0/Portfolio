@@ -7,27 +7,45 @@
 <script src="{% static "core/canvasjs.min.js" %}" type="text/javascript"></script>
 <script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
 <script type="text/javascript">
-$( document ).ready(function() {
-    var data = [
-        {% for line in content %}
-            {
-                value: {{ line.1 }},
-                label: "{{ line.0 }}",
-                color: "{{ line.3 }}",
-                highlight: "{{ line.4 }}",
-            },
-        {% endfor %}
-    ];
-    var ctx = document.getElementById("myChart").getContext("2d");
-    var myPie = new Chart(ctx).Doughnut(data)
-    var legend = myPie.generateLegend();
-    $("#legend").html(legend);
-});
+    window.onload = function () {
+        var chart = new CanvasJS.Chart("chartContainer",
+        {
+              title:{
+                    text: "Portfolio Overview",
+                    fontFamily: "Impact",
+                    fontWeight: "normal"
+              },
+
+              legend:{
+                    verticalAlign: "bottom",
+                    horizontalAlign: "center"
+              },
+              data: [
+              {
+                    startAngle: 270,
+                    indexLabelFontSize: 20,
+                    indexLabelFontFamily: "Garamond",
+                    indexLabelFontColor: "darkgrey",
+                    indexLabelLineColor: "darkgrey",
+                    indexLabelPlacement: "outside",
+                    type: "doughnut",
+                    showInLegend: true,
+                    dataPoints: [
+                    {% for line in content %}
+                        {  y: {{ line.1 }}, legendText:"{{ line.0 }}", indexLabel: "{{ line.2 }}" },
+
+                    {% endfor %}
+                    ]
+             }
+             ]
+       });
+
+        chart.render();
+    }
 </script>
 {% endblock %}
 
 {% block content %}
-    <canvas id="myChart" width="400" height="400"></canvas>
-
-    <div id="legend"></div>
+    <div id="chartContainer" style="height: 400px; width: 100%;">
+    </div>
 {% endblock %}

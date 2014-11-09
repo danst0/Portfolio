@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load admin_urls %}
+
+{% block content %}
+    We did some importing of Cortalconsors quotes, these are the results:
+
+    {% for item in import_results %}
+        <div class="quote_item">
+            Successfully retrieved quotes for {{ item.name }} (date: {{ item.date }}, price: {{ item.price }})
+        </div>
+    {% endfor %}
+{% endblock %}

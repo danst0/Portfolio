@@ -33,36 +33,9 @@ class Prices:
         stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
         self.data.c.execute('''DELETE FROM prices WHERE stock_id = ?''', (stock_id, ))
 
-    def get_dates_and_prices(self, isin_id, from_date, to_date=datetime.date.today().strftime('%Y-%m-%d')):
-        stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
-        if from_date == None:
-            from_date = '1900-01-01'
-        result = self.data.c.execute(
-            '''SELECT date, price FROM prices WHERE stock_id = ? AND date >= ? AND date <= ? ORDER BY date''',
-            (stock_id, from_date, to_date)).fetchall()
-        # Redo with map function
-        dates = []
-        values = []
-        for item in result:
-            dates.append(datetime.datetime.strptime(item[0], "%Y-%m-%d").date())
-            values.append(item[1])
-        return dates, values
 
-    def find_split_date(self, isin_id):
-        stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
-        prices = self.get_prices(stock_id)
-        old_price = None
-        last_unsplit_date = None
-        suggested_ratio = None
-        for date in reversed(sorted(prices)):
-            new_price = prices[date]
-            if old_price != None:
-                if new_price / float(old_price) > 1.5:
-                    last_unsplit_date = date
-                    suggested_ratio = int(round(new_price / float(old_price), 0))
-                    break
-            old_price = new_price
-        return last_unsplit_date, suggested_ratio
+
+
 
     def row_exists(self, stock_id, date):
         result = self.data.c.execute('''SELECT price FROM prices WHERE stock_id = ? AND date = ?''',
@@ -108,18 +81,7 @@ class Prices:
 
 
 
-    def get_quote(self, symbol):
-        print(symbol)
-        base_url = 'http://www.boerse-frankfurt.de/en/search/result?order_by=wm_vbfw.name&name_isin_wkn='
-        content = urllib.request.urlopen(base_url + symbol).read().decode('UTF-8')  # .replace('\n','')
 
-        quote = None
-        m = re.search('Last Price.{1,100}<span.{1,45}security-price.{1,55}>([0-9\.]{3,9})<\/', content, re.DOTALL)
-        if m:
-            quote = float(m.group(1))
-        else:
-            print('Error: could not retrieve quote')
-        return quote
 
     def __str__(self):
         keys = ['ID', 'Date', 'Price']

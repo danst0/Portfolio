@@ -8,8 +8,8 @@ import pickle
 # from stockquotes import GoogleFinanceAPI
 
 import string
-from Money import Money
-from Database import Database
+from money import Money
+from database import Database
 from Portfolio import Portfolio
 from Securities import Securities
 from Transaction import Transaction

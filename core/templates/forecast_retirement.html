@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load admin_urls %}
+{% load filters %}
+
+{% block content %}
+    We do some forecasting, these are the results:
+
+    {% for item in forecast_results %}
+        <div class="item">
+        {{ item.text }}
+        {% if not item.no_cut %}
+            {{ item.value|nicenumber_100 }}
+        {% else %}
+            {{ item.value|nicenumber }}
+        {% endif %}
+        </div>
+    {% endfor %}
+{% endblock %}

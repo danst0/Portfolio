@@ -13,14 +13,14 @@ $( document ).ready(function() {
         labels: {{ dates|safe }},
         datasets: [
             {
-                label: "Rolling Profitability (1 year in the past)",
+                label: "Portfolio Development",
                 fillColor: "#C2F400",
                 strokeColor: "#FF9800",
                 pointColor: "#FF9800",
                 pointStrokeColor: "#FFF",
                 pointHighlightFill: "#CB8800",
                 pointHighlightStroke: "CB8800",
-                data: {{ roi_list }}
+                data: {{ pf_values }}
             },
         ]
     };
@@ -33,16 +33,14 @@ $( document ).ready(function() {
 {% endblock %}
 
 
-
-
 {% block content %}
-    <form action="{% url 'core.views.rolling_profitability' %}" method="post">
+    <form action="{% url 'core.views.portfolio_development' %}" method="post">
     {% csrf_token %}
     {{ form }}
-    <input type="submit" value="Update" />
-
+    <input type="submit" value="Execute" />
     </form>
     {% if portfolio %}
         <canvas id="myChart" width="800" height="400"></canvas>
     {% endif %}
 {% endblock %}
+

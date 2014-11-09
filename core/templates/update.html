@@ -1,5 +1,82 @@
 {% extends "base.html" %}
+{% load admin_urls %}
 
 {% block content %}
-    We do some update
+    We did some importing of PDFs from CortalConsors, these are the results:
+    {% if import_results.prices %}
+        <div class="pdf_item">
+            <table border=1>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in import_results.prices %}
+                   <tr>
+                        <td>
+                            {{ item.name }}
+                        </td>
+                        <td>
+                            {{ item.date }}
+                        </td>
+                        <td>
+                            {{ item.price }}
+                        </td>
+                        <td>
+                            {{ item.status }}
+                        </td>
+                   </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    {% endif %}
+    {% if import_results.transactions %}
+        <div class="pdf_item">
+            <table border=1>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Nominal</th>
+                    <th>Value</th>
+                    <th>Cost</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in import_results.transactions %}
+                   <tr>
+                        <td>
+                            {{ item.name }}
+                        </td>
+                        <td>
+                            {{ item.date }}
+                        </td>
+                        <td>
+                            {{ item.type }}
+                        </td>
+                        <td>
+                            {{ item.nominal }}
+                        </td>
+                        <td>
+                            {{ item.value }}
+                        </td>
+                        <td>
+                            {{ item.cost }}
+                        </td>
+                        <td>
+                            {{ item.status }}
+                        </td>
+                   </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    {% endif %}
 {% endblock %}

@@ -183,7 +183,8 @@ class Transaction(models.Model):
         for stock in stocks:
             if not stock.type in total.keys():
                 total[stock.type] = Decimal(0)
-            total[stock.type] += abs(stocks[stock]['total'])
+            price = self.prices.get_last_price_from_stock_id(stock, date)
+            total[stock.type] += abs(stocks[stock]['nominal'] * price)
         return total
 
 

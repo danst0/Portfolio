@@ -1,0 +1,103 @@
+.nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.nav li {
+    float: left;
+}
+
+.nav a:link, .nav a:visited {
+    display: block;
+    width: 80px;
+    height: 4em;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #8FB700;
+    text-align: center;
+    padding: 4px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size:0.6em;
+}
+
+.nav a:hover, .nav a:active {
+    background-color: #CB8800;
+}
+
+.divide {
+    clear:both;
+    margin-bottom: 1em;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%
+}
+
+table, th, td {
+    border: none;
+    border-bottom: 1px solid black;
+}
+
+td {
+    text-align: right;
+    padding: 3px;
+    margin: 5px;
+}
+
+// Overview Doughnut
+
+.canvas-wrapper{
+	background-color: #fff;
+}
+
+.rightCanvas{
+	float: right;
+}
+
+.leftCanvas{
+	float: left;
+}
+
+#container {
+    width: 100%;
+}
+
+#total {
+    left: 330px;
+    top: 290px;
+    position: absolute;
+    font-size: 3em;
+    width: 150px;
+    text-align: center;
+}
+
+
+// LEGEND
+.doughnut-legend {
+  list-style-type: none;
+  padding-left: 0px;
+}
+.doughnut-legend li {
+  display: block;
+  float: left;
+  clear:both;
+  padding: 0.5em;
+}
+.doughnut-legend li span {
+    border-radius: 0.3em;
+    width: 1.1em;
+    height: 1.1em;
+    float: left;
+    display: block;
+    margin-right: 0.5em;
+}
+
+#legend {
+    left: 630px;
+    top: 120px;
+    position: absolute;
+    font-size: 0.7em;
+    text-transform: uppercase;
+}

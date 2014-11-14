@@ -97,7 +97,7 @@ class Money(models.Model):
         no_of_month_to_go -= 1
         end_of_month_pf_value = (initial_pf_value + delta_income_expense * (1-cash_percentage)) * Decimal(math.pow(1 + interest_p_a, 1/12))
         end_of_month_cash_value = initial_cash_value + delta_income_expense * cash_percentage
-        development.append(float(end_of_month_cash_value + end_of_month_pf_value))
+        development.append(round(float(end_of_month_cash_value + end_of_month_pf_value), 2))
         if no_of_month_to_go == 0:
             return end_of_month_cash_value + end_of_month_pf_value, development
         else:
@@ -114,7 +114,7 @@ class Money(models.Model):
             # print(wealth)
             month_counter += 1
             wealth = wealth * Decimal(1+monthly_interest_rate) - monthly_pension
-            development.append(float(wealth))
+            development.append(round(float(wealth), 2))
         return month_counter, development
 
     def calc_pension(self, future_wealth, month_to_go, yearly_interest_rate, development):
@@ -176,7 +176,8 @@ class Money(models.Model):
                                                                   median_expense,
                                                                   expected_interest_rate, [])
 
-        result = [{'text': 'Estimated income', 'value': median_income},
+        result = [{'income-expense': median_income-median_expense, 'interest': expected_interest_rate*100},
+                  {'text': 'Estimated income', 'value': median_income},
                   {'text': 'Estimated expense', 'value': median_expense},
                   {'text': 'Estimated interest rate', 'value': expected_interest_rate*100, 'no_cut': True},
                   {'text': 'Current wealth', 'value': total_wealth},
@@ -198,10 +199,12 @@ class Money(models.Model):
                                       expected_interest_rate, development)
             short_development = []
             for num, item in enumerate(development):
-                if num % 12 == 0:
+                if num % (12*5) == 0:
                     short_development.append(item)
 
             result_development[year_of_retirement] = short_development
+            result[0]['wealth' + str(year_of_retirement)] = wealth
+            result[0]['pension' + str(year_of_retirement)] = monthly_pension
             result.append({'text': 'Estimated wealth '+str(year_of_retirement), 'value': wealth})
 
             result.append({'text': 'Retirement starting in '+str(year_of_retirement)+

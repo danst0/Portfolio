@@ -15,8 +15,29 @@ $( document ).ready(function() {
         labels: {{ dates|safe }},
         datasets: [
             {
-                label: "2020",
-                fillColor: "#C2F400",
+                label: "Retirement in 2030 (monthly pension: {{ forecast_results.0|keyvalue:'pension2030'|nicenumber_100 }} €)",
+                fillColor: "rgba(194,244,0,0.33)",
+                strokeColor: "#8FB700",
+                pointColor: "#8FB700",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#CB8800",
+                pointHighlightStroke: "CB8800",
+                data: {{ development.2030 }}
+            },
+
+            {
+                label: "Retirement in 2025 (monthly pension: {{ forecast_results.0|keyvalue:'pension2025'|nicenumber_100 }} €)",
+                fillColor: "rgba(194,244,0,0.33)",
+                strokeColor: "#CB8800",
+                pointColor: "#CB8800",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#CB8800",
+                pointHighlightStroke: "CB8800",
+                data: {{ development.2025 }}
+            },
+            {
+                label: "Retirement in 2020 (monthly pension: {{ forecast_results.0|keyvalue:'pension2020'|nicenumber_100 }} €)",
+                fillColor: "rgba(194,244,0,0.33)",
                 strokeColor: "#FF9800",
                 pointColor: "#FF9800",
                 pointStrokeColor: "#FFF",
@@ -24,31 +45,14 @@ $( document ).ready(function() {
                 pointHighlightStroke: "CB8800",
                 data: {{ development.2020 }}
             },
-            {
-                label: "2025",
-            fillColor: "rgba(220,220,220,0.2)",
-            strokeColor: "rgba(220,220,220,1)",
-            pointColor: "rgba(220,220,220,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(220,220,220,1)",
-                data: {{ development.2025 }}
-            },
-            {
-                label: "2030",
-fillColor: "rgba(151,187,205,0.2)",
-            strokeColor: "rgba(151,187,205,1)",
-            pointColor: "rgba(151,187,205,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(151,187,205,1)",
-                data: {{ development.2030 }}
-            },
         ],
     };
 
-    var ctx = document.getElementById("myChart").getContext("2d");
-    var myLineChart = new Chart(ctx).Line(data);
+    var ctx = document.getElementById("chart_overall_wealth").getContext("2d");
+    var myLineChart = new Chart(ctx).Line(data, {animation: false});
+    var legend = myLineChart.generateLegend();
+    $("#forecast-legend").html(legend);
+
 
 });
 </script>
@@ -56,6 +60,19 @@ fillColor: "rgba(151,187,205,0.2)",
 
 
 {% block content %}
+    <canvas id="chart_overall_wealth" width="800" height="400"></canvas>
+    <div id="forecast-legend"></div>
+
+    <div id="income-interest">
+        {{ forecast_results.0|keyvalue:'income-expense'|nicenumber_100 }} €
+        <div class="smaller">
+            average monthly savings
+        </div>
+        {{ forecast_results.0|keyvalue:'interest'|nicenumber }} %
+        <div class="smaller">
+            expected interest rate
+        </div>
+    </div>
     We do some forecasting, these are the results:
 
     {% for item in forecast_results %}
@@ -68,6 +85,4 @@ fillColor: "rgba(151,187,205,0.2)",
         {% endif %}
         </div>
     {% endfor %}
-    <canvas id="myChart" width="800" height="400"></canvas>
-
 {% endblock %}

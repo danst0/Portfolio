@@ -79,17 +79,18 @@ td {
 
 
 // LEGEND
-.doughnut-legend {
+.line-legend, .doughnut-legend {
   list-style-type: none;
   padding-left: 0px;
 }
-.doughnut-legend li {
+.line-legend li, .doughnut-legend li {
   display: block;
   float: left;
+  width: 12em;
   clear:both;
   padding: 0.5em;
 }
-.doughnut-legend li span {
+.line-legend li span , .doughnut-legend li span {
     border-radius: 0.3em;
     width: 1.1em;
     height: 1.1em;
@@ -98,13 +99,32 @@ td {
     margin-right: 0.5em;
 }
 
-#legend {
-    left: 630px;
-    top: 50px;
+#overview-legend {
+    left: 530px;
+    top: 0px;
     position: absolute;
     font-size: 0.7em;
     text-transform: uppercase;
 }
+
+#forecast-legend {
+    left: 570px;
+    top: 0px;
+    position: absolute;
+    font-size: 0.7em;
+}
+#income-interest {
+    width: 7em;
+    text-align: center;
+    left: 60px;
+    top: 80px;
+    position: absolute;
+    font-size: 1.2em;
+}
+.smaller {
+    font-size: 0.6em;
+}
+
 
 #nav_overview {
     left: 50px;

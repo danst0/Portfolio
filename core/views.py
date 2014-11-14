@@ -314,5 +314,8 @@ def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()
     result, result_development = m.aggregate_results()
+    now = timezone.now().date().year +1
     dates = list(range(len(result_development[2020])))
+    dates = [now+(item*5) if item % 1 == 0 else '' for item in dates]
+    # print(dates)
     return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'forecast_results': result, 'development': result_development, 'dates': dates})

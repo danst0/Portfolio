@@ -269,7 +269,7 @@ def new_invest(request):
     pie_colors = get_color_and_highlight()
     for num, item in enumerate(content):
         result.append(item + (str(int(item[1]/total*100))+'%',) + pie_colors[num])
-    nav_total = total
+    nav_total = total * Decimal('0.88') # May deduction factor
     nav_content = result
     # print(result)
     return render(request, 'new_invest.html', {'block_title': 'Overview', 'nav_content': nav_content, 'nav_total': nav_total})

@@ -21,26 +21,70 @@ from securities.models import Price
 # Create your views here.
 
 
-
 def index(request):
     return render(request, 'index.html')
+
+
+def import_all(request):
+    feedback_frankfurt = update_stocks_boerse_frankfurt(request)
+    if not feedback_frankfurt:
+        feedback_frankfurt = []
+    # print(feedback_frankfurt)
+    feedback_outbank = import_outbank(request)
+    if not feedback_outbank:
+        feedback_outbank = []
+    # print(feedback_outbank)
+    feedback_cortalconsors = import_cortalconsors_quotes(request)
+    if not feedback_cortalconsors:
+        feedback_cortalconsors = []
+    # print(feedback_cortalconsors)
+    feedback_yahoo = import_historic_quotes(request)
+    if not feedback_yahoo:
+        feedback_yahoo = []
+    # print(feedback_yahoo)
+    feedback_pdfs = update_pdfs(request)
+    if not feedback_pdfs:
+        feedback_pdfs = []
+    # print(feedback_pdfs['prices'])
+    # print(feedback_pdfs['transactions'])
+    prices = feedback_frankfurt + feedback_cortalconsors + feedback_yahoo + feedback_pdfs['prices']
+    print(prices)
+    transactions = feedback_pdfs['transactions']
+    print(transactions)
+    money = feedback_outbank
+    print(money)
+    return render(request, 'import_all.html', {'block_title': 'Update Database',
+                                               'prices': prices, 'transactions': transactions, 'money': money})
+
+
+def update_pdfs(request):
+    # import pdb; pdb.set_trace()
+    t = Transaction()
+    result = t.import_sources()
+    return result
+
+def update_stocks_boerse_frankfurt(request):
+    # import pdb; pdb.set_trace()
+    p = Price()
+    result = p.import_boerse_frankfurt()
+    return result
 
 def import_outbank(request):
     # import pdb; pdb.set_trace()
     m = Money()
     result = m.import_outbank()
-    return render(request, 'import_outbank.html', {'block_title': 'Import Outbank', 'import_results': result})
+    return result
 
 def import_cortalconsors_quotes(request):
     p = Price()
     result = p.import_cortalconsors_quotes()
-    return render(request, 'import_cortalconsors_quotes.html', {'block_title': 'Import CortalConsors Quotes', 'import_results': result})
+    return result
 
 def import_historic_quotes(request):
     # import pdb; pdb.set_trace()
     p = Price()
     result = p.import_historic_quotes()
-    return render(request, 'import_historic_quotes.html', {'block_title': 'Import Historic Quotes', 'import_results': result})
+    return result
 
 def stock_graph_png(request, security, from_date, to_date):
     s = Security()
@@ -112,24 +156,6 @@ def rolling_profitability(request):
                                                           'form': form})
 
 
-def roi_cake_png(request, portfolio, from_date, to_date):
-    fig=Figure()
-    ax=fig.add_subplot(111)
-    ui = UI()
-    dates, pf_values = ui.portfolio_development(portfolio,
-                                               datetime.datetime.strptime(from_date, '%Y-%m-%d'),
-                                               datetime.datetime.strptime(to_date, '%Y-%m-%d'))
-    ax.plot_date(dates, pf_values, '-')
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
-    fig.autofmt_xdate()
-    ax.set_xlabel('Date')
-    canvas = FigureCanvas(fig)
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
-    return response
-
-
 def portfolio_development(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -149,7 +175,8 @@ def portfolio_development(request):
                                                                   'from_date': form.cleaned_data['from_date'],
                                                                   'to_date': form.cleaned_data['to_date'],
                                                                   'dates': dates,
-                                                                  'pf_values': pf_values})
+                                                                  'pf_values': pf_values
+                                                                  })
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
@@ -242,10 +269,10 @@ def new_invest(request):
     pie_colors = get_color_and_highlight()
     for num, item in enumerate(content):
         result.append(item + (str(int(item[1]/total*100))+'%',) + pie_colors[num])
-
+    nav_total = total
+    nav_content = result
     # print(result)
-
-    return render(request, 'new_invest.html', {'block_title': 'New Investments', 'content': result, 'total': total})
+    return render(request, 'new_invest.html', {'block_title': 'Overview', 'nav_content': nav_content, 'nav_total': nav_total})
 
 def portfolio_overview(request):
     # if this is a POST request we need to process the form data
@@ -281,14 +308,12 @@ def portfolio_overview(request):
                                                        'form': form})
 
 
-def update_stocks_boerse_frankfurt(request):
-    # import pdb; pdb.set_trace()
-    p = Price()
-    result = p.import_boerse_frankfurt()
-    return render(request, 'import_quotes.html', {'block_title': 'Import Quotes from Börse Frankfurt', 'import_results': result})
+
 
 def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()
     result = m.aggregate_results()
     return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'forecast_results': result})
+
+

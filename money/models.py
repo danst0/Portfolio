@@ -209,6 +209,8 @@ class Money(models.Model):
         # "Kategorie";"PayPal Empfänger/Auftraggeber";"PayPal An E-Mail";"PayPal Von E-Mail";"PayPal Gebühr";
         # "PayPal Transaktionscode";"PayPal Status"
         relevant_rows = []
+        if not os.path.isfile(self.base_path + '/' + file):
+            return []
         with open(self.base_path + '/' + file, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
             for row in reader:

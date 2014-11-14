@@ -295,7 +295,7 @@ class Price(models.Model):
         if not os.path.isfile(base_path + '/' + file):
             return []
         result = []
-        with open(base_path + '/' + '/' + file, encoding='utf-8') as f:
+        with open(base_path + '/' + file, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
             for row in reader:
                 if row[0] == '':
@@ -310,6 +310,7 @@ class Price(models.Model):
                                    'name': stock_id.name,
                                    'date': date,
                                    'price': price})
+        os.remove(base_path + '/' + file)
         return result
 
     def import_historic_quotes(self, years=15):

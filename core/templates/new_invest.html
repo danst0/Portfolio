@@ -29,25 +29,25 @@ $( document ).ready(function() {
             animationSteps: 30,
         })
 
-        ctx.moveTo(0,0);
-        ctx.lineTo(0,100);
-        ctx.strokeStyle = '#ff0000';
-        ctx.stroke();
+        //ctx.moveTo(0,0);
+        //ctx.lineTo(0,100);
+        //ctx.strokeStyle = '#ff0000';
+        //ctx.stroke();
         // Creates canvas 320 × 200 at 10, 50
-        var paper = Raphael(100, 300, 320, 200);
+        //var paper = Raphael(100, 300, 320, 200);
 
         // Creates circle at x = 50, y = 40, with radius 10
-        var circle = paper.circle(50, 40, 10);
-        var circle1 = paper.circle(0, 0, 10);
-        var circle2 = paper.circle(320, 200, 10);
+        //var circle = paper.circle(50, 40, 10);
+        //var circle1 = paper.circle(0, 0, 10);
+        //var circle2 = paper.circle(320, 200, 10);
 
         // Sets the fill attribute of the circle to red (#f00)
-        circle.attr("fill", "#FF9800");
+        //circle.attr("fill", "#FF9800");
 
         // Sets the stroke attribute of the circle to white
-        circle.attr("stroke", "#FF9800");
+        //circle.attr("stroke", "#FF9800");
 		var legend = myPie.generateLegend();
-        $("#legend").html(legend);
+        $("#overview-legend").html(legend);
 });
 
 
@@ -57,7 +57,7 @@ $( document ).ready(function() {
 {% block content %}
     <div id="container">
         <canvas id="myChart" width="600" height="400"></canvas>
-        <div id="legend"></div>
+        <div id="overview-legend"></div>
 
         <div id="total">{{ nav_total|nicenumber }} €</div>
 

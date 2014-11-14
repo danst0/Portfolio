@@ -91,31 +91,33 @@ class Money(models.Model):
         transactions[0].total_in_end
         return transactions[0].total_in_end
 
-    def calc_wealth_next_month(self, initial_cash_value, initial_pf_value, no_of_month_to_go, income, expense, interest_p_a):
+    def calc_wealth_next_month(self, initial_cash_value, initial_pf_value, no_of_month_to_go, income, expense, interest_p_a, development):
         delta_income_expense = income - expense
         cash_percentage = initial_cash_value/(initial_cash_value + initial_pf_value)
         no_of_month_to_go -= 1
         end_of_month_pf_value = (initial_pf_value + delta_income_expense * (1-cash_percentage)) * Decimal(math.pow(1 + interest_p_a, 1/12))
         end_of_month_cash_value = initial_cash_value + delta_income_expense * cash_percentage
+        development.append(float(end_of_month_cash_value + end_of_month_pf_value))
         if no_of_month_to_go == 0:
-            return end_of_month_cash_value + end_of_month_pf_value
+            return end_of_month_cash_value + end_of_month_pf_value, development
         else:
             return self.calc_wealth_next_month(end_of_month_cash_value, end_of_month_pf_value, no_of_month_to_go,
-                                               income, expense, interest_p_a)
+                                               income, expense, interest_p_a, development)
     def month_delta(self, date_str):
         r = relativedelta.relativedelta(datetime.datetime.now(), datetime.datetime.strptime(date_str, '%Y-%m-%d'))
         # import pdb;pdb.set_trace()
         return -(r.years * 12 + r.months)
 
-    def simulate_pension(self, wealth, monthly_interest_rate, monthly_pension):
+    def simulate_pension(self, wealth, monthly_interest_rate, monthly_pension, development):
         month_counter = 0
         while wealth > 0:
             # print(wealth)
             month_counter += 1
             wealth = wealth * Decimal(1+monthly_interest_rate) - monthly_pension
-        return month_counter
+            development.append(float(wealth))
+        return month_counter, development
 
-    def calc_pension(self, future_wealth, month_to_go, yearly_interest_rate):
+    def calc_pension(self, future_wealth, month_to_go, yearly_interest_rate, development):
         # import pdb; pdb.set_trace()
         # future_wealth = 1000
         # print(yearly_interest_rate)
@@ -124,19 +126,20 @@ class Money(models.Model):
         monthly_interest_rate = math.pow(yearly_interest_rate+1, 1/12)-1
         monthly_pension = future_wealth * Decimal(monthly_interest_rate * 1.00001)
         delta_month = 99
+
         while abs(delta_month/month_to_go) > 0.01:
-            no_of_month = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension)
+            tmp_development = []
+            no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
             delta_month = no_of_month - month_to_go
-
-
 
             # import pdb; pdb.set_trace()
             monthly_pension = monthly_pension * Decimal(1 + (0.0001 * delta_month))
+        development += tmp_development
         # print(monthly_pension)
         # print(month_to_go, no_of_month)
-        return monthly_pension
+        return monthly_pension, development
 
-    def mp(self, wealth, year_of_retirement, year_of_death, interest_rate):
+    def mp(self, wealth, year_of_retirement, year_of_death, interest_rate, development):
         """
         :param wealth: Starting point for wealth at retirement age
         :param year_of_retirement: when to retire
@@ -145,8 +148,8 @@ class Money(models.Model):
         :return: monthly return/pension while using up all money
         """
         future_delta = self.month_delta(str(year_of_death)+'-12-31') - self.month_delta(str(year_of_retirement)+'-12-31')
-        monthly_pension = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03))
-        return monthly_pension
+        monthly_pension, development = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03), development)
+        return monthly_pension, development
 
     def aggregate_results(self):
         t = Transaction()
@@ -160,18 +163,18 @@ class Money(models.Model):
         to_date = timezone.now().date()
         # import pdb;pdb.set_trace()
 
-        expected_interest_rate = math.pow(t.get_roi('All', from_date.strftime('%Y-%m-%d'), to_date.strftime('%Y-%m-%d')) + 1,
+        expected_interest_rate = math.pow(t.get_roi('All', from_date, to_date) + 1,
                                           Decimal(365/timespan))-1
         delta_2015 = self.month_delta('2015-12-31')
         delta_2020 = self.month_delta('2020-12-31')
         delta_2025 = self.month_delta('2025-12-31')
         delta_2030 = self.month_delta('2030-12-31')
-        wealth_in_2015 = self.calc_wealth_next_month(self.get_current_wealth(),
-                                                     current_pf_value,
-                                                     delta_2015,
-                                                     median_income,
-                                                     median_expense,
-                                                     expected_interest_rate)
+        wealth_in_2015, development = self.calc_wealth_next_month(self.get_current_wealth(),
+                                                                  current_pf_value,
+                                                                  delta_2015,
+                                                                  median_income,
+                                                                  median_expense,
+                                                                  expected_interest_rate, [])
 
         result = [{'text': 'Estimated income', 'value': median_income},
                   {'text': 'Estimated expense', 'value': median_expense},
@@ -179,27 +182,34 @@ class Money(models.Model):
                   {'text': 'Current wealth', 'value': total_wealth},
                   {'text': 'Estimated wealth 2015', 'value': wealth_in_2015}
                   ]
+        result_development = {}
         for year_of_retirement in [2020, 2025, 2030]:
             delta = self.month_delta(str(year_of_retirement)+'-12-31')
-            wealth = self.calc_wealth_next_month(self.get_current_wealth(),
+            wealth, development = self.calc_wealth_next_month(self.get_current_wealth(),
                                                  current_pf_value,
                                                  delta,
                                                  median_income,
                                                  median_expense,
-                                                 expected_interest_rate)
+                                                 expected_interest_rate, [])
 
-            monthly_pension = self.mp(wealth,
+            monthly_pension, development = self.mp(wealth,
                                       year_of_retirement,
                                       year_of_death,
-                                      expected_interest_rate)
+                                      expected_interest_rate, development)
+            short_development = []
+            for num, item in enumerate(development):
+                if num % 12 == 0:
+                    short_development.append(item)
+
+            result_development[year_of_retirement] = short_development
             result.append({'text': 'Estimated wealth '+str(year_of_retirement), 'value': wealth})
 
             result.append({'text': 'Retirement starting in '+str(year_of_retirement)+
                                    ', monthly payments, when using the money until '+str(year_of_death)+
                                    ', monthly payments:',
                            'value': monthly_pension})
-
-        return result
+        print(len(result_development[2020]))
+        return result, result_development
 
     def import_outbank(self):
         file = 'Alle Umsätze bis 2014-09-28.csv'

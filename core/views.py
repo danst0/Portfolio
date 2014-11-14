@@ -313,7 +313,6 @@ def portfolio_overview(request):
 def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()
-    result = m.aggregate_results()
-    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'forecast_results': result})
-
-
+    result, result_development = m.aggregate_results()
+    dates = list(range(len(result_development[2020])))
+    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'forecast_results': result, 'development': result_development, 'dates': dates})

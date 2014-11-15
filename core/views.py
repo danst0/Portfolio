@@ -18,13 +18,16 @@ from django.utils import timezone
 from django.http import HttpResponse
 
 from securities.models import Price
+
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 # Create your views here.
 
 
 def index(request):
     return render(request, 'index.html')
 
-
+@login_required
 def import_all(request):
     feedback_frankfurt = update_stocks_boerse_frankfurt(request)
     if not feedback_frankfurt:
@@ -126,7 +129,7 @@ def stock_graph(request):
     return render(request, 'stock_graph.html', {'block_title': 'Security Graph',
                                                           'form': form})
 
-
+@login_required
 def rolling_profitability(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -155,7 +158,7 @@ def rolling_profitability(request):
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                           'form': form})
 
-
+@login_required
 def portfolio_development(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -250,7 +253,7 @@ def get_color_and_highlight():
 
 
 
-
+@login_required
 def new_invest(request):
     t = Transaction()
     m = Money()
@@ -274,6 +277,8 @@ def new_invest(request):
     # print(result)
     return render(request, 'new_invest.html', {'block_title': 'Overview', 'nav_content': nav_content, 'nav_total': nav_total})
 
+
+@login_required
 def portfolio_overview(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -309,7 +314,7 @@ def portfolio_overview(request):
 
 
 
-
+@login_required
 def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()

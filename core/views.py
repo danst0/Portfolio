@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from securities.models import Price
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 # Create your views here.
 
@@ -256,6 +257,9 @@ def get_color_and_highlight():
 @login_required
 def new_invest(request):
     t = Transaction()
+    # for item in Transaction.objects.all():
+    #     item.user = User.objects.get(username='danst')
+    #     item.save()
     m = Money()
     today = timezone.now().date()
     portfolio_parts = t.get_total_per_type('All', today)

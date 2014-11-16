@@ -9,6 +9,7 @@ from securities.models import Price
 from transactions.Importer import CortalConsors
 from django.utils import timezone
 import datetime
+from django.contrib.auth.models import User
 from transactions.validators import *
 
 import jellyfish
@@ -33,6 +34,7 @@ class Portfolio(models.Model):
 
 class Transaction(models.Model):
     # id = models.CharField(max_length=100, blank=True, unique=True, default=uuid.uuid4)
+    user = models.ForeignKey(User, null=True, default=None)
     transaction_type = models.CharField(max_length=1)
     portfolio = models.ForeignKey(Portfolio)
     stock_id = models.ForeignKey(Security)

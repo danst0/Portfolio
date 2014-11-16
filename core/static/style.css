@@ -66,10 +66,12 @@ td {
 
 #container {
     width: 100%;
+    position: absolute;
+    left: -100px;
 }
 
 #total {
-    left: 220px;
+    left: 320px;
     top: 160px;
     position: absolute;
     font-size: 3em;
@@ -79,18 +81,18 @@ td {
 
 
 // LEGEND
-.line-legend, .doughnut-legend {
+.line-legend, .donutalt-legend {
   list-style-type: none;
   padding-left: 0px;
 }
-.line-legend li, .doughnut-legend li {
+.line-legend li, .donutalt-legend li {
   display: block;
   float: left;
   width: 12em;
   clear:both;
   padding: 0.5em;
 }
-.line-legend li span , .doughnut-legend li span {
+.line-legend li span , .donutalt-legend li span {
     border-radius: 0.3em;
     width: 1.1em;
     height: 1.1em;
@@ -100,7 +102,7 @@ td {
 }
 
 #overview-legend {
-    left: 530px;
+    left: 630px;
     top: 0px;
     position: absolute;
     font-size: 0.7em;
@@ -165,4 +167,5 @@ td {
 #main {
     position: absolute;
     left: 200px;
+    top: 50px;
 }

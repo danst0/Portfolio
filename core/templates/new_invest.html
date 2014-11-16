@@ -22,31 +22,46 @@ $( document ).ready(function() {
         {% endfor %}
     ];
         var ctx = document.getElementById("myChart").getContext("2d");
-
-        var myPie = new Chart(ctx).Doughnut(data, {
+        // Notice now we're extending the particular Line chart type, rather than the base class.
+        Chart.types.Doughnut.extend({
+        // Passing in a name registers this chart in the Chart namespace in the same way
+            name: "DonutAlt",
+            initialize: function(data){
+                //console.log('My Line chart extension');
+                Chart.types.Doughnut.prototype.initialize.apply(this, arguments);
+            },
+            draw: function() {
+                Chart.types.Doughnut.prototype.draw.apply(this, arguments);
+                //now your custom line
+                var ctx = this.chart.ctx;
+                // Line
+                ctx.beginPath();
+                for (i = 0; i < 5; i++) {
+                    ctx.moveTo(0, 60+i*70);
+                    ctx.lineTo(100, 60+i*70);
+                    ctx.lineTo(170, 200);
+                }
+                ctx.strokeStyle = '#F6F6F6';
+                ctx.lineWidth = 5;
+                ctx.setLineDash([15,5]);
+                ctx.stroke();
+                ctx.setLineDash(0);
+                // Circle
+                ctx.beginPath();
+                ctx.arc(170, 200, 20, 0, 2 * Math.PI, false);
+                ctx.fillStyle = '#F6F6F6';
+                ctx.fill();
+                ctx.strokeStyle = '#F6F6F6';
+                ctx.stroke();
+            }
+        });
+        var myPie = new Chart(ctx).DonutAlt(data, {
             animation: false,
             percentageInnerCutout: 60,
             animationSteps: 30,
         })
 
-        //ctx.moveTo(0,0);
-        //ctx.lineTo(0,100);
-        //ctx.strokeStyle = '#ff0000';
-        //ctx.stroke();
-        // Creates canvas 320 × 200 at 10, 50
-        //var paper = Raphael(100, 300, 320, 200);
-
-        // Creates circle at x = 50, y = 40, with radius 10
-        //var circle = paper.circle(50, 40, 10);
-        //var circle1 = paper.circle(0, 0, 10);
-        //var circle2 = paper.circle(320, 200, 10);
-
-        // Sets the fill attribute of the circle to red (#f00)
-        //circle.attr("fill", "#FF9800");
-
-        // Sets the stroke attribute of the circle to white
-        //circle.attr("stroke", "#FF9800");
-		var legend = myPie.generateLegend();
+        var legend = myPie.generateLegend();
         $("#overview-legend").html(legend);
 });
 
@@ -56,7 +71,7 @@ $( document ).ready(function() {
 
 {% block content %}
     <div id="container">
-        <canvas id="myChart" width="600" height="400"></canvas>
+        <canvas id="myChart" width="800" height="400"></canvas>
         <div id="overview-legend"></div>
 
         <div id="total">{{ nav_total|nicenumber }} €</div>

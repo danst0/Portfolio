@@ -11,7 +11,6 @@ from dateutil.relativedelta import relativedelta
 from prettytable import PrettyTable
 
 
-
 from Securities import Security
 from input_methods import *
 from helper_functions import *

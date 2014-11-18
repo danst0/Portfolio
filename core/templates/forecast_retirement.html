@@ -15,7 +15,7 @@ $( document ).ready(function() {
         labels: {{ dates|safe }},
         datasets: [
             {
-                label: "Retirement in 2030 (monthly pension: {{ forecast_results.0|keyvalue:'pension2030'|nicenumber_100 }} €)",
+                label: "Retirement in 2030 (monthly pension: {{ development.pension2030|nicenumber_100 }} €)",
                 fillColor: "rgba(194,244,0,0.33)",
                 strokeColor: "#8FB700",
                 pointColor: "#8FB700",
@@ -26,7 +26,7 @@ $( document ).ready(function() {
             },
 
             {
-                label: "Retirement in 2025 (monthly pension: {{ forecast_results.0|keyvalue:'pension2025'|nicenumber_100 }} €)",
+                label: "Retirement in 2025 (monthly pension: {{ development.pension2025|nicenumber_100 }} €)",
                 fillColor: "rgba(194,244,0,0.33)",
                 strokeColor: "#CB8800",
                 pointColor: "#CB8800",
@@ -36,7 +36,7 @@ $( document ).ready(function() {
                 data: {{ development.2025 }}
             },
             {
-                label: "Retirement in 2020 (monthly pension: {{ forecast_results.0|keyvalue:'pension2020'|nicenumber_100 }} €)",
+                label: "Retirement in 2020 (monthly pension: {{ development.pension2020|nicenumber_100 }} €)",
                 fillColor: "rgba(194,244,0,0.33)",
                 strokeColor: "#FF9800",
                 pointColor: "#FF9800",
@@ -64,25 +64,13 @@ $( document ).ready(function() {
     <div id="forecast-legend"></div>
 
     <div id="income-interest">
-        {{ forecast_results.0|keyvalue:'income-expense'|nicenumber_100 }} €
+        {{ development.incomeexpense|nicenumber_100 }} €
         <div class="smaller">
             average monthly savings
         </div>
-        {{ forecast_results.0|keyvalue:'interest'|nicenumber }} %
+        {{ development.interest|nicenumber }} %
         <div class="smaller">
             expected interest rate
         </div>
     </div>
-    We do some forecasting, these are the results:
-
-    {% for item in forecast_results %}
-        <div class="item">
-        {{ item.text }}
-        {% if not item.no_cut %}
-            {{ item.value|nicenumber_100 }}
-        {% else %}
-            {{ item.value|nicenumber }}
-        {% endif %}
-        </div>
-    {% endfor %}
 {% endblock %}

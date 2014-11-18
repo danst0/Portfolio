@@ -56,3 +56,7 @@ target/
 db.sqlite3
 
 *.png
+core/static/texgyrebonum-regular-webfont.eot
+core/static/texgyrebonum-regular-webfont.svg
+core/static/texgyrebonum-regular-webfont.ttf
+core/static/texgyrebonum-regular-webfont.woff

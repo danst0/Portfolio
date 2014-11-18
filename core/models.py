@@ -3,6 +3,7 @@ import datetime
 from transactions.models import Transaction
 from securities.models import Security, Price
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
 
 
 class UI:
@@ -11,18 +12,21 @@ class UI:
         self.prices = Price()
         self.secs = Security()
 
-    def rolling_profitability(self, portfolio, from_date, to_date):
+    def rolling_profitability(self, portfolio, from_date, to_date, user):
         time_span = (to_date - from_date).days
         interval = 30
         dates = []
         roi_list = []
+        loop_to_date = to_date
+        loop_from_date = from_date
+        while loop_to_date >= from_date:
+            loop_to_date = loop_to_date - relativedelta(months=1)
+            loop_from_date = loop_to_date - relativedelta(months=12)
 
-        for i in range(int(time_span / interval)):
-            loop_from_date = (from_date - datetime.timedelta(days=i * interval))
-            loop_to_date = (to_date - datetime.timedelta(days=i * interval))
+            print(loop_from_date, loop_to_date)
 
-            result = self.transaction.list_pf(portfolio, loop_from_date, loop_to_date)
-            roi = Decimal(result[-1]['roi'].strip('%'))
+            # result = self.transaction.list_pf(portfolio, loop_from_date, loop_to_date, user)
+            roi = int(self.transaction.get_roi(portfolio, loop_from_date, loop_to_date, user) *100)
 
             dates.append(loop_to_date)
             # print(roi, tmp)
@@ -32,18 +36,18 @@ class UI:
         return dates, roi_list
 
 
-    def portfolio_development(self, portfolio, from_date, to_date):
+    def portfolio_development(self, portfolio, from_date, to_date, user):
         dates = []
         pf_details = []
         pf_value = []
         # import pdb; pdb.set_trace()
         time_intervall = int((to_date - from_date).days/12/15)*15
-        total_dividend = self.transaction.get_total_dividend('All', from_date, to_date)
+        total_dividend = self.transaction.get_total_dividend(portfolio, from_date, to_date)
         # Iteration over 12 time intervals
         for i in range(12):
             loop_date = (datetime.date.today() - datetime.timedelta(days=1 + i * time_intervall))
             # import pdb; pdb.set_trace()
-            stocks_at_date = self.transaction.get_total_for_portfolio('All', loop_date)
+            stocks_at_date = self.transaction.get_total_for_portfolio(portfolio, loop_date, user)
 
             portfolio_value_at_date = Decimal(0)
             stocks = []
@@ -56,9 +60,9 @@ class UI:
                 portfolio_value_at_date += stocks_at_date[stock_id]['nominal'] * price
                 stocks.append((stock_id, stocks_at_date[stock_id]['nominal'], price))
 
-            invest = self.transaction.get_total_invest('All', loop_date, to_date)
-            divest = self.transaction.get_total_divest('All', loop_date, to_date)
-            dividend_before = self.transaction.get_total_dividend('All', from_date, loop_date)
+            invest = self.transaction.get_total_invest(portfolio, loop_date, to_date)
+            divest = self.transaction.get_total_divest(portfolio, loop_date, to_date)
+            dividend_before = self.transaction.get_total_dividend(portfolio, from_date, loop_date)
 
             dates.append(loop_date)
             pf_details.append(stocks)
@@ -85,7 +89,7 @@ class UI:
                     #       'Nom', old_stock[1], cur_nom,
                     #       'EUR', old_stock[2],  cur_price)
                     delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
-                            self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0])
+                            self.transaction.get_invest_divest(portfolio, cur_key, dates[interval_factor], dates[0])
                     delta_keys.append([cur_key, delta])
         delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
         print('Total deviation vs. ' + str(interval_factor*time_intervall) + ' days ago:', pf_value[0] - pf_value[interval_factor], '; major drivers:')
@@ -109,7 +113,7 @@ class UI:
                     #       'Nom', old_stock[1], cur_nom,
                     #       'EUR', old_stock[2],  cur_price)
                     delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
-                            self.transaction.get_invest_divest('All', cur_key, dates[interval_factor], dates[0])
+                            self.transaction.get_invest_divest(portfolio, cur_key, dates[interval_factor], dates[0])
                     delta_keys.append([cur_key, delta])
         # print(delta_keys)
         delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)

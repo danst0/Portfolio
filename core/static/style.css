@@ -23,13 +23,11 @@
     display: block;
     width: 80px;
     height: 3em;
-    //font-weight: bold;
     color: #FFFFFF;
     background-color: #8FB700;
     text-align: center;
     padding: 4px;
     text-decoration: none;
-    //text-transform: uppercase;
     font-size:0.8em;
     position: relative;
     top: 50%;
@@ -99,7 +97,7 @@ td {
 .line-legend li, .donutalt-legend li {
   display: block;
   float: left;
-  width: 12em;
+  width: 14em;
   clear:both;
   padding: 0.5em;
 }

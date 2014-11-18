@@ -8,10 +8,12 @@ import csv
 import datetime
 from django.utils import timezone
 from dateutil import relativedelta
+from django.contrib.auth.models import User
 
 # Create your models here.
 
 class Money(models.Model):
+    user = models.ForeignKey(User, null=True, default=None)
     to_date = models.DateField('End date of income/expense, date of total')
     # total, income, expense; income, expense, optional with fallback = None
     income = models.DecimalField(max_digits=20, decimal_places=4, blank=True, null=True, default=None)
@@ -80,14 +82,14 @@ class Money(models.Model):
         median_expense = statistics.mean(expenses)
         return median_income, median_expense
 
-    def get_wealth(self, date):
-        transactions = Money.objects.filter(to_date__lte=date).order_by('-to_date')
+    def get_wealth(self, date, user):
+        transactions = Money.objects.filter(to_date__lte=date, user=user).order_by('-to_date')
         transactions[0].total_in_end
         return transactions[0].total_in_end
 
 
-    def get_current_wealth(self):
-        transactions = Money.objects.all().order_by('-to_date')
+    def get_current_wealth(self, user):
+        transactions = Money.objects.filter(user=user).order_by('-to_date')
         transactions[0].total_in_end
         return transactions[0].total_in_end
 
@@ -151,42 +153,36 @@ class Money(models.Model):
         monthly_pension, development = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03), development)
         return monthly_pension, development
 
-    def aggregate_results(self):
+    def aggregate_results(self, user):
         t = Transaction()
         year_of_death = 2080
-        current_pf_value = t.get_pf_value('All', timezone.now().date())
-        median_income, median_expense = self.calc_average()
-        total_wealth = current_pf_value + self.get_current_wealth()
+        current_pf_value = t.get_pf_value('All', timezone.now().date(), user)
+        median_income, median_expense = self.calc_average(user)
+        total_wealth = current_pf_value + self.get_current_wealth(user)
 
         timespan = 2*365
         from_date = (timezone.now() - datetime.timedelta(days=timespan)).date()
         to_date = timezone.now().date()
         # import pdb;pdb.set_trace()
-
-        expected_interest_rate = math.pow(t.get_roi('All', from_date, to_date) + 1,
+        # print(from_date, to_date, timespan)
+        # print(t.get_roi('All', from_date, to_date, user))
+        expected_interest_rate = math.pow(t.get_roi('All', from_date, to_date, user) + 1,
                                           Decimal(365/timespan))-1
         delta_2015 = self.month_delta('2015-12-31')
-        delta_2020 = self.month_delta('2020-12-31')
-        delta_2025 = self.month_delta('2025-12-31')
-        delta_2030 = self.month_delta('2030-12-31')
-        wealth_in_2015, development = self.calc_wealth_next_month(self.get_current_wealth(),
+        wealth_in_2015, development = self.calc_wealth_next_month(self.get_current_wealth(user),
                                                                   current_pf_value,
                                                                   delta_2015,
                                                                   median_income,
                                                                   median_expense,
                                                                   expected_interest_rate, [])
 
-        result = [{'income-expense': median_income-median_expense, 'interest': expected_interest_rate*100},
-                  {'text': 'Estimated income', 'value': median_income},
-                  {'text': 'Estimated expense', 'value': median_expense},
-                  {'text': 'Estimated interest rate', 'value': expected_interest_rate*100, 'no_cut': True},
-                  {'text': 'Current wealth', 'value': total_wealth},
-                  {'text': 'Estimated wealth 2015', 'value': wealth_in_2015}
-                  ]
         result_development = {}
+        result_development['incomeexpense'] = median_income-median_expense
+        result_development['interest'] = expected_interest_rate*100
+
         for year_of_retirement in [2020, 2025, 2030]:
             delta = self.month_delta(str(year_of_retirement)+'-12-31')
-            wealth, development = self.calc_wealth_next_month(self.get_current_wealth(),
+            wealth, development = self.calc_wealth_next_month(self.get_current_wealth(user),
                                                  current_pf_value,
                                                  delta,
                                                  median_income,
@@ -203,16 +199,15 @@ class Money(models.Model):
                     short_development.append(item)
 
             result_development[year_of_retirement] = short_development
-            result[0]['wealth' + str(year_of_retirement)] = wealth
-            result[0]['pension' + str(year_of_retirement)] = monthly_pension
-            result.append({'text': 'Estimated wealth '+str(year_of_retirement), 'value': wealth})
+            result_development['wealth' + str(year_of_retirement)] = wealth
+            result_development['pension' + str(year_of_retirement)] = monthly_pension
+            #result.append({'text': 'Estimated wealth '+str(year_of_retirement), 'value': wealth})
 
-            result.append({'text': 'Retirement starting in '+str(year_of_retirement)+
-                                   ', monthly payments, when using the money until '+str(year_of_death)+
-                                   ', monthly payments:',
-                           'value': monthly_pension})
-        print(len(result_development[2020]))
-        return result, result_development
+            #result.append({'text': 'Retirement starting in '+str(year_of_retirement)+
+            #                       ', monthly payments, when using the money until '+str(year_of_death)+
+            #                       ', monthly payments:',
+            #               'value': monthly_pension})
+        return result_development
 
     def import_outbank(self):
         file = 'Alle Umsätze bis 2014-09-28.csv'

@@ -177,10 +177,10 @@ class Transaction(models.Model):
                 total += item.total
         return total
 
-    def get_total_per_type(self, portfolio, date):
+    def get_total_per_type(self, portfolio, date, user):
         total = {}
 
-        stocks = self.get_total_for_portfolio(portfolio, date)
+        stocks = self.get_total_for_portfolio(portfolio, date, user)
         # print(stocks)
         for stock in stocks:
             if not stock.type in total.keys():
@@ -214,8 +214,8 @@ class Transaction(models.Model):
                     nominal = nominal * split.ratio
         return nominal
 
-    def get_total_for_portfolio(self, portfolio, date):
-        result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date)
+    def get_total_for_portfolio(self, portfolio, date, user):
+        result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date, user=user)
         per_stock = {}
         for item in result:
             sign = 1
@@ -239,7 +239,7 @@ class Transaction(models.Model):
                 del per_stock[key]
         return per_stock
 
-    def list_pf(self, portfolio, from_date, to_date):
+    def list_pf(self, portfolio, from_date, to_date, user):
         """ Portfolio Overview function table of all stocks and profits since from_date
         :param portfolio: xxx
         :param from_date: When to start
@@ -254,8 +254,8 @@ class Transaction(models.Model):
         #         print(trans.stock_id, trans.date, trans.price)
         #         p = Price()
         #         p.add(trans.stock_id, trans.date, trans.price)
-        stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date)
-        stocks_at_end = self.get_total_for_portfolio(portfolio, to_date)
+        stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date, user)
+        stocks_at_end = self.get_total_for_portfolio(portfolio, to_date, user)
         values = []
         total_value = Decimal(0)
         total_value_at_beginning = Decimal(0)
@@ -335,12 +335,12 @@ class Transaction(models.Model):
                        'roi': total_roi})
         return values
 
-    def get_roi(self, portfolio, from_date, to_date):
-        result = self.list_pf(portfolio, from_date, to_date)
+    def get_roi(self, portfolio, from_date, to_date, user):
+        result = self.list_pf(portfolio, from_date, to_date, user)
         result = Decimal(result[-1]['roi'][:-1])
         return result/Decimal(100)
 
 
-    def get_pf_value(self, portfolio, to_date):
-        result = self.list_pf(portfolio, to_date, to_date)
+    def get_pf_value(self, portfolio, to_date, user):
+        result = self.list_pf(portfolio, to_date, to_date, user)
         return result[-1]['value_at_end']

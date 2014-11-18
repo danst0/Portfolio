@@ -141,7 +141,8 @@ def rolling_profitability(request):
             ui = UI()
             dates, roi_list = ui.rolling_profitability(form.cleaned_data['portfolio'],
                                                        form.cleaned_data['from_date'],
-                                                       form.cleaned_data['to_date'])
+                                                       form.cleaned_data['to_date'],
+                                                       request.user)
             dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
             roi_list = list(map(lambda x: float(round(x, 2)), roi_list))
             # print(roi_list)
@@ -170,7 +171,8 @@ def portfolio_development(request):
             ui = UI()
             dates, pf_values = ui.portfolio_development(form.cleaned_data['portfolio'],
                                                         form.cleaned_data['from_date'],
-                                                        form.cleaned_data['to_date'])
+                                                        form.cleaned_data['to_date'],
+                                                        request.user)
             dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
             pf_values = list(map(lambda x: float(round(x,2)), pf_values))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
@@ -257,13 +259,14 @@ def get_color_and_highlight():
 @login_required
 def new_invest(request):
     t = Transaction()
-    # for item in Transaction.objects.all():
+    # for item in Money.objects.all():
     #     item.user = User.objects.get(username='danst')
     #     item.save()
+    # print(request.user)
     m = Money()
     today = timezone.now().date()
-    portfolio_parts = t.get_total_per_type('All', today)
-    wealth = m.get_wealth(today)
+    portfolio_parts = t.get_total_per_type('All', today, request.user)
+    wealth = m.get_wealth(today, request.user)
     content = list(portfolio_parts.items())
     content.append(('Cash', wealth))
     total = Decimal(0)
@@ -293,7 +296,8 @@ def portfolio_overview(request):
             t = Transaction()
             content = t.list_pf(form.cleaned_data['portfolio'],
                                 form.cleaned_data['from_date'],
-                                form.cleaned_data['to_date'])
+                                form.cleaned_data['to_date'],
+                                request.user)
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                                'form': form,
                                                                'portfolio': form.cleaned_data['portfolio'],
@@ -322,9 +326,9 @@ def portfolio_overview(request):
 def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()
-    result, result_development = m.aggregate_results()
-    now = timezone.now().date().year +1
+    result_development = m.aggregate_results(request.user)
+    now = timezone.now().date().year + 1
     dates = list(range(len(result_development[2020])))
     dates = [now+(item*5) if item % 1 == 0 else '' for item in dates]
     # print(dates)
-    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'forecast_results': result, 'development': result_development, 'dates': dates})
+    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'development': result_development, 'dates': dates})

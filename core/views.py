@@ -189,7 +189,7 @@ def portfolio_development(request):
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                 'form': form})
 
-def get_color_and_highlight():
+def get_color_and_highlight(number=5):
     color = {'aqua': "#00ffff",
              'azure': "#f0ffff",
              'beige': "#f5f5dc",
@@ -247,7 +247,11 @@ def get_color_and_highlight():
              'salmon': 'darksalmon',
              'violet': 'darkviolet'}
     # to preserve order
-    colors = ['#8FB700', '#6BE200', '#C2F400', '#FF9800', '#CB8800']
+    orig_colors = ['#8FB700', '#6BE200', '#C2F400', '#FF9800', '#CB8800']
+    colors = []
+    for i in range(number):
+        colors.append(orig_colors[i % 5])
+    # print(colors)
     result = []
     for normal_color in colors:
         highlight_color = complements[normal_color]
@@ -298,6 +302,14 @@ def portfolio_overview(request):
                                 form.cleaned_data['from_date'],
                                 form.cleaned_data['to_date'],
                                 request.user)
+            pie_colors = get_color_and_highlight(len(content))
+            result = []
+            for num, item in enumerate(content):
+                # print(pie_colors[num])
+                item['color'] = pie_colors[num][0]
+                item['highlight'] = pie_colors[num][1]
+                # print(item)
+                result.append(item)
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                                'form': form,
                                                                'portfolio': form.cleaned_data['portfolio'],
@@ -312,7 +324,7 @@ def portfolio_overview(request):
                                                                                        'dividends',
                                                                                        'value_at_end',
                                                                                        'profit', 'roi'],
-                                                               'portfolio_content': content})
+                                                               'portfolio_content': result})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()

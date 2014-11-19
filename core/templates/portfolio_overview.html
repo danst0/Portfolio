@@ -17,8 +17,8 @@ $( document ).ready(function() {
                         {
                             value: {{ line|keyvalue:'profit'|absolute|cut:0 }},
                             label: "{{ line|keyvalue:'name' }}: {{ line|keyvalue:'profit'|cut:1 }} ({{ line|keyvalue:'roi' }})",
-                            color: "#cccccc",
-                            highlight: "#dddddd",
+                            color: "{{ line|keyvalue:'color' }}",
+                            highlight: "{{ line|keyvalue:'highlight' }}",
                         },
                     {% endif %}
                 {% endfor %}

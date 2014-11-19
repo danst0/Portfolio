@@ -160,7 +160,7 @@ class Money(models.Model):
         median_income, median_expense = self.calc_average(user)
         total_wealth = current_pf_value + self.get_current_wealth(user)
 
-        timespan = 2*365
+        timespan = 3*365
         from_date = (timezone.now() - datetime.timedelta(days=timespan)).date()
         to_date = timezone.now().date()
         # import pdb;pdb.set_trace()

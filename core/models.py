@@ -14,13 +14,13 @@ class UI:
 
     def rolling_profitability(self, portfolio, from_date, to_date, user):
         time_span = (to_date - from_date).days
-        interval = 30
+        no_of_month = int(time_span/30/12)
+        print(no_of_month)
         dates = []
         roi_list = []
         loop_to_date = to_date
-        loop_from_date = from_date
         while loop_to_date >= from_date:
-            loop_to_date = loop_to_date - relativedelta(months=1)
+            loop_to_date = loop_to_date - relativedelta(months=no_of_month)
             loop_from_date = loop_to_date - relativedelta(months=12)
 
             print(loop_from_date, loop_to_date)

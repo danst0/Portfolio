@@ -5,13 +5,9 @@ Portfolio wealth management app for the command line.
 
 Todos
 =====
-* Support a way to present to others
-* Multi-User support
-* Support multiple portfolios (eg. to have one to show)
+
 * Overview of stored information (transactions, prices) per stock (e.g. in stock graph)
-* Quality check forecast retirement (esp. interest rate)
-* ROI-Kuchen: ROI als Kuchendiagramm, wer hat wieviel dazu beigetragen
-* Timing-Analyse, wie hat sich der Kurs vorher/nachher entwickelt
+
 
 ---
 
@@ -55,7 +51,12 @@ Done
  * Make dialogues more resilient (ctrl-c and stupid input) 
 * Dialogues
   * Enable way to abort dialogues
-
+* Support a way to present to others
+* Multi-User support
+* Support multiple portfolios (eg. to have one to show)
+* Quality check forecast retirement (esp. interest rate)
+* Timing-Analyse, wie hat sich der Kurs vorher/nachher entwickelt
+* ROI-Kuchen: ROI als Kuchendiagramm, wer hat wieviel dazu beigetragen
 
 Install
 ===

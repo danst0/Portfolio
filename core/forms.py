@@ -4,14 +4,14 @@ import datetime
 
 class PortfolioFormOneDate(forms.Form):
 
-    portfolio = forms.CharField(label='Portfolio', max_length=100, initial='All')
+    #portfolio = forms.CharField(label='Portfolio', max_length=100, initial='All')
     time_span = 360
     tmp_default_to = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
     from_date = forms.DateField(label='Date', initial=tmp_default_to)
 
 
 class PortfolioFormTwoDates(forms.Form):
-    portfolio = forms.CharField(label='Portfolio', max_length=100, initial='All')
+    #portfolio = forms.CharField(label='Portfolio', max_length=100, initial='All')
     time_span = 365
     tmp_default_from = (datetime.date.today() - datetime.timedelta(days=time_span)).strftime('%Y-%m-%d')
     tmp_default_to = (datetime.date.today() - datetime.timedelta(days=0)).strftime('%Y-%m-%d')

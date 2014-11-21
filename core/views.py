@@ -139,8 +139,7 @@ def rolling_profitability(request):
         # check whether it's valid:
         if form.is_valid():
             ui = UI()
-            dates, roi_list = ui.rolling_profitability(form.cleaned_data['portfolio'],
-                                                       form.cleaned_data['from_date'],
+            dates, roi_list = ui.rolling_profitability(form.cleaned_data['from_date'],
                                                        form.cleaned_data['to_date'],
                                                        request.user)
             dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
@@ -148,7 +147,6 @@ def rolling_profitability(request):
             # print(roi_list)
             return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                                   'form': form,
-                                                                  'portfolio': form.cleaned_data['portfolio'],
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
                                                                   'dates': dates,
@@ -169,19 +167,19 @@ def portfolio_development(request):
         # check whether it's valid:
         if form.is_valid():
             ui = UI()
-            dates, pf_values = ui.portfolio_development(form.cleaned_data['portfolio'],
-                                                        form.cleaned_data['from_date'],
+            dates, pf_values, roi = ui.portfolio_development(form.cleaned_data['from_date'],
                                                         form.cleaned_data['to_date'],
                                                         request.user)
+
             dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
             pf_values = list(map(lambda x: float(round(x,2)), pf_values))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                                   'form': form,
-                                                                  'portfolio': form.cleaned_data['portfolio'],
                                                                   'from_date': form.cleaned_data['from_date'],
                                                                   'to_date': form.cleaned_data['to_date'],
                                                                   'dates': dates,
-                                                                  'pf_values': pf_values
+                                                                  'pf_values': pf_values,
+                                                                  'roi': int(roi*100),
                                                                   })
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -298,8 +296,7 @@ def portfolio_overview(request):
         # check whether it's valid:
         if form.is_valid():
             t = Transaction()
-            content = t.list_pf(form.cleaned_data['portfolio'],
-                                form.cleaned_data['from_date'],
+            content = t.list_pf(form.cleaned_data['from_date'],
                                 form.cleaned_data['to_date'],
                                 request.user)
             pie_colors = get_color_and_highlight(len(content))
@@ -312,7 +309,6 @@ def portfolio_overview(request):
                 result.append(item)
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                                'form': form,
-                                                               'portfolio': form.cleaned_data['portfolio'],
                                                                'from_date': form.cleaned_data['from_date'],
                                                                'to_date': form.cleaned_data['to_date'],
                                                                'header': ['Name', 'Nominal', 'Price',

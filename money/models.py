@@ -156,7 +156,7 @@ class Money(models.Model):
     def aggregate_results(self, user):
         t = Transaction()
         year_of_death = 2080
-        current_pf_value = t.get_pf_value('All', timezone.now().date(), user)
+        current_pf_value = t.get_pf_value(timezone.now().date(), user)
         median_income, median_expense = self.calc_average(user)
         total_wealth = current_pf_value + self.get_current_wealth(user)
 
@@ -166,7 +166,7 @@ class Money(models.Model):
         # import pdb;pdb.set_trace()
         # print(from_date, to_date, timespan)
         # print(t.get_roi('All', from_date, to_date, user))
-        expected_interest_rate = math.pow(t.get_roi('All', from_date, to_date, user) + 1,
+        expected_interest_rate = math.pow(t.get_roi(from_date, to_date, user) + 1,
                                           Decimal(365/timespan))-1
         delta_2015 = self.month_delta('2015-12-31')
         wealth_in_2015, development = self.calc_wealth_next_month(self.get_current_wealth(user),

@@ -12,7 +12,7 @@ class UI:
         self.prices = Price()
         self.secs = Security()
 
-    def rolling_profitability(self, portfolio, from_date, to_date, user):
+    def rolling_profitability(self, from_date, to_date, user, portfolio='All'):
         time_span = (to_date - from_date).days
         no_of_month = int(time_span/30/12)
         print(no_of_month)
@@ -26,7 +26,7 @@ class UI:
             print(loop_from_date, loop_to_date)
 
             # result = self.transaction.list_pf(portfolio, loop_from_date, loop_to_date, user)
-            roi = int(self.transaction.get_roi(portfolio, loop_from_date, loop_to_date, user) *100)
+            roi = int(self.transaction.get_roi(loop_from_date, loop_to_date, user, portfolio) *100)
 
             dates.append(loop_to_date)
             # print(roi, tmp)
@@ -36,7 +36,7 @@ class UI:
         return dates, roi_list
 
 
-    def portfolio_development(self, portfolio, from_date, to_date, user):
+    def portfolio_development(self, from_date, to_date, user, portfolio='All'):
         dates = []
         pf_details = []
         pf_value = []
@@ -123,5 +123,6 @@ class UI:
             # print(delta_keys)
         dates = reversed(dates)
         pf_value = reversed(pf_value)
-        return dates, pf_value
+        roi = self.transaction.get_roi(from_date, to_date, user)
+        return dates, pf_value, roi
 

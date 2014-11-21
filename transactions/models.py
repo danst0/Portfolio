@@ -239,7 +239,7 @@ class Transaction(models.Model):
                 del per_stock[key]
         return per_stock
 
-    def list_pf(self, portfolio, from_date, to_date, user):
+    def list_pf(self, from_date, to_date, user, portfolio='All'):
         """ Portfolio Overview function table of all stocks and profits since from_date
         :param portfolio: xxx
         :param from_date: When to start
@@ -335,12 +335,12 @@ class Transaction(models.Model):
                        'roi': total_roi})
         return values
 
-    def get_roi(self, portfolio, from_date, to_date, user):
-        result = self.list_pf(portfolio, from_date, to_date, user)
+    def get_roi(self, from_date, to_date, user, portfolio='All'):
+        result = self.list_pf(from_date, to_date, user, portfolio)
         result = Decimal(result[-1]['roi'][:-1])
         return result/Decimal(100)
 
 
-    def get_pf_value(self, portfolio, to_date, user):
-        result = self.list_pf(portfolio, to_date, to_date, user)
+    def get_pf_value(self, to_date, user, portfolio='All'):
+        result = self.list_pf(to_date, to_date, user, portfolio)
         return result[-1]['value_at_end']

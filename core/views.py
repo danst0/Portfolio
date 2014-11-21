@@ -7,10 +7,10 @@ from securities.models import Security
 from transactions.models import Transaction
 from money.models import Money
 
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.dates import DateFormatter
-from matplotlib.ticker import ScalarFormatter
+#from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+#from matplotlib.figure import Figure
+#from matplotlib.dates import DateFormatter
+#from matplotlib.ticker import ScalarFormatter
 
 import datetime
 from decimal import Decimal

@@ -27,7 +27,10 @@ $( document ).ready(function() {
         var ctx = document.getElementById("roi_cake_chart").getContext("2d");
         var myLineChart = new Chart(ctx).PolarArea(data, {tooltipTemplate: "<%if (label){%><%=label%> <% }%>",});
     {% endif %}
+
+
 });
+
 </script>
 {% endblock %}
 
@@ -37,7 +40,7 @@ $( document ).ready(function() {
     <form id="click_form" action="{% url 'core.views.portfolio_overview' %}" method="post">
     {% csrf_token %}
     {{ form }}
-    <input type="submit" value="Execute" />
+    <input type="submit" value="Update" />
     </form>
     {% if portfolio_content %}
         <canvas id="roi_cake_chart" width="500" height="300"></canvas>
@@ -73,7 +76,6 @@ $( document ).ready(function() {
         </table>
         </div>
     {% endif %}
-
 
 {% endblock %}
 

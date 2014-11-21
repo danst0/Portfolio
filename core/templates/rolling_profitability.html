@@ -10,7 +10,7 @@
 <script type="text/javascript">
 $( document ).ready(function() {
     {% if not dates %}
-        document.getElementById("click_form").submit();
+        document.getElementById("rolling_click_form").submit();
     {% else %}
         var data = {
             labels: {{ dates|safe }},
@@ -39,13 +39,13 @@ $( document ).ready(function() {
 
 
 {% block content %}
-    <form id="click_form" action="{% url 'core.views.rolling_profitability' %}" method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Update" />
 
-    </form>
-    {% if portfolio %}
+    {% if dates %}
         <canvas id="myChart" width="800" height="400"></canvas>
     {% endif %}
+    <form id="rolling_click_form" action="{% url 'core.views.rolling_profitability' %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Update" />
+    </form>
 {% endblock %}

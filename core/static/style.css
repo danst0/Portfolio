@@ -79,13 +79,12 @@ td {
     left: -100px;
 }
 
-
 #total {
-    left: 320px;
+    left: 305px;
     top: 160px;
     position: absolute;
     font-size: 3em;
-    width: 150px;
+    width: 4em;
     text-align: center;
 }
 
@@ -125,17 +124,7 @@ td {
     position: absolute;
     font-size: 0.7em;
 }
-#income-interest {
-    width: 7em;
-    text-align: center;
-    left: 60px;
-    top: 12px;
-    position: absolute;
-    font-size: 1.2em;
-}
-.smaller {
-    font-size: 0.6em;
-}
+
 
 
 #nav_overview {
@@ -180,6 +169,13 @@ td {
     top: 50px;
 }
 
+#click_form {
+    position: absolute;
+    left: 500px;
+    top: 20px;
+    width: 10em;
+}
+
 form, input{
     padding: 4px;
     text-decoration: none;
@@ -188,4 +184,21 @@ form, input{
 
 body {
     font-family:'tex_gyre_bonumregular';
+}
+
+/* Kästen */
+
+#income-interest, #development_roi {
+    width: 6em;
+    text-align: center;
+    left: 70px;
+    top: 12px;
+    position: absolute;
+    font-size: 1.2em;
+    padding: 2px;
+    border: 1px solid #CB8800;
+    background-color: #fefefe;
+}
+.smaller {
+    font-size: 0.6em;
 }

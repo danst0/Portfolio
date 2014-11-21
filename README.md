@@ -7,6 +7,7 @@ Todos
 =====
 
 * Overview of stored information (transactions, prices) per stock (e.g. in stock graph)
+* Import should work on server (e.g. upload of files,...)
 
 
 ---

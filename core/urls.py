@@ -24,8 +24,7 @@ urlpatterns = patterns('',
                            name='stock_graph_png'),
                        url(r'forecast_retirement/', views.forecast_retirement, name='forecast_retirement'),
 
-                       url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
-                       url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
+
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
                        # ex: /polls/5/results/

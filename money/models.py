@@ -84,8 +84,10 @@ class Money(models.Model):
 
     def get_wealth(self, date, user):
         transactions = Money.objects.filter(to_date__lte=date, user=user).order_by('-to_date')
-        transactions[0].total_in_end
-        return transactions[0].total_in_end
+        if len(transactions) > 0:
+            return transactions[0].total_in_end
+        else:
+            return 0
 
 
     def get_current_wealth(self, user):

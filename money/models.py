@@ -76,10 +76,14 @@ class Money(models.Model):
             # print(value['expense']+ divest + invest + dividend)
             incomes.append(value['income'])
             expenses.append(value['expense'] + divest + invest + dividend)
-
-
-        median_income = statistics.mean(incomes)
-        median_expense = statistics.mean(expenses)
+        if incomes:
+            median_income = statistics.mean(incomes)
+        else:
+            median_income = 0
+        if expenses:
+            median_expense = statistics.mean(expenses)
+        else:
+            median_expense = 0
         return median_income, median_expense
 
     def get_wealth(self, date, user):
@@ -92,18 +96,23 @@ class Money(models.Model):
 
 
     def get_current_wealth(self, user):
-        transactions = Money.objects.filter(user=user).order_by('-to_date')
-        transactions[0].total_in_end
-        return transactions[0].total_in_end
+        today = datetime.date.today()
+        result = self.get_wealth(today, user)
+        return result
 
     def calc_wealth_next_month(self, initial_cash_value, initial_pf_value, no_of_month_to_go, income, expense, interest_p_a, development):
         delta_income_expense = income - expense
-        cash_percentage = initial_cash_value/(initial_cash_value + initial_pf_value)
+        cash_percentage = Decimal(0)
+        if initial_cash_value + initial_pf_value != 0:
+            cash_percentage = initial_cash_value/(initial_cash_value + initial_pf_value)
+
+        # print(cash_percentage, no_of_month_to_go)
         no_of_month_to_go -= 1
         end_of_month_pf_value = (initial_pf_value + delta_income_expense * (1-cash_percentage)) * Decimal(math.pow(1 + interest_p_a, 1/12))
         end_of_month_cash_value = initial_cash_value + delta_income_expense * cash_percentage
         development.append(round(float(end_of_month_cash_value + end_of_month_pf_value), 2))
         if no_of_month_to_go == 0:
+            # print('good return', end_of_month_cash_value + end_of_month_pf_value, development)
             return end_of_month_cash_value + end_of_month_pf_value, development
         else:
             return self.calc_wealth_next_month(end_of_month_cash_value, end_of_month_pf_value, no_of_month_to_go,
@@ -133,6 +142,7 @@ class Money(models.Model):
         delta_month = 99
 
         while abs(delta_month/month_to_go) > 0.01:
+            print(delta_month, month_to_go, delta_month/month_to_go)
             tmp_development = []
             no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
             delta_month = no_of_month - month_to_go
@@ -152,8 +162,11 @@ class Money(models.Model):
         :param interest_rate: applicable interest rate
         :return: monthly return/pension while using up all money
         """
-        future_delta = self.month_delta(str(year_of_death)+'-12-31') - self.month_delta(str(year_of_retirement)+'-12-31')
-        monthly_pension, development = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03), development)
+        if wealth != 0:
+            future_delta = self.month_delta(str(year_of_death)+'-12-31') - self.month_delta(str(year_of_retirement)+'-12-31')
+            monthly_pension, development = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03), development)
+        else:
+            monthly_pension = 0
         return monthly_pension, development
 
     def aggregate_results(self, user):
@@ -184,6 +197,7 @@ class Money(models.Model):
         result_development['interest'] = expected_interest_rate*100
 
         for year_of_retirement in [2020, 2025, 2030]:
+
             delta = self.month_delta(str(year_of_retirement)+'-12-31')
             wealth, development = self.calc_wealth_next_month(self.get_current_wealth(user),
                                                  current_pf_value,
@@ -191,7 +205,7 @@ class Money(models.Model):
                                                  median_income,
                                                  median_expense,
                                                  expected_interest_rate, [])
-
+            # print(wealth, year_of_retirement)
             monthly_pension, development = self.mp(wealth,
                                       year_of_retirement,
                                       year_of_death,

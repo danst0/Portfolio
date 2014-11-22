@@ -15,22 +15,28 @@ class UI:
     def rolling_profitability(self, from_date, to_date, user, portfolio='All'):
         time_span = (to_date - from_date).days
         no_of_month = int(time_span/30/12)
-        print(no_of_month)
+        # print(no_of_month)
         dates = []
         roi_list = []
         loop_to_date = to_date
         while loop_to_date >= from_date:
-            loop_to_date = loop_to_date - relativedelta(months=no_of_month)
+
             loop_from_date = loop_to_date - relativedelta(months=12)
 
             print(loop_from_date, loop_to_date)
 
             # result = self.transaction.list_pf(portfolio, loop_from_date, loop_to_date, user)
-            roi = int(self.transaction.get_roi(loop_from_date, loop_to_date, user, portfolio) *100)
+            roi = self.transaction.get_roi(loop_from_date, loop_to_date, user, portfolio)
+            if roi != 'n/a':
+                roi = int(roi *100)
+            else:
+                roi = 0
 
             dates.append(loop_to_date)
             # print(roi, tmp)
             roi_list.append(roi)
+
+            loop_to_date = loop_to_date - relativedelta(months=no_of_month)
         dates = reversed(dates)
         roi_list = reversed(roi_list)
         return dates, roi_list
@@ -93,8 +99,9 @@ class UI:
                     delta_keys.append([cur_key, delta])
         delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
         print('Total deviation vs. ' + str(interval_factor*time_intervall) + ' days ago:', pf_value[0] - pf_value[interval_factor], '; major drivers:')
-        for i in range(5):
-            print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]), ')')
+        if delta_keys:
+            for i in range(5):
+                print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]), ')')
 
         # Drivers vs. 2 intervall earlier
         delta_keys = []
@@ -118,11 +125,14 @@ class UI:
         # print(delta_keys)
         delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
         print('Total deviation vs. ' + str(interval_factor * time_intervall) + ' days ago:', pf_value[0] - pf_value[interval_factor], '; major drivers:')
-        for i in range(5):
-            print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]),')')
-            # print(delta_keys)
+        if delta_keys:
+            for i in range(5):
+                print(i + 1, ': ' + str(delta_keys[i][0]), '(', str(delta_keys[i][1]),')')
+
         dates = reversed(dates)
         pf_value = reversed(pf_value)
         roi = self.transaction.get_roi(from_date, to_date, user)
+        if roi != 'n/a':
+            roi = int(roi*100)
         return dates, pf_value, roi
 

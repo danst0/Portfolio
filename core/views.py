@@ -179,7 +179,7 @@ def portfolio_development(request):
                                                                   'to_date': form.cleaned_data['to_date'],
                                                                   'dates': dates,
                                                                   'pf_values': pf_values,
-                                                                  'roi': int(roi*100),
+                                                                  'roi': roi,
                                                                   })
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -280,7 +280,11 @@ def new_invest(request):
     result = []
     pie_colors = get_color_and_highlight()
     for num, item in enumerate(content):
-        result.append(item + (str(int(item[1]/total*100))+'%',) + pie_colors[num])
+        if total != 0:
+            percentage = int(item[1]/total*100)
+        else:
+            percentage = 'n/a'
+        result.append(item + (str(percentage)+'%',) + pie_colors[num])
     nav_total = total * Decimal('0.88') # May deduction factor
     nav_content = result
     # print(result)

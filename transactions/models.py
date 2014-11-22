@@ -337,8 +337,12 @@ class Transaction(models.Model):
 
     def get_roi(self, from_date, to_date, user, portfolio='All'):
         result = self.list_pf(from_date, to_date, user, portfolio)
-        result = Decimal(result[-1]['roi'][:-1])
-        return result/Decimal(100)
+        roi = result[-1]['roi'][:-1]
+        if roi != 'n/':
+            result = Decimal(roi)/Decimal(100)
+        else:
+            result = Decimal(0)
+        return result
 
 
     def get_pf_value(self, to_date, user, portfolio='All'):

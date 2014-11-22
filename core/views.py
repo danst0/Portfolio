@@ -28,67 +28,7 @@ from django.utils.decorators import method_decorator
 def index(request):
     return render(request, 'index.html')
 
-@login_required
-def import_all(request):
-    feedback_frankfurt = update_stocks_boerse_frankfurt(request)
-    if not feedback_frankfurt:
-        feedback_frankfurt = []
-    # print(feedback_frankfurt)
-    feedback_outbank = import_outbank(request)
-    if not feedback_outbank:
-        feedback_outbank = []
-    # print(feedback_outbank)
-    feedback_cortalconsors = import_cortalconsors_quotes(request)
-    if not feedback_cortalconsors:
-        feedback_cortalconsors = []
-    # print(feedback_cortalconsors)
-    feedback_yahoo = import_historic_quotes(request)
-    if not feedback_yahoo:
-        feedback_yahoo = []
-    # print(feedback_yahoo)
-    feedback_pdfs = update_pdfs(request)
-    if not feedback_pdfs:
-        feedback_pdfs = []
-    # print(feedback_pdfs['prices'])
-    # print(feedback_pdfs['transactions'])
-    prices = feedback_frankfurt + feedback_cortalconsors + feedback_yahoo + feedback_pdfs['prices']
-    print(prices)
-    transactions = feedback_pdfs['transactions']
-    print(transactions)
-    money = feedback_outbank
-    print(money)
-    return render(request, 'import_all.html', {'block_title': 'Update Database',
-                                               'prices': prices, 'transactions': transactions, 'money': money})
 
-
-def update_pdfs(request):
-    # import pdb; pdb.set_trace()
-    t = Transaction()
-    result = t.import_sources()
-    return result
-
-def update_stocks_boerse_frankfurt(request):
-    # import pdb; pdb.set_trace()
-    p = Price()
-    result = p.import_boerse_frankfurt()
-    return result
-
-def import_outbank(request):
-    # import pdb; pdb.set_trace()
-    m = Money()
-    result = m.import_outbank()
-    return result
-
-def import_cortalconsors_quotes(request):
-    p = Price()
-    result = p.import_cortalconsors_quotes()
-    return result
-
-def import_historic_quotes(request):
-    # import pdb; pdb.set_trace()
-    p = Price()
-    result = p.import_historic_quotes()
-    return result
 
 def stock_graph_png(request, security, from_date, to_date):
     s = Security()

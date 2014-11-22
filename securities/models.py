@@ -289,13 +289,16 @@ class Price(models.Model):
                 print('No ISIN', sec.name)
         print('Update finished')
 
-    def import_cortalconsors_quotes(self):
+    def import_cortalconsors_quotes(self, path):
         base_path = os.path.expanduser('~') + '/Desktop/PDFs'
         file = 'depot_918717894.csv'
-        if not os.path.isfile(base_path + '/' + file):
+        if path != file:
+            return []
+        file = path
+        if not os.path.isfile(file):
             return []
         result = []
-        with open(base_path + '/' + file, encoding='utf-8') as f:
+        with open(file, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
             for row in reader:
                 if row[0] == '':

@@ -229,16 +229,16 @@ class Money(models.Model):
             #               'value': monthly_pension})
         return result_development
 
-    def import_outbank(self):
+    def import_outbank(self, path):
         file = 'Alle Umsätze bis 2014-09-28.csv'
+        if path != file:
+            return []
         # Source format
         # "Buchungstext";"Währung";"Betrag";"Buchungstag";"Valuta-Datum";"Empfänger/Auftraggeber";
         # "Bankleitzahl";"Kontonummer";"Verwendungszweck";"Vormerkung";"Buchungsschlüssel";"Kommentar";
         # "Kategorie";"PayPal Empfänger/Auftraggeber";"PayPal An E-Mail";"PayPal Von E-Mail";"PayPal Gebühr";
         # "PayPal Transaktionscode";"PayPal Status"
         relevant_rows = []
-        if not os.path.isfile(self.base_path + '/' + file):
-            return []
         with open(self.base_path + '/' + file, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
             for row in reader:

@@ -7,10 +7,14 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import login_required
 
 from importer.models import Document
 from importer.forms import DocumentForm
+from django.http import HttpResponse
 
+
+@login_required
 def list(request):
     # Handle file upload
     if request.method == 'POST':
@@ -18,7 +22,6 @@ def list(request):
         if form.is_valid():
             newdoc = Document(docfile=request.FILES['docfile'], user=request.user)
             newdoc.save()
-
             # Redirect to the document list after POST
             return HttpResponseRedirect(reverse('importer.views.list'))
     else:
@@ -33,5 +36,14 @@ def list(request):
         {'block_title': 'Minimal Django File Upload Example',
          'documents': documents,
          'form': form},
-        context_instance=RequestContext(request)
-    )
+        context_instance=RequestContext(request))
+
+def do_update(request):
+    documents = Document.objects.all()
+    # print(documents)
+    Document.objects.filter(imported=True).delete()
+    for document in documents:
+        document.update()
+        document.imported = True
+        document.save()
+    return HttpResponse('')

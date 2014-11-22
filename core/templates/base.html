@@ -29,7 +29,6 @@
         {% block nav %}
         <div class="nav">
             <ul>
-                <!--<li>{% block nav-home %}<a href="{% url 'index' %}">Home</a>{% endblock %}</li>-->
                 <li id="nav_overview">{% block nav-new-invest %}<a href="{% url 'new_invest' %}">Overview</a>{% endblock %}</li>
                 <li id="nav_pf_overview">{% block nav-portfolio_overview %}<a href="{% url 'portfolio_overview' %}">Portfolio Overview</a>{% endblock %}</li>
 
@@ -37,21 +36,10 @@
                 <li id="nav_pf_rolling_profitability">{% block nav-rolling_profitability %}<a href="{% url 'rolling_profitability' %}">Rolling Profitability</a>{% endblock %}</li>
                 <li id="nav_forecast">{% block nav-forecast_retirement %}<a href="{% url 'forecast_retirement' %}">Forecast Retirement</a>{% endblock %}</li>
                 <!--<li  id="nav_stock_graph">{% block nav-stock_graph %}<a href="{% url 'stock_graph' %}">Stock Graph</a>{% endblock %}</li>-->
-
-            </ul>
-        </div>
-        <div class="divide"></div>
-        <div class="nav">
-            <ul>
                 <li id="nav_import">{% block nav-import-all %}<a href="{% url 'list' %}">Update</a>{% endblock %}</li>
-                <!--<li>{% block nav-update-cc-quotes %}<a href="{% url 'import_cortalconsors_quotes' %}">Update from Cortalconsors</a>{% endblock %}</li>-->
-                <!--<li>{% block import_pdf %}<a href="{% url 'update_pdfs' %}">Import PDFs (CortalConsors)</a>{% endblock %}</li>-->
-                <!--<li>{% block nav-outbank %}<a href="{% url 'import_outbank' %}">Import Outbank</a>{% endblock %}</li>-->
-                <!--<li>{% block nav-update-yahoo %}<a href="{% url 'import_historic_quotes' %}">Update from Yahoo</a>{% endblock %}</li>-->
-                <!--<li>{% block nav-update-bf %}<a href="{% url 'update_stocks_boerse_frankfurt' %}">Update from Börse Frankfurt</a>{% endblock %}</li>-->
-
             </ul>
         </div>
+
 
         {% endblock %}
 

@@ -52,10 +52,10 @@ class Transaction(models.Model):
         str(self.portfolio), self.transaction_type, str(self.stock_id), str(self.date), str(self.nominal), str(self.price),
         str(self.cost), str(self.total)))
 
-    def import_sources(self):
+    def import_sources(self, path):
         i = CortalConsors()
-        price_updates, transactions_update_pdf = i.read_pdfs()
-        transaction_update_csv = i.read_old_depot_csv()
+        price_updates, transactions_update_pdf = i.read_pdfs(path)
+        transaction_update_csv = i.read_old_depot_csv(path)
         transactions_update = transactions_update_pdf + transaction_update_csv
         output_transactions_updates = self.import_transactions(transactions_update)
         output_price_updates = self.prices.import_prices(price_updates)

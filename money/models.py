@@ -76,11 +76,13 @@ class Money(models.Model):
             # print(value['expense']+ divest + invest + dividend)
             incomes.append(value['income'])
             expenses.append(value['expense'] + divest + invest + dividend)
-        if incomes:
+        incomes = list(incomes)
+        expenses = list(expenses)
+        if incomes != []:
             median_income = statistics.mean(incomes)
         else:
             median_income = 0
-        if expenses:
+        if expenses != []:
             median_expense = statistics.mean(expenses)
         else:
             median_expense = 0
@@ -88,9 +90,10 @@ class Money(models.Model):
 
     def get_wealth(self, date, user):
         transactions = Money.objects.filter(to_date__lte=date, user=user).order_by('-to_date')
-        try:
+        transactions = list(transactions)
+        if transactions != []:
             result = transactions[0].total_in_end
-        except IndexError:
+        else:
             result = Decimal(0)
         return result
 

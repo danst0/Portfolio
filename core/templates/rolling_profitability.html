@@ -5,10 +5,11 @@
 
 
 {% block extrahead %}
-<script src="{% static "core/Chart.min.js" %}" type="text/javascript"></script>
-<script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {
+    $( "#rolling_click_form" ).submit(function( event ) {
+        $('#loading').show();
+    });
     {% if not dates %}
         document.getElementById("rolling_click_form").submit();
     {% else %}
@@ -30,7 +31,9 @@ $( document ).ready(function() {
 
         var ctx = document.getElementById("myChart").getContext("2d");
         var myLineChart = new Chart(ctx).Line(data);
+        $('#loading').hide();
     {% endif %}
+
 });
 </script>
 {% endblock %}

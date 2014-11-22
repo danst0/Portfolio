@@ -16,7 +16,7 @@ def list(request):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            newdoc = Document(docfile=request.FILES['docfile'])
+            newdoc = Document(docfile=request.FILES['docfile'], user=request.user)
             newdoc.save()
 
             # Redirect to the document list after POST
@@ -25,11 +25,13 @@ def list(request):
         form = DocumentForm() # A empty, unbound form
 
     # Load documents for the list page
-    documents = Document.objects.all()
+    documents = Document.objects.filter(user=request.user)
 
     # Render list page with the documents and the form
     return render_to_response(
         'list.html',
-        {'documents': documents, 'form': form},
+        {'block_title': 'Minimal Django File Upload Example',
+         'documents': documents,
+         'form': form},
         context_instance=RequestContext(request)
     )

@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, include, url
-
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 
 admin.autodiscover()
@@ -9,9 +10,12 @@ urlpatterns = patterns('',
                        # url(r'^$', 'mercurius.views.home', name='home'),
                        # url(r'^blog/', include('blog.urls')),
                        url(r'^core/', include('core.urls')),
+                       url(r'^import/', include('importer.urls')),
+
                        url(r'^transactions/', include('transactions.urls')),
                        url(r'^admin/', include(admin.site.urls), name='admin'),
                        url(r'^accounts/login/$', 'django.contrib.auth.views.login', name='login'),
                        url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
-)
+
+) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

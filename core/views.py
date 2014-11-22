@@ -285,7 +285,7 @@ def new_invest(request):
         else:
             percentage = 'n/a'
         result.append(item + (str(percentage)+'%',) + pie_colors[num])
-    nav_total = total * Decimal('0.88') # May deduction factor
+    nav_total = total * Decimal('0.87') # May deduction factor
     nav_content = result
     # print(result)
     return render(request, 'new_invest.html', {'block_title': 'Overview', 'nav_content': nav_content, 'nav_total': nav_total})

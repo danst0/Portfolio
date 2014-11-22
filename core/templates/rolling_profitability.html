@@ -7,9 +7,6 @@
 {% block extrahead %}
 <script type="text/javascript">
 $( document ).ready(function() {
-    $( "#rolling_click_form" ).submit(function( event ) {
-        $('#loading').show();
-    });
     {% if not dates %}
         document.getElementById("rolling_click_form").submit();
     {% else %}
@@ -31,7 +28,6 @@ $( document ).ready(function() {
 
         var ctx = document.getElementById("myChart").getContext("2d");
         var myLineChart = new Chart(ctx).Line(data);
-        $('#loading').hide();
     {% endif %}
 
 });

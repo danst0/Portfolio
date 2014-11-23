@@ -2,6 +2,7 @@
 import datetime
 from transactions.models import Transaction
 from securities.models import Security, Price
+from money.models import Money
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 
@@ -11,6 +12,7 @@ class UI:
         self.transaction = Transaction()
         self.prices = Price()
         self.secs = Security()
+        self.money = Money()
 
     def rolling_profitability(self, from_date, to_date, user, portfolio='All'):
         time_span = (to_date - from_date).days
@@ -18,7 +20,9 @@ class UI:
         # print(no_of_month)
         dates = []
         roi_list = []
+
         loop_to_date = to_date
+
         while loop_to_date >= from_date:
 
             loop_from_date = loop_to_date - relativedelta(months=12)
@@ -45,6 +49,7 @@ class UI:
     def portfolio_development(self, from_date, to_date, user, portfolio='All'):
         dates = []
         pf_details = []
+        cash_values = []
         pf_value = []
         # import pdb; pdb.set_trace()
         time_intervall = int((to_date - from_date).days/12/15)*15
@@ -71,6 +76,7 @@ class UI:
             dividend_before = self.transaction.get_total_dividend(portfolio, from_date, loop_date)
 
             dates.append(loop_date)
+            cash_values.append(self.money.get_wealth(loop_date, user))
             pf_details.append(stocks)
             # Logic of tmp_value: PF Value: reduce invests that happend after that date; further reduce by all dividends that will happen until end of horizon (vs. what already came)
             tmp_value = portfolio_value_at_date - invest + divest - (total_dividend - dividend_before)
@@ -131,8 +137,9 @@ class UI:
 
         dates = reversed(dates)
         pf_value = reversed(pf_value)
+        cash_values = reversed(cash_values)
         roi = self.transaction.get_roi(from_date, to_date, user)
         if roi != 'n/a':
             roi = int(roi*100)
-        return dates, pf_value, roi
+        return dates, pf_value, cash_values, roi
 

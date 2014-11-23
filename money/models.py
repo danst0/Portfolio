@@ -90,6 +90,8 @@ class Money(models.Model):
 
     def get_wealth(self, date, user):
         transactions = Money.objects.filter(to_date__lte=date, user=user).order_by('-to_date')
+        # print(date)
+        # print(transactions)
         transactions = list(transactions)
         if transactions != []:
             result = transactions[0].total_in_end
@@ -145,7 +147,7 @@ class Money(models.Model):
         delta_month = 99
 
         while abs(delta_month/month_to_go) > 0.01:
-            print(delta_month, month_to_go, delta_month/month_to_go)
+            # print(delta_month, month_to_go, delta_month/month_to_go)
             tmp_development = []
             no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
             delta_month = no_of_month - month_to_go

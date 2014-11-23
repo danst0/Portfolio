@@ -14,20 +14,35 @@ $( document ).ready(function() {
             labels: {{ dates|safe }},
             datasets: [
                 {
+                    axis: 0,
                     label: "Portfolio Development",
-                    fillColor: "#C2F400",
-                    strokeColor: "#FF9800",
-                    pointColor: "#FF9800",
-                    pointStrokeColor: "#FFF",
+                    fillColor: "rgba(194,244,0,0.5)",
+                    strokeColor: "#8FB700",
+                    pointColor: "#8FB700",
+                    pointStrokeColor: "#fff",
                     pointHighlightFill: "#CB8800",
                     pointHighlightStroke: "CB8800",
                     data: {{ pf_values }}
+                },
+                {
+                    axis: 1,
+                    label: "Cash Development",
+                    fillColor: "rgba(194,244,0,0.5)",
+                    strokeColor: "#CB8800",
+                    pointColor: "#CB8800",
+                    pointStrokeColor: "#fff",
+                    pointHighlightFill: "#CB8800",
+                    pointHighlightStroke: "CB8800",
+                    data: {{ cash_values }},
                 }
             ]
         };
 
             var ctx = document.getElementById("myChart").getContext("2d");
             var myLineChart = new Chart(ctx).Line(data);
+            // var myLineChart = new Chart(ctx).MultiAxisLine(data, {responsive: true,drawScale: [0,1],drawScaleStroke: [0,1]});
+            var legend = myLineChart.generateLegend();
+            $("#development-legend").html(legend);
     {% endif %}
 });
 </script>

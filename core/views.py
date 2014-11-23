@@ -107,20 +107,21 @@ def portfolio_development(request):
         # check whether it's valid:
         if form.is_valid():
             ui = UI()
-            dates, pf_values, roi = ui.portfolio_development(form.cleaned_data['from_date'],
+            dates, pf_values, cash_values, roi = ui.portfolio_development(form.cleaned_data['from_date'],
                                                         form.cleaned_data['to_date'],
                                                         request.user)
 
             dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
             pf_values = list(map(lambda x: float(round(x,2)), pf_values))
+            cash_values = list(map(lambda x: float(round(x,2)), cash_values))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                                   'form': form,
                                                                   'from_date': form.cleaned_data['from_date'],
                                                                   'to_date': form.cleaned_data['to_date'],
                                                                   'dates': dates,
                                                                   'pf_values': pf_values,
-                                                                  'roi': roi,
-                                                                  })
+                                                                  'cash_values': cash_values,
+                                                                  'roi': roi})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()

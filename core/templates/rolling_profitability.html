@@ -41,6 +41,9 @@ $( document ).ready(function() {
 
     {% if dates %}
         <canvas id="myChart" width="800" height="400"></canvas>
+        <div id="title_rolling" class="sub_title">
+            5. Moving profitability
+        </div>
     {% endif %}
     <form id="rolling_click_form" action="{% url 'core.views.rolling_profitability' %}" method="post">
         {% csrf_token %}

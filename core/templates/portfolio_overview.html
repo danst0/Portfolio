@@ -44,8 +44,15 @@ $( document ).ready(function() {
     </form>
     {% if portfolio_content %}
         <canvas id="roi_cake_chart" width="500" height="300"></canvas>
+        <div id="title_roi_overview" class="sub_title">
+            2. Profit contribution per security
+        </div>
     {% endif %}
     {% if portfolio_content %}
+        <div style="clear:both; margin-bottom: 4em;"></div>
+        <div id="title_stock_table" class="sub_title">
+            3. Securities in portfolio, current and past value
+        </div>
         <div id="table">
         <table border=1>
         <thead>

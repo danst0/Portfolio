@@ -185,6 +185,7 @@ form, input{
     padding: 4px;
     text-decoration: none;
     font-size:0.8em;
+    margin-top: 1em;
 }
 
 body {
@@ -208,3 +209,31 @@ body {
     font-size: 0.6em;
 }
 
+/* Bild/Tabellen Untertitel */
+.sub_title {
+    font-size: 0.9em;
+    text-align: left;
+    color: #8B918A;
+    position: absolute;
+    width: 45em;
+    left: 60px;
+    text-transform: uppercase;
+}
+
+#title_overview {
+    top: 420px;
+}
+
+#title_roi_overview {
+    top: 300px;
+}
+#title_stock_table {
+    top: 340px;
+}
+#title_rolling {
+    top: 400px;
+}
+
+#title_development {
+    top: 400px;
+}

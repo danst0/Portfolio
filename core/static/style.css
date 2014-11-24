@@ -10,6 +10,9 @@
 
 }
 
+nav {
+    width: 80px;
+}
 .nav ul {
     list-style-type: none;
     margin: 0;
@@ -17,6 +20,7 @@
 }
 .nav li {
     float: left;
+    margin-top: 25px;
 }
 
 .nav a:link, .nav a:visited {
@@ -80,7 +84,7 @@ td {
 }
 
 #total {
-    left: 305px;
+    left: 255px;
     top: 160px;
     position: absolute;
     font-size: 3em;
@@ -132,42 +136,6 @@ td {
     font-size: 0.7em;
 }
 
-#nav_overview {
-    left: 50px;
-    top: 50px;
-    position: absolute;
-}
-
-#nav_pf_overview {
-    left: 50px;
-    top: 120px;
-    position: absolute;
-}
-
-#nav_pf_development {
-    left: 50px;
-    top: 190px;
-    position: absolute;
-}
-
-#nav_pf_rolling_profitability {
-    left: 50px;
-    top: 260px;
-    position: absolute;
-}
-
-#nav_forecast {
-    left: 50px;
-    top: 330px;
-    position: absolute;
-}
-
-#nav_import {
-    left: 50px;
-    top: 400px;
-    position: absolute;
-}
-
 #main {
     position: absolute;
     left: 200px;
@@ -176,7 +144,7 @@ td {
 
 #click_form {
     position: absolute;
-    left: 500px;
+    left: 400px;
     top: 20px;
     width: 10em;
 }

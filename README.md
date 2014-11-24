@@ -8,6 +8,10 @@ Todos
 
 * Overview of stored information (transactions, prices) per stock (e.g. in stock graph)
 * Import should work on server (e.g. upload of files,...)
+* Taxes for profits (25% + 25%*5.5%)
+* Indicator for buy and sell decision for tax reasons (Freistellungsauftrag 800€, kids)
+* Semi-random Demo Portfolio with Demo User 
+* Internet Explorer und Firefox
 
 
 ---

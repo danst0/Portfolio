@@ -45,7 +45,7 @@ $( document ).ready(function() {
 */
 
                 // pseudo lines
-                ctx.beginPath();
+                /*ctx.beginPath();
                 for (i = 0; i < 5; i++) {
                     ctx.moveTo(0, 60+i*70);
                     ctx.lineTo(100, 60+i*70);
@@ -62,7 +62,7 @@ $( document ).ready(function() {
                 ctx.fillStyle = '#F6F6F6';
                 ctx.fill();
                 ctx.strokeStyle = '#F6F6F6';
-                ctx.stroke();
+                ctx.stroke();*/
             }
         });
         var myPie = new Chart(ctx).DonutAlt(data, {
@@ -81,7 +81,7 @@ $( document ).ready(function() {
 
 {% block content %}
     <div id="container">
-        <canvas id="myChart" width="800" height="400"></canvas>
+        <canvas id="myChart" width="700" height="400"></canvas>
         <div id="overview-legend"></div>
 
         <div id="total">{{ nav_total|nicenumber }} €</div>

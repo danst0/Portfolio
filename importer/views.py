@@ -33,7 +33,8 @@ def list(request):
     # Render list page with the documents and the form
     return render_to_response(
         'list.html',
-        {'block_title': 'Minimal Django File Upload Example',
+        {'block_title': 'Import',
+         'active_nav': '#nav_import',
          'documents': documents,
          'form': form},
         context_instance=RequestContext(request))

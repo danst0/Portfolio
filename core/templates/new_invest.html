@@ -34,7 +34,17 @@ $( document ).ready(function() {
                 Chart.types.Doughnut.prototype.draw.apply(this, arguments);
                 //now your custom line
                 var ctx = this.chart.ctx;
-                // Line
+                // Labels
+                /*ctx.beginPath();
+                ctx.moveTo(0, 100);
+                ctx.lineTo(100, 200);
+
+                ctx.strokeStyle = '#F60000';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+*/
+
+                // pseudo lines
                 ctx.beginPath();
                 for (i = 0; i < 5; i++) {
                     ctx.moveTo(0, 60+i*70);
@@ -77,6 +87,6 @@ $( document ).ready(function() {
         <div id="total">{{ nav_total|nicenumber }} €</div>
     </div>
     <div id="title_overview" class="sub_title">
-        1. Total wealth and share of investment categories
+        1. Total wealth and share of investment types
     </div>
 {% endblock %}

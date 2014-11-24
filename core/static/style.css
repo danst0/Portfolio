@@ -34,7 +34,7 @@
     transform: translateY(-50%);
 }
 
-.nav a:hover, .nav a:active {
+.nav a:hover, .nav a.active {
     background-color: #CB8800;
 }
 
@@ -126,8 +126,8 @@ td {
 }
 
 #development-legend {
-    left: 570px;
-    top: 0px;
+    left: 30px;
+    top: 100px;
     position: absolute;
     font-size: 0.7em;
 }

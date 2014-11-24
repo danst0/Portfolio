@@ -86,6 +86,7 @@ def rolling_profitability(request):
             roi_list = list(map(lambda x: float(round(x, 2)), roi_list))
             # print(roi_list)
             return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
+                                                                  'active_nav': '#nav_pf_rolling_profitability',
                                                                   'form': form,
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
@@ -115,6 +116,7 @@ def portfolio_development(request):
             pf_values = list(map(lambda x: float(round(x,2)), pf_values))
             cash_values = list(map(lambda x: float(round(x,2)), cash_values))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
+                                                                  'active_nav': '#nav_pf_development',
                                                                   'form': form,
                                                                   'from_date': form.cleaned_data['from_date'],
                                                                   'to_date': form.cleaned_data['to_date'],
@@ -229,7 +231,10 @@ def new_invest(request):
     nav_total = total * Decimal('0.87') # May deduction factor
     nav_content = result
     # print(result)
-    return render(request, 'new_invest.html', {'block_title': 'Overview', 'nav_content': nav_content, 'nav_total': nav_total})
+    return render(request, 'new_invest.html', {'block_title': 'Overview',
+                                               'active_nav': '#nav_overview',
+                                               'nav_content': nav_content,
+                                               'nav_total': nav_total})
 
 
 @login_required
@@ -253,6 +258,7 @@ def portfolio_overview(request):
                 # print(item)
                 result.append(item)
             return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
+                                                               'active_nav': '#nav_pf_overview',
                                                                'form': form,
                                                                'from_date': form.cleaned_data['from_date'],
                                                                'to_date': form.cleaned_data['to_date'],
@@ -284,4 +290,7 @@ def forecast_retirement(request):
     dates = list(range(len(result_development[2020])))
     dates = [now+(item*5) if item % 1 == 0 else '' for item in dates]
     # print(dates)
-    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement', 'development': result_development, 'dates': dates})
+    return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement',
+                                                        'active_nav': '#nav_forecast',
+                                                        'development': result_development,
+                                                        'dates': dates})

@@ -60,20 +60,24 @@ $( document ).ready(function() {
 
 
 {% block content %}
-    <canvas id="chart_overall_wealth" width="800" height="400"></canvas>
-    <div id="title_retirement" class="sub_title">
-        6. Forecast on wealth development depending on retirement age
-    </div>
-    <div id="forecast-legend"></div>
+    {% if development %}
+        <canvas id="chart_overall_wealth" width="800" height="400"></canvas>
+        <div id="title_retirement" class="sub_title">
+            6. Forecast on wealth development depending on retirement age
+        </div>
+        <div id="forecast-legend"></div>
 
-    <div id="income-interest">
-        {{ development.incomeexpense|nicenumber_100 }} €
-        <div class="smaller">
-            average monthly savings
+        <div id="income-interest">
+            {{ development.incomeexpense|nicenumber_100 }} €
+            <div class="smaller">
+                average monthly savings
+            </div>
+            {{ development.interest|nicenumber }} %
+            <div class="smaller">
+                expected interest rate
+            </div>
         </div>
-        {{ development.interest|nicenumber }} %
-        <div class="smaller">
-            expected interest rate
-        </div>
-    </div>
+    {% else %}
+        No data available.
+    {% endif %}
 {% endblock %}

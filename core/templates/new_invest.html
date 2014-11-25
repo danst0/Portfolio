@@ -80,13 +80,17 @@ $( document ).ready(function() {
 {% endblock %}
 
 {% block content %}
-    <div id="container">
-        <canvas id="myChart" width="700" height="400"></canvas>
-        <div id="overview-legend"></div>
-
-        <div id="total">{{ nav_total|nicenumber }} €</div>
-    </div>
-    <div id="title_overview" class="sub_title">
-        1. Total wealth and share of investment types
-    </div>
+    {% if nav_total %}
+        <div id="container">
+            <canvas id="myChart" width="700" height="400"></canvas>
+            <div id="overview-legend"></div>
+    
+            <div id="total">{{ nav_total|nicenumber }} €</div>
+        </div>
+        <div id="title_overview" class="sub_title">
+            1. Total wealth and share of investment types
+        </div>
+    {% else %}
+        No data available.
+    {% endif %}
 {% endblock %}

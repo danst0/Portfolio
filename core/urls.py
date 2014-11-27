@@ -19,7 +19,7 @@ urlpatterns = patterns('',
                            views.stock_graph_png,
                            name='stock_graph_png'),
                        url(r'forecast_retirement/', views.forecast_retirement, name='forecast_retirement'),
-
+                        url(r'demo/', views.new_demo_user, name='new_demo_user'),
 
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),

@@ -22,6 +22,11 @@ from securities.models import Price
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
+from django.http import Http404
+from django.shortcuts import render_to_response
+from django.contrib.auth.models import User
+import random, string
+
 # Create your views here.
 
 
@@ -294,3 +299,41 @@ def forecast_retirement(request):
                                                         'active_nav': '#nav_forecast',
                                                         'development': result_development,
                                                         'dates': dates})
+
+def randomword(length):
+   return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+
+@login_required
+def new_demo_user(request):
+
+    if request.user.username == 'danst':
+        result = {}
+        t = Transaction()
+        user_exists = True
+        try:
+            User.objects.get(username='demo')
+        except:
+            user_exists = False
+        # import pdb; pdb.set_trace()
+        if user_exists:
+            tmp = Transaction.objects.filter(user=User.objects.get(username='demo'))
+            tmp.delete()
+            tmp = User.objects.get(username='demo')
+            tmp.delete()
+        user_name = 'demo'
+        user_password = randomword(5)
+        user_mail = 'demo@demo.me'
+        factor = Decimal(1/(random.randrange(10,30)))
+        result['name'] = user_name
+        result['password'] = user_password
+        result['mail'] = user_mail
+        result['factor'] = factor
+        new_user = User.objects.create_user(user_name, user_mail, user_password)
+
+        t.copy_transactions_to_new_user(User.objects.get(username='danst'), new_user, factor)
+    else:
+        raise Http404
+
+    return render(request, 'new_demo_user.html', {'block_title': 'Generated new Demo User',
+                                                        'active_nav': '#nav_overview',
+                                                        'result': result})

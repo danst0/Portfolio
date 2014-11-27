@@ -348,3 +348,20 @@ class Transaction(models.Model):
     def get_pf_value(self, to_date, user, portfolio='All'):
         result = self.list_pf(to_date, to_date, user, portfolio)
         return result[-1]['value_at_end']
+
+    def copy_transactions_to_new_user(self, old_user, new_user, factor):
+        old_transactions = Transaction.objects.filter(user=old_user)
+        for trans in old_transactions:
+            trans.nominal = int(trans.nominal * factor)
+            if trans.nominal > 0:
+                trans.id = None
+                trans.user = new_user
+
+                trans.cost *= int(factor)
+                if trans.type == 'b':
+                    trans.total = -trans.nominal * trans.price - trans.cost
+                elif trans.type == 's':
+                    trans.total = trans.nominal * trans.price - trans.cost
+                else:
+                    trans.total *= factor
+                trans.save()

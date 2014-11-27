@@ -31,13 +31,12 @@ def list(request):
     documents = Document.objects.filter(user=request.user)
 
     # Render list page with the documents and the form
-    return render_to_response(
-        'list.html',
-        {'block_title': 'Import',
-         'active_nav': '#nav_import',
-         'documents': documents,
-         'form': form},
-        context_instance=RequestContext(request))
+    return render_to_response('list.html',
+                              {'block_title': 'Import',
+                               'active_nav': '#nav_import',
+                               'documents': documents,
+                               'form': form},
+                              context_instance=RequestContext(request))
 
 def do_update(request):
     documents = Document.objects.all()

@@ -290,15 +290,12 @@ class Price(models.Model):
         print('Update finished')
 
     def import_cortalconsors_quotes(self, path):
-        base_path = os.path.expanduser('~') + '/Desktop/PDFs'
-        file = 'depot_918717894.csv'
-        if path != file:
-            return []
-        file = path
-        if not os.path.isfile(file):
+        # import pdb; pdb.set_trace()
+        file_name = 'depot_918717894.csv'
+        if file_name not in path or not os.path.isfile(path):
             return []
         result = []
-        with open(file, encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
             for row in reader:
                 if row[0] == '':
@@ -313,7 +310,7 @@ class Price(models.Model):
                                    'name': stock_id.name,
                                    'date': date,
                                    'price': price})
-        os.remove(base_path + '/' + file)
+        # os.remove(base_path + '/' + file)
         return result
 
     def import_historic_quotes(self, years=15):

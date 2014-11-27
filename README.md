@@ -12,7 +12,10 @@ Todos
 * Indicator for buy and sell decision for tax reasons (Freistellungsauftrag 800€, kids)
 * Semi-random Demo Portfolio with Demo User 
 * Internet Explorer und Firefox
-
+* Change font for more screen legibility
+* Hide form in beginning, display loading, then no data
+* New view/add to some, share of individual stocks
+* Regression to mean for retirement forecasting
 
 ---
 

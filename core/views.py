@@ -96,13 +96,15 @@ def rolling_profitability(request):
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
                                                                   'dates': dates,
-                                                                  'roi_list': roi_list})
+                                                                  'roi_list': roi_list,
+                                                                  'hidden_form': 'block',})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
 
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
-                                                          'form': form})
+                                                          'form': form,
+                                                          'hidden_form': 'hidden',})
 
 @login_required
 def portfolio_development(request):

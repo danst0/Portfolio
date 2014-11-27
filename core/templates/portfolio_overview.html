@@ -36,13 +36,13 @@ $( document ).ready(function() {
 
 
 {% block content %}
-    {% if portfolio_content %}
+
     <form id="click_form" action="{% url 'core.views.portfolio_overview' %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Update" />
     </form>
-
+    {% if portfolio_content %}
         <canvas id="roi_cake_chart" width="400" height="300"></canvas>
         <div id="title_roi_overview" class="sub_title">
             2. Profit contribution per security
@@ -80,8 +80,6 @@ $( document ).ready(function() {
         </tbody>
         </table>
         </div>
-    {% else %}
-        No data available.
     {% endif %}
 
 {% endblock %}

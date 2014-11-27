@@ -62,13 +62,11 @@ $( document ).ready(function() {
                 Return on investment
             </div>
         </div>
-        <form id="development_click_form" action="{% url 'core.views.portfolio_development' %}" method="post">
-            {% csrf_token %}
-            {{ form }}
-            <input type="submit" value="Update" />
-        </form>
-    {% else %}
-        No data available.
     {% endif %}
+    <form id="development_click_form" action="{% url 'core.views.portfolio_development' %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Update" />
+    </form>
 {% endblock %}
 

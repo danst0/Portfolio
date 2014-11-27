@@ -44,12 +44,11 @@ $( document ).ready(function() {
         <div id="title_rolling" class="sub_title">
             5. Moving profitability
         </div>
-        <form id="rolling_click_form" action="{% url 'core.views.rolling_profitability' %}" method="post">
-            {% csrf_token %}
-            {{ form }}
-            <input type="submit" value="Update" />
-        </form>
-    {% else %}
-        No data available.
     {% endif %}
+    <form id="rolling_click_form" action="{% url 'core.views.rolling_profitability' %}" method="post" style="display:{{ hidden_form }}">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Update" />
+    </form>
+
 {% endblock %}

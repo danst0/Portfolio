@@ -87,24 +87,25 @@ def rolling_profitability(request):
             dates, roi_list = ui.rolling_profitability(form.cleaned_data['from_date'],
                                                        form.cleaned_data['to_date'],
                                                        request.user)
-            dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
-            roi_list = list(map(lambda x: float(round(x, 2)), roi_list))
-            # print(roi_list)
+            if dates:
+                dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
+                # print(roi_list)
+                roi_list = list(map(lambda x: float(round(x, 2)), roi_list))
+            # if roi_list == [0.0,]*13:
+                # print(roi_list)
             return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                                   'active_nav': '#nav_pf_rolling_profitability',
                                                                   'form': form,
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
                                                                   'dates': dates,
-                                                                  'roi_list': roi_list,
-                                                                  'hidden_form': 'block',})
+                                                                  'roi_list': roi_list,})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
 
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
-                                                          'form': form,
-                                                          'hidden_form': 'hidden',})
+                                                          'form': form,})
 
 @login_required
 def portfolio_development(request):

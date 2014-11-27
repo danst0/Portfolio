@@ -129,7 +129,8 @@ class Money(models.Model):
 
     def simulate_pension(self, wealth, monthly_interest_rate, monthly_pension, development):
         month_counter = 0
-        while wealth > 0:
+        max_count = 1200
+        while wealth > 0 and month_counter < max_count:
             # print(wealth)
             month_counter += 1
             wealth = wealth * Decimal(1+monthly_interest_rate) - monthly_pension

@@ -25,7 +25,10 @@ from django.utils.decorators import method_decorator
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.contrib.auth.models import User
-import random, string
+from django.contrib.auth import authenticate, login, logout
+import random
+import string
+from django.shortcuts import redirect
 
 # Create your views here.
 
@@ -99,13 +102,15 @@ def rolling_profitability(request):
                                                                   'from_date': form.cleaned_data['from_date'].strftime('%Y-%m-%d'),
                                                                   'to_date': form.cleaned_data['to_date'].strftime('%Y-%m-%d'),
                                                                   'dates': dates,
-                                                                  'roi_list': roi_list,})
+                                                                  'roi_list': roi_list,
+                                                                  'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
 
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
-                                                          'form': form,})
+                                                          'form': form,
+                                                          'username': request.user.username,})
 
 @login_required
 def portfolio_development(request):
@@ -131,12 +136,14 @@ def portfolio_development(request):
                                                                   'dates': dates,
                                                                   'pf_values': pf_values,
                                                                   'cash_values': cash_values,
-                                                                  'roi': roi})
+                                                                  'roi': roi,
+                                                                  'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
-                                                'form': form})
+                                                'form': form,
+                                                'username': request.user.username,})
 
 def get_color_and_highlight(number=5):
     color = {'aqua': "#00ffff",
@@ -242,7 +249,8 @@ def new_invest(request):
     return render(request, 'new_invest.html', {'block_title': 'Overview',
                                                'active_nav': '#nav_overview',
                                                'nav_content': nav_content,
-                                               'nav_total': nav_total})
+                                               'nav_total': nav_total,
+                                               'username': request.user.username,})
 
 
 @login_required
@@ -279,13 +287,15 @@ def portfolio_overview(request):
                                                                                        'dividends',
                                                                                        'value_at_end',
                                                                                        'profit', 'roi'],
-                                                               'portfolio_content': result})
+                                                               'portfolio_content': result,
+                                                               'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
         form = PortfolioFormTwoDates()
 
     return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
-                                                       'form': form})
+                                                       'form': form,
+                                                       'username': request.user.username,})
 
 
 
@@ -301,7 +311,8 @@ def forecast_retirement(request):
     return render(request, 'forecast_retirement.html', {'block_title': 'Forecast retirement',
                                                         'active_nav': '#nav_forecast',
                                                         'development': result_development,
-                                                        'dates': dates})
+                                                        'dates': dates,
+                                                        'username': request.user.username,})
 
 def randomword(length):
    return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
@@ -312,6 +323,7 @@ def new_demo_user(request):
     if request.user.username == 'danst':
         result = {}
         t = Transaction()
+        m = Money()
         user_exists = True
         try:
             User.objects.get(username='demo')
@@ -326,17 +338,40 @@ def new_demo_user(request):
         user_name = 'demo'
         user_password = randomword(5)
         user_mail = 'demo@demo.me'
-        factor = Decimal(1/(random.randrange(10,30)))
         result['name'] = user_name
         result['password'] = user_password
         result['mail'] = user_mail
-        result['factor'] = factor
+        # result['factor'] = factor
         new_user = User.objects.create_user(user_name, user_mail, user_password)
-
+        factor = Decimal(1/(random.randrange(10, 30)))
         t.copy_transactions_to_new_user(User.objects.get(username='danst'), new_user, factor)
+        factor = Decimal(1/(random.randrange(10, 30)))
+        m.copy_money_to_new_user(User.objects.get(username='danst'), new_user, factor)
     else:
         raise Http404
 
     return render(request, 'new_demo_user.html', {'block_title': 'Generated new Demo User',
                                                         'active_nav': '#nav_overview',
-                                                        'result': result})
+                                                        'result': result,
+                                                        'username': request.user.username,})
+
+@login_required
+def login_demo(request, username, password):
+    print('Hello')
+    print(username, password)
+    if username == 'demo':
+        print('Ahoy')
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                logout(request)
+                login(request, user)
+                return redirect('new_invest')
+            else:
+                # Return a 'disabled account' error message
+                print('Disabled account')
+                pass
+        else:
+            # Return an 'invalid login' error message.
+            print('invalid login')
+            pass

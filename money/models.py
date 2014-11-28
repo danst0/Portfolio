@@ -145,22 +145,24 @@ class Money(models.Model):
         # yearly_interest_rate = 0.05
         monthly_interest_rate = math.pow(yearly_interest_rate+1, 1/12)-1
         # import pdb; pdb.set_trace()
-        monthly_pension = future_wealth * Decimal(monthly_interest_rate * 1.00001)
+        if monthly_interest_rate > 0:
+            monthly_pension = future_wealth * Decimal(monthly_interest_rate * 1.00001)
 
-        delta_month = 99
-
-        while abs(delta_month/month_to_go) > 0.01:
-            # print(delta_month, month_to_go, delta_month/month_to_go)
-            print('pension', monthly_pension)
-            tmp_development = []
-            no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
-            delta_month = no_of_month - month_to_go
-            print('delta', delta_month)
-            # import pdb; pdb.set_trace()
-            monthly_pension = monthly_pension * Decimal(1 + (0.00001 * delta_month))
-        development += tmp_development
+            delta_month = 99
+            while abs(delta_month/month_to_go) > 0.01:
+                # print(delta_month, month_to_go, delta_month/month_to_go)
+                print('pension', monthly_pension)
+                tmp_development = []
+                no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
+                delta_month = no_of_month - month_to_go
+                print('delta', delta_month)
+                # import pdb; pdb.set_trace()
+                monthly_pension = monthly_pension * Decimal(1 + (0.00001 * delta_month))
+            development += tmp_development
         # print(monthly_pension)
         # print(month_to_go, no_of_month)
+        else:
+            monthly_pension = 0
         return monthly_pension, development
 
     def mp(self, wealth, year_of_retirement, year_of_death, interest_rate, development):
@@ -295,3 +297,16 @@ class Money(models.Model):
 
     def __str__(self):
         return str(self.total_in_end) + '::' + str(self.to_date)
+
+    def copy_money_to_new_user(self, old_user, new_user, factor):
+        old_money = Money.objects.filter(user=old_user)
+        for mon in old_money:
+            mon.id = None
+            mon.user = new_user
+            if mon.income:
+                mon.income *= factor
+            if mon.expense:
+                mon.expense *= factor
+            if mon.total_in_end:
+                mon.total_in_end *= factor
+            mon.save()

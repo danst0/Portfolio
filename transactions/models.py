@@ -358,9 +358,9 @@ class Transaction(models.Model):
                 trans.user = new_user
 
                 trans.cost *= int(factor)
-                if trans.type == 'b':
+                if trans.transaction_type == 'b':
                     trans.total = -trans.nominal * trans.price - trans.cost
-                elif trans.type == 's':
+                elif trans.transaction_type == 's':
                     trans.total = trans.nominal * trans.price - trans.cost
                 else:
                     trans.total *= factor

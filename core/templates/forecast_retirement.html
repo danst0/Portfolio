@@ -79,5 +79,9 @@ $( document ).ready(function() {
             <div class="smaller">
                 expected interest rate during retirement
             </div>
+            {{ development.tax_rate|nicenumber }} %
+            <div class="smaller">
+                Tax rate applied on overall sum
+            </div>
         </div>
 {% endblock %}

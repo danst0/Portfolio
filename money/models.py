@@ -105,7 +105,7 @@ class Money(models.Model):
         result = self.get_wealth(today, user)
         return result
 
-    def calc_wealth_next_month(self, initial_cash_value, initial_pf_value, no_of_month_to_go, income, expense, interest_p_a, development):
+    def calc_wealth_next_month(self, initial_cash_value, initial_pf_value, no_of_month_to_go, income, expense, interest_p_a, tax_at_the_end, development):
         delta_income_expense = income - expense
         cash_percentage = Decimal(0)
         if initial_cash_value + initial_pf_value != 0:
@@ -117,11 +117,16 @@ class Money(models.Model):
         end_of_month_cash_value = initial_cash_value + delta_income_expense * cash_percentage
         development.append(round(float(end_of_month_cash_value + end_of_month_pf_value), 2))
         if no_of_month_to_go == 0:
+            # import pdb; pdb.set_trace()
             # print('good return', end_of_month_cash_value + end_of_month_pf_value, development)
-            return end_of_month_cash_value + end_of_month_pf_value, development
+
+            deduction_factor = 1 - tax_at_the_end
+            net_wealth = deduction_factor * (end_of_month_cash_value + end_of_month_pf_value)
+            development.append(round(float(net_wealth), 2))
+            return net_wealth, development
         else:
             return self.calc_wealth_next_month(end_of_month_cash_value, end_of_month_pf_value, no_of_month_to_go,
-                                               income, expense, interest_p_a, development)
+                                               income, expense, interest_p_a, tax_at_the_end, development)
     def month_delta(self, date_str):
         r = relativedelta.relativedelta(datetime.datetime.now(), datetime.datetime.strptime(date_str, '%Y-%m-%d'))
         # import pdb;pdb.set_trace()
@@ -207,19 +212,15 @@ class Money(models.Model):
         # Average interest rate as more accurate predictor. Here Dow Jones performance between 1975 and 2013
         average_interest_rate_retirement = 0.03
         expected_interest_rate_retirement = (current_interest_rate - average_interest_rate_retirement) * confidence + average_interest_rate_retirement
-        delta_2015 = self.month_delta('2015-12-31')
-        # print(delta_2015)
-        wealth_in_2015, development = self.calc_wealth_next_month(self.get_current_wealth(user),
-                                                                  current_pf_value,
-                                                                  delta_2015,
-                                                                  median_income,
-                                                                  median_expense,
-                                                                  expected_interest_rate, [])
+
+        tax_rate = Decimal(0.25 + 0.25*0.055)
+
 
         result_development = {}
         result_development['incomeexpense'] = median_income-median_expense
         result_development['interest'] = expected_interest_rate*100
         result_development['interest_retirement'] = expected_interest_rate_retirement*100
+        result_development['tax_rate'] = tax_rate*100
         for year_of_retirement in [2020, 2025, 2030]:
             # print(year_of_retirement)
             delta = self.month_delta(str(year_of_retirement)+'-12-31')
@@ -227,8 +228,7 @@ class Money(models.Model):
                                                  current_pf_value,
                                                  delta,
                                                  median_income,
-                                                 median_expense,
-                                                 expected_interest_rate, [])
+                                                 median_expense, expected_interest_rate, tax_rate, [])
 
             # print('Wealth ok')
             # print(wealth, year_of_retirement)

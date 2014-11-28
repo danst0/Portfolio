@@ -12,8 +12,27 @@
 @font-face {
     font-family: 'quicksand';
     src: url('/static/Quicksand-Regular.otf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'quicksand-light';
+    src: url('/static/Quicksand-light.otf');
     font-weight: light;
     font-style: normal;
+}
+@font-face {
+    font-family: 'quicksand-dash';
+    src: url('/static/Quicksand_Dash.otf');
+    font-weight: light;
+    font-style: normal;
+}
+
+a {
+    font-family: quicksand-light;
+    text-decoration: none;
+    color: inherit;
 }
 
 nav {
@@ -83,11 +102,6 @@ td {
 	float: left;
 }
 
-#container {
-    width: 100%;
-    position: absolute;
-    left: -100px;
-}
 
 #total {
     left: 255px;
@@ -144,15 +158,16 @@ td {
 
 #cash_development-legend {
     left: 30px;
-    top: 270px;
+    top: 470px;
     position: absolute;
     font-size: 0.7em;
 }
 
 #main {
     position: absolute;
-    left: 200px;
+    left: 140px;
     top: 50px;
+    width: 800px;
 }
 
 #click_form {
@@ -171,7 +186,7 @@ form, input{
 
 body {
     /*font-family:'tex_gyre_bonumregular';*/
-    font-family:'quicksand';*/
+    font-family:'quicksand';
 }
 
 /* Kästen */
@@ -196,26 +211,29 @@ body {
     font-size: 0.9em;
     text-align: left;
     color: #8B918A;
-    position: absolute;
+
     width: 45em;
     left: 60px;
     text-transform: uppercase;
+    margin: 2em;
 }
 
-#title_overview {
-    top: 420px;
-}
 
-#title_roi_overview {
-    top: 300px;
-}
-#title_stock_table {
-    top: 340px;
-}
-#title_rolling {
-    top: 400px;
-}
 
-#title_development {
-    top: 400px;
+/* Footer */
+#footer {
+    margin: 3em 0 0 2em;
+    font-size: 0.7em;
+    clear: both;
+    font-family: "quicksand-light";
+    width: 90%;
+    display: table;
+    table-layout: fixed;
 }
+#footer div {
+    margin: 2em;
+    margin-right: 5em;
+    display: table-cell;
+}
+#footer div:nth-child(2) { text-align: center; }
+#footer div:last-child { text-align: right; }

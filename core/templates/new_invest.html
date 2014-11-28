@@ -78,12 +78,12 @@ $( document ).ready(function() {
 
 {% block content %}
     {% if nav_total %}
-        <div id="container">
-            <canvas id="myChart" width="700" height="400"></canvas>
-            <div id="overview-legend"></div>
-    
-            <div id="total">{{ nav_total|nicenumber }} €</div>
-        </div>
+
+        <canvas id="myChart" width="700" height="400"></canvas>
+        <div id="overview-legend"></div>
+
+        <div id="total">{{ nav_total|nicenumber }}<br>€</div>
+
         <div id="title_overview" class="sub_title">
             1. Total wealth and share of investment types
         </div>

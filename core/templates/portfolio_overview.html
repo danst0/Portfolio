@@ -25,7 +25,8 @@ $( document ).ready(function() {
 
         ];
         var ctx = document.getElementById("roi_cake_chart").getContext("2d");
-        var myLineChart = new Chart(ctx).PolarArea(data, {tooltipTemplate: "<%if (label){%><%=label%> <% }%>",});
+        $.extend(chart_js_options, {tooltipTemplate: "<%if (label){%><%=label%> <% }%>",})
+        var myLineChart = new Chart(ctx).PolarArea(data, chart_js_options);
     {% endif %}
 
 

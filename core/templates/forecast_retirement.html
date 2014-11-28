@@ -49,7 +49,7 @@ $( document ).ready(function() {
     };
 
     var ctx = document.getElementById("chart_overall_wealth").getContext("2d");
-    var myLineChart = new Chart(ctx).Line(data, {animation: false});
+    var myLineChart = new Chart(ctx).Line(data, chart_js_options);
     var legend = myLineChart.generateLegend();
     $("#forecast-legend").html(legend);
 

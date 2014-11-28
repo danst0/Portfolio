@@ -41,9 +41,9 @@ $( document ).ready(function() {
             ]
         };
         var ctx = document.getElementById("pfChart").getContext("2d");
-        var pfChart = new Chart(ctx).Line(data_pf);
+        var pfChart = new Chart(ctx).Line(data_pf, chart_js_options);
         var ctx_cash = document.getElementById("cashChart").getContext("2d");
-        var cashChart = new Chart(ctx_cash).Line(data_cash);
+        var cashChart = new Chart(ctx_cash).Line(data_cash, chart_js_options);
 
         var legend = pfChart.generateLegend();
         $("#pf_development-legend").html(legend);

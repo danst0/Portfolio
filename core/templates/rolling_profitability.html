@@ -27,7 +27,7 @@ $( document ).ready(function() {
         };
 
         var ctx = document.getElementById("myChart").getContext("2d");
-        var myLineChart = new Chart(ctx).Line(data);
+        var myLineChart = new Chart(ctx).Line(data, chart_js_options);
     {% endif %}
 
 });

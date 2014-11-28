@@ -65,11 +65,8 @@ $( document ).ready(function() {
                 ctx.stroke();*/
             }
         });
-        var myPie = new Chart(ctx).DonutAlt(data, {
-            animation: false,
-            percentageInnerCutout: 60,
-            animationSteps: 30,
-        })
+        $.extend(chart_js_options, {animation: false, percentageInnerCutout: 60, animationSteps: 30,})
+        var myPie = new Chart(ctx).DonutAlt(data, chart_js_options)
 
         var legend = myPie.generateLegend();
         $("#overview-legend").html(legend);

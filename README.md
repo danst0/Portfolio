@@ -15,7 +15,7 @@ Todos
 * Change font for more screen legibility
 * Hide form in beginning, display loading, then no data
 * New view/add to some, share of individual stocks
-* Regression to mean for retirement forecasting
+* View for past income/savings/expense
 
 ---
 
@@ -65,6 +65,7 @@ Done
 * Quality check forecast retirement (esp. interest rate)
 * Timing-Analyse, wie hat sich der Kurs vorher/nachher entwickelt
 * ROI-Kuchen: ROI als Kuchendiagramm, wer hat wieviel dazu beigetragen
+* Regression to mean for retirement forecasting
 
 Install
 ===

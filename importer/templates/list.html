@@ -1,0 +1,35 @@
+{% extends "../../core/templates/base.html" %}
+{% load admin_urls %}
+
+
+{% block content %}
+    <!-- List of uploaded documents -->
+    {% if documents %}
+        <ul>
+        {% for document in documents %}
+            <li><a href="{{ document.docfile.url }}">{{ document.docfile.name }}</a>
+            {% if document.imported %}
+                ✓
+            {% else %}
+                ✗
+            {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <div>All documents have been imported</div>
+    {% endif %}
+
+    <!-- Upload form. Note enctype attribute! -->
+    <form action="{% url 'list' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {{ form.docfile.errors }}
+        {{ form.docfile }}
+
+        <input type="submit" value="Upload" />
+    </form>
+    <a href="{% url 'do_update' %}">Play cron and execute update cycle</a>
+{% endblock %}
+

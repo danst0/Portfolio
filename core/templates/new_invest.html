@@ -4,136 +4,14 @@
 {% load staticfiles %}
 
 {% block extrahead %}
-<script src="{% static "core/chart.min.js" %}" type="text/javascript"></script>
-<script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
-<script src="{% static "core/doughnutit.js" %}" type="text/javascript"></script>
+
 
 <script type="text/javascript">
 $( document ).ready(function() {
-		var doughnutData = [
-            {% for line in content %}
-			    {value:{{ line.1 }}, color:"{{ line.3 }}", highlight:"{{ line.4 }}", label:"{{ line.0 }} ({{ line.2 }})" },
-			{% endfor %}
-		];
 
-		$( "#myDoughnut" ).doughnutit({
-			dnData: doughnutData,
-		    dnSize: 400,
-		    dnInnerCutout: 60,
-		    dnAnimation: true,
-			dnAnimationSteps: 20,
-			dnAnimationEasing: 'linear',
-			dnStroke: true,
-			dnShowText: false,
-			dnFontSize: '70px',
-			dnFontColor: "#000",
-			dnText: "MOTHERFUCKER",
-			dnStartAngle: 90,
-			dnCounterClockwise: false,
-			dnRightCanvas: {
-				rcRadius: 15,
-				rcPreMargin: 100,
-				rcMargin: 20,
-				rcHeight: 100,
-				rcOffset: 15,
-				rcLineWidth: 200,
-				rcSphereColor: '#819596',
-				rcSphereStroke: '#819596',
-				rcTop:{
-					rcTopLineColor: '#819596',
-					rcTopDashLine: 5,
-					rcTopFontSize: '20px',
-					rcStrokeWidth: 3,
-					rctAbove: {
-						rctText: 'Analysis',
-						rctOffset: 5,
-						rctImageOffsetRight: 5,
-						rctImageOffsetBottom: 0,
-					},
-					rctBelow: {
-						rctText: '6.5',
-						rctFontSize: '50px',
-						rctOffset: 15,
-						rctOffset: 5,
-						rctImageOffsetRight: 5,
-						rctImageOffsetBottom: 0,
-					}
-				},
-				rcBottom:{
-					rcBottomDashLine: 0,
-					rcBottomFontSize: '15px',
-					rcBottomLineColor: '#819596',
-					rcStrokeWidth: 3,
-					rcbAbove: {
-						rcbImageOffsetBottom: 0,
-						rcbImageOffsetRight: 5,
-						rcbText: 'DATA DE G3',
-						rcbFontSize: '20px',
-						rcbOffset: 5
-					},
-					rcbBelow: {
-						rcbImage: 'calendar.png',
-						rcbImageOffsetRight: 5,
-						rcbImageOffsetBottom: 0,
-						rcbText: '20/10/2013',
-						rcbOffset: 10
-					}
-				}
-			},
-			dnLeftCanvas: {
-				lcRadius: 15,
-				lcPreMargin: 100,
-				lcMargin: 20,
-				lcHeight: 100,
-				lcOffset: 15,
-				lcLineWidth: 200,
-				lcSphereColor: '#819596',
-				lcSphereStroke: '#819596',
-				lcTop:{
-					lcTopLineColor: '#819596',
-					lcTopDashLine: 5,
-					lcTopFontSize: '20px',
-					lcStrokeWidth: 3,
-					lctAbove: {
-						lctText: 'Updates',
-						lctOffset: 5,
-						lctImageOffsetRight: 5,
-						lctImageOffsetBottom: 0,
-					},
-					lctBelow: {
-						lctText: '8.4',
-						lctFontSize: '50px',
-						lctOffset: 15,
-						lctOffset: 5,
-						lctImageOffsetRight: 5,
-						lctImageOffsetBottom: 0,
-					}
-				},
-				lcBottom:{
-					lcBottomDashLine: 0,
-					lcBottomFontSize: '15px',
-					lcBottomLineColor: '#819596',
-					lcStrokeWidth: 3,
-					lcbAbove: {
-						lcbImageOffsetBottom: 0,
-						lcbImageOffsetRight: 5,
-						lcbText: 'NOTA G2',
-						lcbFontSize: '20px',
-						lcbOffset: 5
-					},
-					lcbBelow: {
-						lcbImage: 'calendar.png',
-						lcbImageOffsetRight: -10,
-						lcbImageOffsetBottom: 1,
-						lcbText: '10/02/1994',
-						lcbOffset: 10
-					}
-				}
-			}
-		});// End Doughnut
 
     var data = [
-        {% for line in content %}
+        {% for line in nav_content %}
             {
 
                 value: {{ line.1 }},
@@ -143,18 +21,58 @@ $( document ).ready(function() {
             },
         {% endfor %}
     ];
-    var ctx = document.getElementById("myChart").getContext("2d");
+        var ctx = document.getElementById("myChart").getContext("2d");
+        // Notice now we're extending the particular Line chart type, rather than the base class.
+        Chart.types.Doughnut.extend({
+        // Passing in a name registers this chart in the Chart namespace in the same way
+            name: "DonutAlt",
+            initialize: function(data){
+                //console.log('My Line chart extension');
+                Chart.types.Doughnut.prototype.initialize.apply(this, arguments);
+            },
+            draw: function() {
+                Chart.types.Doughnut.prototype.draw.apply(this, arguments);
+                //now your custom line
+                var ctx = this.chart.ctx;
+                // Labels
+                /*ctx.beginPath();
+                ctx.moveTo(0, 100);
+                ctx.lineTo(100, 200);
 
-        var myPie = new Chart(ctx).Doughnut(data, {
+                ctx.strokeStyle = '#F60000';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+*/
+
+                // pseudo lines
+                /*ctx.beginPath();
+                for (i = 0; i < 5; i++) {
+                    ctx.moveTo(0, 60+i*70);
+                    ctx.lineTo(100, 60+i*70);
+                    ctx.lineTo(170, 200);
+                }
+                ctx.strokeStyle = '#F6F6F6';
+                ctx.lineWidth = 5;
+                ctx.setLineDash([15,5]);
+                ctx.stroke();
+                ctx.setLineDash(0);
+                // Circle
+                ctx.beginPath();
+                ctx.arc(170, 200, 20, 0, 2 * Math.PI, false);
+                ctx.fillStyle = '#F6F6F6';
+                ctx.fill();
+                ctx.strokeStyle = '#F6F6F6';
+                ctx.stroke();*/
+            }
+        });
+        var myPie = new Chart(ctx).DonutAlt(data, {
             animation: false,
             percentageInnerCutout: 60,
             animationSteps: 30,
         })
-        ctx.moveTo(0,0);
-        ctx.lineTo(200,100);
-        ctx.stroke();
-		var legend = myPie.generateLegend();
-        $("#legend").html(legend);
+
+        var legend = myPie.generateLegend();
+        $("#overview-legend").html(legend);
 });
 
 
@@ -162,11 +80,17 @@ $( document ).ready(function() {
 {% endblock %}
 
 {% block content %}
-    <div id="container">
-        <canvas id="myChart" width="800" height="400"></canvas>
-        <div id="legend"></div>
-        <div id="myDoughnut"> </div>
-        <div id="total">{{ total|nicenumber }} €</div>
-
-    </div>
+    {% if nav_total %}
+        <div id="container">
+            <canvas id="myChart" width="700" height="400"></canvas>
+            <div id="overview-legend"></div>
+    
+            <div id="total">{{ nav_total|nicenumber }} €</div>
+        </div>
+        <div id="title_overview" class="sub_title">
+            1. Total wealth and share of investment types
+        </div>
+    {% else %}
+        No data available.
+    {% endif %}
 {% endblock %}

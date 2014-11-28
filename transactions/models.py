@@ -9,6 +9,7 @@ from securities.models import Price
 from transactions.Importer import CortalConsors
 from django.utils import timezone
 import datetime
+from django.contrib.auth.models import User
 from transactions.validators import *
 
 import jellyfish
@@ -33,6 +34,7 @@ class Portfolio(models.Model):
 
 class Transaction(models.Model):
     # id = models.CharField(max_length=100, blank=True, unique=True, default=uuid.uuid4)
+    user = models.ForeignKey(User, null=True, default=None)
     transaction_type = models.CharField(max_length=1)
     portfolio = models.ForeignKey(Portfolio)
     stock_id = models.ForeignKey(Security)
@@ -50,10 +52,10 @@ class Transaction(models.Model):
         str(self.portfolio), self.transaction_type, str(self.stock_id), str(self.date), str(self.nominal), str(self.price),
         str(self.cost), str(self.total)))
 
-    def import_sources(self):
+    def import_sources(self, path):
         i = CortalConsors()
-        price_updates, transactions_update_pdf = i.read_pdfs()
-        transaction_update_csv = i.read_old_depot_csv()
+        price_updates, transactions_update_pdf = i.read_pdfs(path)
+        transaction_update_csv = i.read_old_depot_csv(path)
         transactions_update = transactions_update_pdf + transaction_update_csv
         output_transactions_updates = self.import_transactions(transactions_update)
         output_price_updates = self.prices.import_prices(price_updates)
@@ -175,10 +177,10 @@ class Transaction(models.Model):
                 total += item.total
         return total
 
-    def get_total_per_type(self, portfolio, date):
+    def get_total_per_type(self, portfolio, date, user):
         total = {}
 
-        stocks = self.get_total_for_portfolio(portfolio, date)
+        stocks = self.get_total_for_portfolio(portfolio, date, user)
         # print(stocks)
         for stock in stocks:
             if not stock.type in total.keys():
@@ -212,8 +214,8 @@ class Transaction(models.Model):
                     nominal = nominal * split.ratio
         return nominal
 
-    def get_total_for_portfolio(self, portfolio, date):
-        result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date)
+    def get_total_for_portfolio(self, portfolio, date, user):
+        result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date, user=user)
         per_stock = {}
         for item in result:
             sign = 1
@@ -237,7 +239,7 @@ class Transaction(models.Model):
                 del per_stock[key]
         return per_stock
 
-    def list_pf(self, portfolio, from_date, to_date):
+    def list_pf(self, from_date, to_date, user, portfolio='All'):
         """ Portfolio Overview function table of all stocks and profits since from_date
         :param portfolio: xxx
         :param from_date: When to start
@@ -252,8 +254,8 @@ class Transaction(models.Model):
         #         print(trans.stock_id, trans.date, trans.price)
         #         p = Price()
         #         p.add(trans.stock_id, trans.date, trans.price)
-        stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date)
-        stocks_at_end = self.get_total_for_portfolio(portfolio, to_date)
+        stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date, user)
+        stocks_at_end = self.get_total_for_portfolio(portfolio, to_date, user)
         values = []
         total_value = Decimal(0)
         total_value_at_beginning = Decimal(0)
@@ -333,12 +335,33 @@ class Transaction(models.Model):
                        'roi': total_roi})
         return values
 
-    def get_roi(self, portfolio, from_date, to_date):
-        result = self.list_pf(portfolio, from_date, to_date)
-        result = Decimal(result[-1]['roi'][:-1])
-        return result/Decimal(100)
+    def get_roi(self, from_date, to_date, user, portfolio='All'):
+        result = self.list_pf(from_date, to_date, user, portfolio)
+        roi = result[-1]['roi'][:-1]
+        if roi != 'n/':
+            result = Decimal(roi)/Decimal(100)
+        else:
+            result = Decimal(0)
+        return result
 
 
-    def get_pf_value(self, portfolio, to_date):
-        result = self.list_pf(portfolio, to_date, to_date)
+    def get_pf_value(self, to_date, user, portfolio='All'):
+        result = self.list_pf(to_date, to_date, user, portfolio)
         return result[-1]['value_at_end']
+
+    def copy_transactions_to_new_user(self, old_user, new_user, factor):
+        old_transactions = Transaction.objects.filter(user=old_user)
+        for trans in old_transactions:
+            trans.nominal = int(trans.nominal * factor)
+            if trans.nominal > 0:
+                trans.id = None
+                trans.user = new_user
+
+                trans.cost *= int(factor)
+                if trans.type == 'b':
+                    trans.total = -trans.nominal * trans.price - trans.cost
+                elif trans.type == 's':
+                    trans.total = trans.nominal * trans.price - trans.cost
+                else:
+                    trans.total *= factor
+                trans.save()

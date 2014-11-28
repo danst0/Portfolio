@@ -5,42 +5,76 @@
 
 
 {% block extrahead %}
-<script src="{% static "core/Chart.min.js" %}" type="text/javascript"></script>
-<script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {
-    var data = {
-        labels: {{ dates|safe }},
-        datasets: [
-            {
-                label: "Portfolio Development",
-                fillColor: "#C2F400",
-                strokeColor: "#FF9800",
-                pointColor: "#FF9800",
-                pointStrokeColor: "#FFF",
-                pointHighlightFill: "#CB8800",
-                pointHighlightStroke: "CB8800",
-                data: {{ pf_values }}
-            },
-        ]
-    };
+    {% if not dates %}
+        document.getElementById("development_click_form").submit();
+    {% else %}
+        var data_pf = {
+            labels: {{ dates|safe }},
+            datasets: [
+                {
+                    label: "Portfolio Development",
+                    fillColor: "rgba(194,244,0,1)",
+                    strokeColor: "#8FB700",
+                    pointColor: "#8FB700",
+                    pointStrokeColor: "#fff",
+                    pointHighlightFill: "#CB8800",
+                    pointHighlightStroke: "CB8800",
+                    data: {{ pf_values }}
+                },
+            ]
+        };
+        var data_cash = {
+            labels: {{ dates|safe }},
+            datasets: [
+                {
+                    label: "Cash Development",
+                    fillColor: "rgba(194,244,0,1)",
+                    strokeColor: "#CB8800",
+                    pointColor: "#CB8800",
+                    pointStrokeColor: "#fff",
+                    pointHighlightFill: "#CB8800",
+                    pointHighlightStroke: "CB8800",
+                    data: {{ cash_values }},
+                }
+            ]
+        };
+        var ctx = document.getElementById("pfChart").getContext("2d");
+        var pfChart = new Chart(ctx).Line(data_pf);
+        var ctx_cash = document.getElementById("cashChart").getContext("2d");
+        var cashChart = new Chart(ctx_cash).Line(data_cash);
 
-    var ctx = document.getElementById("myChart").getContext("2d");
-    var myLineChart = new Chart(ctx).Line(data);
-
+        var legend = pfChart.generateLegend();
+        $("#pf_development-legend").html(legend);
+        legend = cashChart.generateLegend();
+        $("#cash_development-legend").html(legend);
+    {% endif %}
 });
 </script>
 {% endblock %}
 
 
 {% block content %}
-    <form action="{% url 'core.views.portfolio_development' %}" method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Execute" />
-    </form>
-    {% if portfolio %}
-        <canvas id="myChart" width="800" height="400"></canvas>
+    {% if dates %}
+        <canvas id="pfChart" width="800" height="200"></canvas>
+        <canvas id="cashChart" width="800" height="200"></canvas>
+        <div id="title_development" class="sub_title">
+            4. Time based overview on portfolio/cash development
+        </div>
+        <div id="pf_development-legend"></div>
+        <div id="cash_development-legend"></div>
+        <div id="development_roi">
+            {{ roi }}%
+            <div class="smaller">
+                Return on investment
+            </div>
+        </div>
     {% endif %}
+    <form id="development_click_form" action="{% url 'core.views.portfolio_development' %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Update" />
+    </form>
 {% endblock %}
 

@@ -1,18 +1,83 @@
 {% extends "base.html" %}
 {% load admin_urls %}
 {% load filters %}
+{% load staticfiles %}
+
+
+
+
+{% block extrahead %}
+<script src="{% static "core/Chart.min.js" %}" type="text/javascript"></script>
+<script src="{% static "core/jquery-1.11.1.min.js" %}" type="text/javascript"></script>
+<script type="text/javascript">
+$( document ).ready(function() {
+    var data = {
+        labels: {{ dates|safe }},
+        datasets: [
+            {
+                label: "Retirement in 2030 (monthly pension: {{ development.pension2030|nicenumber_100 }} €)",
+                fillColor: "rgba(194,244,0,0.33)",
+                strokeColor: "#8FB700",
+                pointColor: "#8FB700",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#CB8800",
+                pointHighlightStroke: "CB8800",
+                data: {{ development.2030 }}
+            },
+
+            {
+                label: "Retirement in 2025 (monthly pension: {{ development.pension2025|nicenumber_100 }} €)",
+                fillColor: "rgba(194,244,0,0.33)",
+                strokeColor: "#CB8800",
+                pointColor: "#CB8800",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#CB8800",
+                pointHighlightStroke: "CB8800",
+                data: {{ development.2025 }}
+            },
+            {
+                label: "Retirement in 2020 (monthly pension: {{ development.pension2020|nicenumber_100 }} €)",
+                fillColor: "rgba(194,244,0,0.33)",
+                strokeColor: "#FF9800",
+                pointColor: "#FF9800",
+                pointStrokeColor: "#FFF",
+                pointHighlightFill: "#CB8800",
+                pointHighlightStroke: "CB8800",
+                data: {{ development.2020 }}
+            },
+        ],
+    };
+
+    var ctx = document.getElementById("chart_overall_wealth").getContext("2d");
+    var myLineChart = new Chart(ctx).Line(data, {animation: false});
+    var legend = myLineChart.generateLegend();
+    $("#forecast-legend").html(legend);
+
+
+});
+</script>
+{% endblock %}
+
 
 {% block content %}
-    We do some forecasting, these are the results:
-
-    {% for item in forecast_results %}
-        <div class="item">
-        {{ item.text }}
-        {% if not item.no_cut %}
-            {{ item.value|nicenumber_100 }}
-        {% else %}
-            {{ item.value|nicenumber }}
-        {% endif %}
+        <canvas id="chart_overall_wealth" width="800" height="400"></canvas>
+        <div id="title_retirement" class="sub_title">
+            6. Forecast on wealth development depending on retirement age
         </div>
-    {% endfor %}
+        <div id="forecast-legend"></div>
+
+        <div id="income-interest">
+            {{ development.incomeexpense|nicenumber_100 }} €
+            <div class="smaller">
+                average monthly savings
+            </div>
+            {{ development.interest|nicenumber }} %
+            <div class="smaller">
+                expected interest rate
+            </div>
+            {{ development.interest_retirement|nicenumber }} %
+            <div class="smaller">
+                expected interest rate during retirement
+            </div>
+        </div>
 {% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load filters %}
+{% load admin_urls %}
+{% load staticfiles %}
+
+
+{% block content %}
+    {% if result %}
+        {{ result }}
+    {% else %}
+        No data available.
+    {% endif %}
+{% endblock %}

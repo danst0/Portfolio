@@ -35,7 +35,7 @@ class CortalConsors(Importer):
 
 
 
-    def read_old_depot_csv(self):
+    def read_old_depot_csv(self, path):
         ext_path = 'Depotverwaltung 2010'
         file = 'Sheet 1-Table 2.csv'
         short_name_long_name = {}
@@ -85,73 +85,65 @@ class CortalConsors(Importer):
 
 
 
-    def read_pdfs(self):
+    def read_pdfs(self, file):
         file_counter = 0
         price_updates = []
 
-        for file in os.listdir(self.base_path):
-            if file.startswith('PERSONAL') and file.endswith('.pdf'):
-                # print('Import ' + file)
-                try:
-                    subprocess.check_output(
-                    ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
-                     self.base_path + '/data.txt'])
-                except:
-                    print('Error while importing.')
-                    data = None
-                else:
-                    with open(self.base_path + '/data.txt', 'rb') as myfile:
-                        data = myfile.read()
-                    data = self.get_data_from_personal_investment_report(data)
-                if data:
-                    # print(data)
-                    price_updates.append(data)
-                    file_counter += 1
-                os.remove(self.base_path + '/' + file)
+        if file.startswith('PERSONAL') and file.endswith('.pdf'):
+            # print('Import ' + file)
+            try:
+                subprocess.check_output(
+                ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
+                 self.base_path + '/data.txt'])
+            except:
+                print('Error while importing.')
+                data = None
+            else:
+                with open(self.base_path + '/data.txt', 'rb') as myfile:
+                    data = myfile.read()
+                data = self.get_data_from_personal_investment_report(data)
+            if data:
+                # print(data)
+                price_updates.append(data)
+                file_counter += 1
+            os.remove(self.base_path + '/' + file)
+
+        transactions_update = []
+        if (file.startswith('HV-BEGLEIT') or
+                file.startswith('KONTOABSCH') or
+                file.startswith('KONTOAUSZU') or
+                file.startswith('PERSONAL') or
+                file.startswith('TERMINANSC') or
+                file.startswith('WICHTIGE_M') or
+                file.startswith('VERLUSTVER') or
+                file.startswith('VERTRAGSRE')):
+            # Remove invalid PDFs
+            # print('Ignore ' + file)
+            os.remove(self.base_path + '/' + file)
+        elif file.endswith('.pdf'):
+            try:
+                subprocess.check_output(
+                ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
+                 self.base_path + '/data.txt'])
+            except:
+                print('Error while importing.')
+            else:
+                with open(self.base_path + '/data.txt', 'rb') as myfile:
+                    data = myfile.read()
+                data = self.prepare_data(data)
+                if self.check_if_mine(data):
+                    data = self.get_data_from_text(data)
+                    if data:
+                        transactions_update.append(data)
+                        file_counter += 1
+                    else:
+                        print('Above errors occured with', file)
+
+
         try:
             os.remove(self.base_path + '/data.txt')
         except:
             pass
-        transactions_update = []
-        for file in os.listdir(self.base_path):
-            if (file.startswith('HV-BEGLEIT') or
-                    file.startswith('KONTOABSCH') or
-                    file.startswith('KONTOAUSZU') or
-                    file.startswith('PERSONAL') or
-                    file.startswith('TERMINANSC') or
-                    file.startswith('WICHTIGE_M') or
-                    file.startswith('VERLUSTVER') or
-                    file.startswith('VERTRAGSRE')):
-                # Remove invalid PDFs
-                # print('Ignore ' + file)
-                os.remove(self.base_path + '/' + file)
-            elif file.endswith('.pdf'):
-                # print('Import ' + file)
-                try:
-                    subprocess.check_output(
-                    ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
-                     self.base_path + '/data.txt'])
-                except:
-                    print('Error while importing.')
-                else:
-                    with open(self.base_path + '/data.txt', 'rb') as myfile:
-                        data = myfile.read()
-                    data = self.prepare_data(data)
-                    if self.check_if_mine(data):
-                        data = self.get_data_from_text(data)
-                        if data:
-                            transactions_update.append(data)
-                            file_counter += 1
-                            os.remove(self.base_path + '/' + file)
-                        else:
-                            print('Above errors occured with', file)
-                    else:
-                        os.remove(self.base_path + '/' + file)
-
-            try:
-                os.remove(self.base_path + '/data.txt')
-            except:
-                pass
 #        print(file_counter, 'files successfully imported.')
         return price_updates, transactions_update
 

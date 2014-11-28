@@ -9,6 +9,12 @@
     font-style: normal;
 
 }
+@font-face {
+    font-family: 'quicksand';
+    src: url('/static/Quicksand-Regular.otf');
+    font-weight: light;
+    font-style: normal;
+}
 
 nav {
     width: 80px;
@@ -164,7 +170,8 @@ form, input{
 }
 
 body {
-    font-family:'tex_gyre_bonumregular';
+    /*font-family:'tex_gyre_bonumregular';*/
+    font-family:'quicksand';*/
 }
 
 /* Kästen */

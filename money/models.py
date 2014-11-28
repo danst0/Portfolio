@@ -144,17 +144,20 @@ class Money(models.Model):
         # print(future_wealth)
         # yearly_interest_rate = 0.05
         monthly_interest_rate = math.pow(yearly_interest_rate+1, 1/12)-1
+        # import pdb; pdb.set_trace()
         monthly_pension = future_wealth * Decimal(monthly_interest_rate * 1.00001)
+
         delta_month = 99
 
         while abs(delta_month/month_to_go) > 0.01:
             # print(delta_month, month_to_go, delta_month/month_to_go)
+            print('pension', monthly_pension)
             tmp_development = []
             no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
             delta_month = no_of_month - month_to_go
-
+            print('delta', delta_month)
             # import pdb; pdb.set_trace()
-            monthly_pension = monthly_pension * Decimal(1 + (0.0001 * delta_month))
+            monthly_pension = monthly_pension * Decimal(1 + (0.00001 * delta_month))
         development += tmp_development
         # print(monthly_pension)
         # print(month_to_go, no_of_month)
@@ -170,13 +173,14 @@ class Money(models.Model):
         """
         if wealth != 0:
             future_delta = self.month_delta(str(year_of_death)+'-12-31') - self.month_delta(str(year_of_retirement)+'-12-31')
-            monthly_pension, development = self.calc_pension(wealth, future_delta, min(interest_rate/3.0, 0.03), development)
+            monthly_pension, development = self.calc_pension(wealth, future_delta, interest_rate, development)
         else:
             monthly_pension = 0
         return monthly_pension, development
 
     def aggregate_results(self, user):
         t = Transaction()
+        print('Start aggregating results')
         year_of_death = 2080
         current_pf_value = t.get_pf_value(timezone.now().date(), user)
         median_income, median_expense = self.calc_average(user)
@@ -188,9 +192,21 @@ class Money(models.Model):
         # import pdb;pdb.set_trace()
         # print(from_date, to_date, timespan)
         # print(t.get_roi('All', from_date, to_date, user))
-        expected_interest_rate = math.pow(t.get_roi(from_date, to_date, user) + 1,
+        current_interest_rate = math.pow(t.get_roi(from_date, to_date, user) + 1,
                                           Decimal(365/timespan))-1
+        # Regression to mean
+        # confidence for current_interest_rate as a predictor for future success
+        confidence = 0.2
+        # Average interest rate as more accurate predictor. Here Dow Jones performance between 1975 and 2013
+        average_interest_rate = 0.088
+        expected_interest_rate = (current_interest_rate - average_interest_rate) * confidence + average_interest_rate
+        # Recalibrate expected interest rate for retirement time with new assumptions
+        confidence = 0.1
+        # Average interest rate as more accurate predictor. Here Dow Jones performance between 1975 and 2013
+        average_interest_rate_retirement = 0.03
+        expected_interest_rate_retirement = (current_interest_rate - average_interest_rate_retirement) * confidence + average_interest_rate_retirement
         delta_2015 = self.month_delta('2015-12-31')
+        # print(delta_2015)
         wealth_in_2015, development = self.calc_wealth_next_month(self.get_current_wealth(user),
                                                                   current_pf_value,
                                                                   delta_2015,
@@ -201,9 +217,9 @@ class Money(models.Model):
         result_development = {}
         result_development['incomeexpense'] = median_income-median_expense
         result_development['interest'] = expected_interest_rate*100
-
+        result_development['interest_retirement'] = expected_interest_rate_retirement*100
         for year_of_retirement in [2020, 2025, 2030]:
-
+            # print(year_of_retirement)
             delta = self.month_delta(str(year_of_retirement)+'-12-31')
             wealth, development = self.calc_wealth_next_month(self.get_current_wealth(user),
                                                  current_pf_value,
@@ -211,11 +227,15 @@ class Money(models.Model):
                                                  median_income,
                                                  median_expense,
                                                  expected_interest_rate, [])
+
+            # print('Wealth ok')
             # print(wealth, year_of_retirement)
+
             monthly_pension, development = self.mp(wealth,
                                       year_of_retirement,
                                       year_of_death,
-                                      expected_interest_rate, development)
+                                      expected_interest_rate_retirement, development)
+            # print('Pension ok', monthly_pension)
             short_development = []
             for num, item in enumerate(development):
                 if num % (12*5) == 0:

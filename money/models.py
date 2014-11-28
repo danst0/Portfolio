@@ -9,6 +9,7 @@ import datetime
 from django.utils import timezone
 from dateutil import relativedelta
 from django.contrib.auth.models import User
+from pprint import pprint
 
 # Create your models here.
 
@@ -23,8 +24,8 @@ class Money(models.Model):
     base_path = os.path.expanduser('~') + '/Desktop/PDFs'
 
 
-    def return_complete_sets(self):
-        transactions = Money.objects.all().order_by('to_date')
+    def return_complete_sets(self, user):
+        transactions = Money.objects.filter(user=user).order_by('to_date')
         complete_set = {}
         # import pdb; pdb.set_trace()
         for num, trans in enumerate(transactions):
@@ -51,8 +52,9 @@ class Money(models.Model):
             #     complete_set[trans.to_date]['total_in_end'] = trans.total_in_end
         return complete_set
 
-    def calc_average(self, from_date=None, to_date=None):
-        my_set = self.return_complete_sets()
+    def calc_average(self, user, from_date=None, to_date=None):
+        my_set = self.return_complete_sets(user)
+        # pprint(my_set)
         # import pdb; pdb.set_trace()
         incomes = []
         expenses = []
@@ -150,17 +152,17 @@ class Money(models.Model):
         # yearly_interest_rate = 0.05
         monthly_interest_rate = math.pow(yearly_interest_rate+1, 1/12)-1
         # import pdb; pdb.set_trace()
-        if monthly_interest_rate > 0:
+        if monthly_interest_rate > 0 and future_wealth > 0:
             monthly_pension = future_wealth * Decimal(monthly_interest_rate * 1.00001)
 
             delta_month = 99
             while abs(delta_month/month_to_go) > 0.01:
                 # print(delta_month, month_to_go, delta_month/month_to_go)
-                print('pension', monthly_pension)
+                # print('pension', monthly_pension)
                 tmp_development = []
                 no_of_month, tmp_development = self.simulate_pension(future_wealth, monthly_interest_rate, monthly_pension, tmp_development)
                 delta_month = no_of_month - month_to_go
-                print('delta', delta_month)
+                # print('delta', delta_month)
                 # import pdb; pdb.set_trace()
                 monthly_pension = monthly_pension * Decimal(1 + (0.00001 * delta_month))
             development += tmp_development
@@ -191,6 +193,7 @@ class Money(models.Model):
         year_of_death = 2080
         current_pf_value = t.get_pf_value(timezone.now().date(), user)
         median_income, median_expense = self.calc_average(user)
+        print(median_income, median_expense)
         total_wealth = current_pf_value + self.get_current_wealth(user)
 
         timespan = 3*365

@@ -7,7 +7,9 @@
 {% block content %}
     {% if result %}
         {{ result }}
+        <a href="{% url 'login_demo' result.name result.password %}">Login demo user</a>
     {% else %}
         No data available.
     {% endif %}
+
 {% endblock %}

@@ -129,9 +129,16 @@ td {
     font-size: 0.7em;
 }
 
-#development-legend {
+#pf_development-legend {
     left: 30px;
-    top: 100px;
+    top: 70px;
+    position: absolute;
+    font-size: 0.7em;
+}
+
+#cash_development-legend {
+    left: 30px;
+    top: 270px;
     position: absolute;
     font-size: 0.7em;
 }

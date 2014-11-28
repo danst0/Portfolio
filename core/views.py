@@ -121,8 +121,8 @@ def portfolio_development(request):
                                                         request.user)
 
             dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
-            pf_values = list(map(lambda x: float(round(x,2)), pf_values))
-            cash_values = list(map(lambda x: float(round(x,2)), cash_values))
+            pf_values = list(map(lambda x: float(round(x, 2)), pf_values))
+            cash_values = list(map(lambda x: float(round(x, 2)), cash_values))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                                   'active_nav': '#nav_pf_development',
                                                                   'form': form,
@@ -236,7 +236,7 @@ def new_invest(request):
         else:
             percentage = 'n/a'
         result.append(item + (str(percentage)+'%',) + pie_colors[num])
-    nav_total = total * Decimal('0.87') # May deduction factor
+    nav_total = total #* Decimal('0.85') # May deduction factor
     nav_content = result
     # print(result)
     return render(request, 'new_invest.html', {'block_title': 'Overview',

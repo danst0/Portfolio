@@ -136,23 +136,25 @@ class Transaction(models.Model):
                                            total=total)
             return t
 
-    def get_invest_divest(self, portfolio, stock_id, from_date, to_date):
+    def get_invest_divest(self, user, stock_id, from_date, to_date, portfolio='All'):
         # print(type(from_date), type(to_date))
         in_divest = Decimal(0)
-        in_divest = self.get_total(portfolio, 'b', from_date, to_date, stock_id)
-        in_divest += self.get_total(portfolio, 's', from_date, to_date, stock_id)
+        in_divest = self.get_total(user, 'b', from_date, to_date, stock_id, portfolio)
+        in_divest += self.get_total(user, 's', from_date, to_date, stock_id, portfolio)
         return in_divest
 
-    def get_total_invest(self, portfolio, from_date, to_date):
-        return self.get_total(portfolio, 'b', from_date, to_date)
+    def get_total_invest(self, user, from_date, to_date, portfolio='All'):
+        # import pdb; pdb.set_trace()
+        return self.get_total(user, 'b', from_date, to_date, portfolio=portfolio)
 
-    def get_total_divest(self, portfolio, from_date, to_date):
-        return self.get_total(portfolio, 's', from_date, to_date)
+    def get_total_divest(self, user, from_date, to_date, portfolio='All'):
+        return self.get_total(user, 's', from_date, to_date, portfolio=portfolio)
 
-    def get_total_dividend(self, portfolio, from_date, to_date, stock_id=None):
-        return self.get_total(portfolio, 'd', from_date, to_date, stock_id)
+    def get_total_dividend(self, user, from_date, to_date, stock_id=None, portfolio='All'):
 
-    def get_total(self, portfolio, transaction_type, from_date, to_date, stock_id=None):
+        return self.get_total(user, 'd', from_date, to_date, stock_id, portfolio)
+
+    def get_total(self, user, transaction_type, from_date, to_date, stock_id=None, portfolio='All'):
         """
         :param portfolio: Name of portfolio
         :param transaction_type: Types B uy, S ell, D ividend
@@ -163,14 +165,16 @@ class Transaction(models.Model):
         """
         total = Decimal(0)
         if stock_id:
-            for item in Transaction.objects.filter(portfolio__name=portfolio,
+            for item in Transaction.objects.filter(user=user,
+                                                   portfolio__name=portfolio,
                                                    transaction_type=transaction_type,
                                                    date__gt=from_date,
                                                    date__lte=to_date,
                                                    stock_id=stock_id):
                 total += item.total
         else:
-            for item in Transaction.objects.filter(portfolio__name=portfolio,
+            for item in Transaction.objects.filter(user=user,
+                                                   portfolio__name=portfolio,
                                                    transaction_type=transaction_type,
                                                    date__gt=from_date,
                                                    date__lte=to_date):
@@ -261,8 +265,9 @@ class Transaction(models.Model):
         total_value_at_beginning = Decimal(0)
         total_profit = Decimal(0)
         total_dividends = Decimal(0)
-        # import pdb; pdb.set_trace()
+
         for stock_id in sorted(stocks_at_end.keys(), key=lambda x: x.name.lower()):
+            # import pdb; pdb.set_trace()
 
             price_at_beginning = self.prices.get_last_price_from_stock_id(stock_id,
                                                                           from_date,
@@ -284,18 +289,18 @@ class Transaction(models.Model):
                     # print('Price and already existing')
 
                     value_at_beginning = stock_at_beginning[stock_id]['nominal'] * price_at_beginning -\
-                                         self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+                                         self.get_invest_divest(user, stock_id, from_date, to_date, portfolio)
                 else:
-                    value_at_beginning -= self.get_invest_divest(portfolio, stock_id, from_date, to_date)
+                    value_at_beginning -= self.get_invest_divest(user, stock_id, from_date, to_date, portfolio)
                     # print('Price but not yet existed')
             else:
                 # print('No price')
-                value_at_beginning -= self.get_invest_divest(portfolio, stock_id, datetime.date(1900, 1, 1), from_date)
+                value_at_beginning -= self.get_invest_divest(user, stock_id, datetime.date(1900, 1, 1), from_date, portfolio)
 
 
 
             # Calculate dividends
-            dividends = self.get_total_dividend(portfolio, from_date, to_date, stock_id)
+            dividends = self.get_total_dividend(user, from_date, to_date, stock_id, portfolio)
             # Calculate Value at end
             if price_at_end:
                 # print(stocks_at_end[stock_id]['nominal'], price_at_end)

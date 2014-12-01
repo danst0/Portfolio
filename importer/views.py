@@ -35,7 +35,8 @@ def list(request):
                               {'block_title': 'Import',
                                'active_nav': '#nav_import',
                                'documents': documents,
-                               'form': form},
+                               'form': form,
+                               'username': request.user.username,},
                               context_instance=RequestContext(request))
 
 def do_update(request):

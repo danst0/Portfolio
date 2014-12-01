@@ -7,10 +7,10 @@ Todos
 =====
 
 * Indicator for buy and sell decision for tax reasons (Freistellungsauftrag 800€, kids)
-* Taxes for profits (25% + 25%*5.5%)
 * Overview of stored information (transactions, prices) per stock (e.g. in stock graph)
 * New view/add to existing, share of individual stocks
-* View for past income/savings/expense
+* Separate (?) view for past income/savings/expense
+
 
 ---
 
@@ -65,17 +65,22 @@ Done
 * Semi-random Demo Portfolio with Demo User 
 * Internet Explorer und Firefox (works at least for Chrome on the Mac)
 * Change font for more screen legibility
+* Taxes for profits (25% + 25%*5.5%)
+* Cut the Days from Scale lables
+
 
 Later todos
-===
+---
 * Hide form in beginning, display loading, then no data (not really easy, perhaps another time)
 
 Install
 ===
 Commands to get it running
 ---
+```shell
 python3 manage.py runserver
 python3 manage.py syncdb
-python3 manage.py startapp m2
-python3 manage.py sql m2 - Show commands to build databases
+python3 manage.py startapp core
+python3 manage.py sql core - Show commands to build databases
 python manage.py validate – Checks for any errors in the construction of your models.
+```

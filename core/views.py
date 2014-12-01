@@ -91,7 +91,7 @@ def rolling_profitability(request):
                                                        form.cleaned_data['to_date'],
                                                        request.user)
             if dates:
-                dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
+                dates = list(map(lambda x: x.strftime("%b '%y"), dates))
                 # print(roi_list)
                 roi_list = list(map(lambda x: float(round(x, 2)), roi_list))
             # if roi_list == [0.0,]*13:
@@ -121,13 +121,22 @@ def portfolio_development(request):
         # check whether it's valid:
         if form.is_valid():
             ui = UI()
-            dates, pf_values, cash_values, roi = ui.portfolio_development(form.cleaned_data['from_date'],
-                                                        form.cleaned_data['to_date'],
-                                                        request.user)
+            dates, pf_values, cash_values, income_values, invest_values, roi =\
+                ui.portfolio_development(form.cleaned_data['from_date'],
+                                         form.cleaned_data['to_date'],
+                                         request.user)
 
-            dates = list(map(lambda x: x.strftime('%Y-%m-%d'), dates))
-            pf_values = list(map(lambda x: float(round(x, 2)), pf_values))
-            cash_values = list(map(lambda x: float(round(x, 2)), cash_values))
+            dates = list(map(lambda x: x.strftime("%b '%y"), dates))
+            pf_values = list(map(lambda x: float(round(x/1000, 2)), pf_values))
+            cash_values = list(map(lambda x: float(round(x/1000, 2)), cash_values))
+
+            income_values['dates'] = list(map(lambda x: x.strftime("%b '%y"), income_values['dates']))
+            income_values['income'] = list(map(lambda x: float(round(x/1000, 2)), income_values['income']))
+            income_values['expense'] = list(map(lambda x: float(round(x/1000, 2)), income_values['expense']))
+
+            invest_values['invest'] = list(map(lambda x: float(round(x/1000, 2)), invest_values['invest']))
+            invest_values['divest'] = list(map(lambda x: float(round(x/1000, 2)), invest_values['divest']))
+            invest_values['dividend'] = list(map(lambda x: float(round(x/1000, 2)), invest_values['dividend']))
             return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                                   'active_nav': '#nav_pf_development',
                                                                   'form': form,
@@ -136,6 +145,8 @@ def portfolio_development(request):
                                                                   'dates': dates,
                                                                   'pf_values': pf_values,
                                                                   'cash_values': cash_values,
+                                                                  'income_values': income_values,
+                                                                  'invest_values': invest_values,
                                                                   'roi': roi,
                                                                   'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
@@ -243,7 +254,7 @@ def new_invest(request):
         else:
             percentage = 'n/a'
         result.append(item + (str(percentage)+'%',) + pie_colors[num])
-    nav_total = total * Decimal('0.85') # May deduction factor
+    nav_total = total #* Decimal('0.85') # May deduction factor
     nav_content = result
     # print(result)
     return render(request, 'new_invest.html', {'block_title': 'Overview',
@@ -304,6 +315,9 @@ def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()
     result_development = m.aggregate_results(request.user)
+    print(result_development)
+    for key in [2020, 2025, 2030]:
+        result_development[key] = list(map(lambda x: float(round(x/1000, 2)), result_development[key]))
     now = timezone.now().date().year + 1
     dates = list(range(len(result_development[2020])))
     dates = [now+(item*5) if item % 1 == 0 else '' for item in dates]
@@ -332,6 +346,8 @@ def new_demo_user(request):
         # import pdb; pdb.set_trace()
         if user_exists:
             tmp = Transaction.objects.filter(user=User.objects.get(username='demo'))
+            tmp.delete()
+            tmp = Money.objects.filter(user=User.objects.get(username='demo'))
             tmp.delete()
             tmp = User.objects.get(username='demo')
             tmp.delete()

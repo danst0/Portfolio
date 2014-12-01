@@ -51,12 +51,16 @@ class UI:
         pf_details = []
         cash_values = []
         pf_value = []
+        invest_values = []
+        divest_values = []
+        dividend_values = []
         # import pdb; pdb.set_trace()
         time_intervall = int((to_date - from_date).days/12/15)*15
-        total_dividend = self.transaction.get_total_dividend(portfolio, from_date, to_date)
+        total_dividend = self.transaction.get_total_dividend(user, from_date, to_date, portfolio=portfolio)
         # Iteration over 12 time intervals
         for i in range(12):
             loop_date = (to_date - datetime.timedelta(days=i * time_intervall))
+            last_loop_date = (to_date - datetime.timedelta(days=(i+1) * time_intervall))
             # import pdb; pdb.set_trace()
             stocks_at_date = self.transaction.get_total_for_portfolio(portfolio, loop_date, user)
 
@@ -71,17 +75,27 @@ class UI:
                 portfolio_value_at_date += stocks_at_date[stock_id]['nominal'] * price
                 stocks.append((stock_id, stocks_at_date[stock_id]['nominal'], price))
 
-            invest = self.transaction.get_total_invest(portfolio, loop_date, to_date)
-            divest = self.transaction.get_total_divest(portfolio, loop_date, to_date)
-            dividend_before = self.transaction.get_total_dividend(portfolio, from_date, loop_date)
+            invest = self.transaction.get_total_invest(user, loop_date, to_date, portfolio)
+            divest = self.transaction.get_total_divest(user, loop_date, to_date, portfolio)
+            dividend_before = self.transaction.get_total_dividend(user, from_date, loop_date, portfolio=portfolio)
+
+            invest_values.append(-self.transaction.get_total_invest(user, last_loop_date, loop_date))
+            divest_values.append(self.transaction.get_total_divest(user, last_loop_date, loop_date))
+            dividend_values.append(self.transaction.get_total_dividend(user, last_loop_date, loop_date))
 
             dates.append(loop_date)
             cash_values.append(self.money.get_wealth(loop_date, user))
+
             pf_details.append(stocks)
             # Logic of tmp_value: PF Value: reduce invests that happend after that date; further reduce by all dividends that will happen until end of horizon (vs. what already came)
             tmp_value = portfolio_value_at_date - invest + divest - (total_dividend - dividend_before)
             pf_value.append(tmp_value)
 
+        income_dates, incomes, expenses = self.money.calc_average(user, from_date, to_date, full_set=True)
+
+
+
+        # print(income_dates)
         # Drivers vs. 1 intervall earlier
         # print('Now', dates[0])
         # print('-1 int', dates[1])
@@ -101,7 +115,7 @@ class UI:
                     #       'Nom', old_stock[1], cur_nom,
                     #       'EUR', old_stock[2],  cur_price)
                     delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
-                            self.transaction.get_invest_divest(portfolio, cur_key, dates[interval_factor], dates[0])
+                            self.transaction.get_invest_divest(user, cur_key, dates[interval_factor], dates[0], portfolio)
                     delta_keys.append([cur_key, delta])
         delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
         print('Total deviation vs. ' + str(interval_factor*time_intervall) + ' days ago:', pf_value[0] - pf_value[interval_factor], '; major drivers:')
@@ -126,7 +140,7 @@ class UI:
                     #       'Nom', old_stock[1], cur_nom,
                     #       'EUR', old_stock[2],  cur_price)
                     delta = cur_nom * cur_price - old_stock[1] * old_stock[2] +\
-                            self.transaction.get_invest_divest(portfolio, cur_key, dates[interval_factor], dates[0])
+                            self.transaction.get_invest_divest(user, cur_key, dates[interval_factor], dates[0], portfolio)
                     delta_keys.append([cur_key, delta])
         # print(delta_keys)
         delta_keys = sorted(delta_keys, key=lambda x: abs(x[1]), reverse=True)
@@ -138,8 +152,15 @@ class UI:
         dates = reversed(dates)
         pf_value = reversed(pf_value)
         cash_values = reversed(cash_values)
+        invest_values = reversed(invest_values)
+        divest_values = reversed(divest_values)
+        dividend_values = reversed(dividend_values)
+
         roi = self.transaction.get_roi(from_date, to_date, user)
         if roi != 'n/a':
             roi = int(roi*100)
-        return dates, pf_value, cash_values, roi
+        return dates, pf_value, cash_values,\
+               {'dates': income_dates, 'income': incomes, 'expense': expenses},\
+               {'invest': invest_values, 'divest': divest_values, 'dividend': dividend_values},\
+               roi
 

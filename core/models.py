@@ -56,7 +56,7 @@ class UI:
         total_dividend = self.transaction.get_total_dividend(portfolio, from_date, to_date)
         # Iteration over 12 time intervals
         for i in range(12):
-            loop_date = (datetime.date.today() - datetime.timedelta(days= i * time_intervall))
+            loop_date = (to_date - datetime.timedelta(days=i * time_intervall))
             # import pdb; pdb.set_trace()
             stocks_at_date = self.transaction.get_total_for_portfolio(portfolio, loop_date, user)
 

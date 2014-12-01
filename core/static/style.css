@@ -29,6 +29,10 @@
     font-style: normal;
 }
 
+@-ms-viewport{
+  width: device-width;
+}
+
 a {
     font-family: quicksand-light;
     text-decoration: none;
@@ -77,6 +81,14 @@ table {
     width: 100%
 }
 
+table.new_user {
+    width: 60%;
+}
+
+table.new_user td {
+    text-align: left;
+}
+
 table, th, td {
     border: none;
     border-bottom: 1px solid black;
@@ -114,18 +126,18 @@ td {
 
 
 // LEGEND
-.line-legend, .donutalt-legend {
+.line-legend, .donutalt-legend, .bar-legend{
   list-style-type: none;
   padding-left: 0px;
 }
-.line-legend li, .donutalt-legend li {
+.line-legend li, .donutalt-legend li, .bar-legend li{
   display: block;
   float: left;
   width: 14em;
   clear:both;
   padding: 0.5em;
 }
-.line-legend li span , .donutalt-legend li span {
+.line-legend li span , .donutalt-legend li span, .bar-legend li span {
     border-radius: 0.3em;
     width: 1.1em;
     height: 1.1em;
@@ -143,7 +155,7 @@ td {
 }
 
 #forecast-legend {
-    left: 570px;
+    left: 30px;
     top: 0px;
     position: absolute;
     font-size: 0.7em;
@@ -156,9 +168,23 @@ td {
     font-size: 0.7em;
 }
 
+#invest_development-legend {
+    left: 30px;
+    top: 310px;
+    position: absolute;
+    font-size: 0.7em;
+}
+
 #cash_development-legend {
     left: 30px;
-    top: 420px;
+    top: 460px;
+    position: absolute;
+    font-size: 0.7em;
+}
+
+#income_development-legend {
+    left: 30px;
+    top: 610px;
     position: absolute;
     font-size: 0.7em;
 }
@@ -187,21 +213,30 @@ form, input{
 body {
     /*font-family:'tex_gyre_bonumregular';*/
     font-family:'quicksand';
+    width: 1098px;
 }
 
 /* Kästen */
 
-#income-interest, #development_roi {
+.additional_legend {
     width: 6em;
     text-align: center;
-    left: 70px;
-    top: 12px;
     position: absolute;
     font-size: 1.2em;
     padding: 2px;
     border: 1px solid #CB8800;
     background-color: #fefefe;
 }
+
+#development_roi {
+    left: 70px;
+    top: 12px;
+}
+#income-interest {
+    left: 670px;
+    top: 12px;
+}
+
 .smaller {
     font-size: 0.6em;
 }

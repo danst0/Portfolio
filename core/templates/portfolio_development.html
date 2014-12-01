@@ -40,15 +40,81 @@ $( document ).ready(function() {
                 }
             ]
         };
+        var data_income = {
+            labels: {{ income_values.dates|safe }},
+            datasets: [
+                {
+                    label: "Income",
+                    fillColor: "#8FB700",
+                    strokeColor: "#8FB700",
+                    highlightFill: "#CB8800",
+                    highlightStroke: "#CB8800",
+                    data: {{ income_values.income }}
+                },
+                {
+                    label: "Expense",
+                    fillColor: "#CB8800",
+                    strokeColor: "#CB8800",
+                    highlightFill: "#CB8800",
+                    highlightStroke: "#CB8800",
+                    data: {{ income_values.expense }}
+                }
+            ]
+        };
+
+        var data_invest = {
+            labels: {{ dates|safe }},
+            datasets: [
+                {
+                    label: "Investment",
+                    fillColor: "#8FB700",
+                    strokeColor: "#8FB700",
+                    highlightFill: "#CB8800",
+                    highlightStroke: "#CB8800",
+                    data: {{ invest_values.invest }}
+                },
+                {
+                    label: "Divestment",
+                    fillColor: "#CB8800",
+                    strokeColor: "#CB8800",
+                    highlightFill: "#CB8800",
+                    highlightStroke: "#CB8800",
+                    data: {{ invest_values.divest }}
+                },
+                {
+                    label: "Dividend",
+                    fillColor: "#FF9800",
+                    strokeColor: "#FF9800",
+                    highlightFill: "#CB8800",
+                    highlightStroke: "#CB8800",
+                    data: {{ invest_values.dividend }}
+                }
+            ]
+        };
         var ctx = document.getElementById("pfChart").getContext("2d");
         var pfChart = new Chart(ctx).Line(data_pf, chart_js_options);
+
+        var ctx_invest = document.getElementById("investChart").getContext("2d");
+        var investChart = new Chart(ctx_invest).Bar(data_invest, chart_js_options);
+
         var ctx_cash = document.getElementById("cashChart").getContext("2d");
         var cashChart = new Chart(ctx_cash).Line(data_cash, chart_js_options);
 
+        var ctx_income = document.getElementById("incomeChart").getContext("2d");
+        var incomeChart = new Chart(ctx_income).Bar(data_income, chart_js_options);
+
+
         var legend = pfChart.generateLegend();
         $("#pf_development-legend").html(legend);
+
+        legend = investChart.generateLegend();
+        $("#invest_development-legend").html(legend);
+
         legend = cashChart.generateLegend();
         $("#cash_development-legend").html(legend);
+
+        legend = incomeChart.generateLegend();
+        $("#income_development-legend").html(legend);
     {% endif %}
 });
 </script>
@@ -57,15 +123,18 @@ $( document ).ready(function() {
 
 {% block content %}
     {% if dates %}
-        <canvas id="pfChart" width="800" height="400"></canvas>
-        <canvas id="cashChart" width="800" height="200"></canvas>
-        <canvas id="incomeChart" width="800" height="200"></canvas>
+        <canvas id="pfChart" width="800" height="300"></canvas>
+        <canvas id="investChart" width="800" height="150"></canvas>
+        <canvas id="cashChart" width="800" height="150"></canvas>
+        <canvas id="incomeChart" width="800" height="150"></canvas>
         <div id="title_development" class="sub_title">
             4. Time based overview on portfolio, cash and income development
         </div>
         <div id="pf_development-legend"></div>
+        <div id="invest_development-legend"></div>
         <div id="cash_development-legend"></div>
-        <div id="development_roi">
+        <div id="income_development-legend"></div>
+        <div id="development_roi" class="additional_legend">
             {{ roi }}%
             <div class="smaller">
                 Return on investment

@@ -6,8 +6,25 @@
 
 {% block content %}
     {% if result %}
-        {{ result }}
-        <a href="{% url 'login_demo' result.name result.password %}">Login demo user</a>
+        <table class="new_user">
+            <tr>
+                <th>New demo user generated successfully</th>
+                <th></th>
+            </tr>
+            <tr>
+                <td>Username</td>
+                <td>{{ result.name }}</td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td>{{ result.password }}</td>
+            </tr>
+            <tr>
+                <td> <a href="{% url 'login_demo' result.name result.password %}">Login demo user</a></td>
+                <td></td>
+            </tr>
+        </table>
+
     {% else %}
         No data available.
     {% endif %}

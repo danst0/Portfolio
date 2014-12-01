@@ -27,9 +27,10 @@ class Money(models.Model):
     def return_complete_sets(self, user):
         transactions = Money.objects.filter(user=user).order_by('to_date')
         complete_set = {}
-        # import pdb; pdb.set_trace()
+
         for num, trans in enumerate(transactions):
             if num != 0:
+                # import pdb; pdb.set_trace()
                 complete_set[trans.to_date] = {}
                 complete_set[trans.to_date]['total_in_beginning'] = transactions[num - 1].total_in_end
                 if trans.income and not trans.expense:
@@ -45,6 +46,17 @@ class Money(models.Model):
                     complete_set[trans.to_date]['income'] = Decimal(0)
                     complete_set[trans.to_date]['expense'] = Decimal(0)
                 complete_set[trans.to_date]['total_in_end'] = trans.total_in_end
+                if complete_set[trans.to_date]['expense'] < 0:
+                    complete_set[trans.to_date]['income'] -= complete_set[trans.to_date]['expense']
+                    complete_set[trans.to_date]['expense'] = 0
+                if complete_set[trans.to_date]['income'] < 0:
+                    complete_set[trans.to_date]['expense'] -= complete_set[trans.to_date]['income']
+                    complete_set[trans.to_date]['income'] = 0
+                # print(10*'---')
+                # print('Beginning', complete_set[trans.to_date]['total_in_beginning'])
+                # print('Income', complete_set[trans.to_date]['income'])
+                # print('Expense', complete_set[trans.to_date]['expense'])
+                # print('End', complete_set[trans.to_date]['total_in_end'])
             # else:
             #     complete_set[trans.to_date]['total_in_beginning'] = Decimal(0)
             #     complete_set[trans.to_date]['income'] = trans.total_in_end
@@ -52,32 +64,44 @@ class Money(models.Model):
             #     complete_set[trans.to_date]['total_in_end'] = trans.total_in_end
         return complete_set
 
-    def calc_average(self, user, from_date=None, to_date=None):
+    def calc_average(self, user, from_date=None, to_date=None, full_set=False):
         my_set = self.return_complete_sets(user)
         # pprint(my_set)
         # import pdb; pdb.set_trace()
         incomes = []
         expenses = []
+        dates = []
         last_date = None
         t = Transaction()
         for date, value in sorted(my_set.items()):
-            if last_date:
-                invest = t.get_total_invest('All', last_date, date)
-                divest = t.get_total_divest('All', last_date, date)
-                dividend = t.get_total_dividend('All', last_date, date)
-            else:
-                invest, divest, dividend = 0, 0, 0
-            last_date = date
-            # print(10*'---')
-            # print(date)
-            # print('Divest', divest)
-            # print('Invest', invest)
-            # print('Dividend', dividend)
-            # print(value['income'])
-            # print(value['expense'])
-            # print(value['expense']+ divest + invest + dividend)
-            incomes.append(value['income'])
-            expenses.append(value['expense'] + divest + invest + dividend)
+            if (from_date and to_date and date >= from_date and date <= to_date) or \
+                (from_date and not to_date and date >= from_date) or \
+                (to_date and not from_date and date <= to_date) or \
+                    (not to_date and not from_date):
+                if last_date:
+                    invest = t.get_total_invest(user, last_date, date)
+                    divest = t.get_total_divest(user, last_date, date)
+                    dividend = t.get_total_dividend(user, last_date, date)
+                else:
+                    invest, divest, dividend = 0, 0, 0
+                last_date = date
+                print(10*'---')
+                print(date)
+                print('Divest', divest)
+                print('Invest', invest)
+                print('Dividend', dividend)
+                print('Income', value['income'])
+                print('Expense', value['expense'])
+                value['expense'] = value['expense'] + divest + invest + dividend
+                print('final Expense', value['expense'])
+
+                if value['expense'] < 0:
+                    value['income'] -= value['expense']
+                    value['expense'] = 0
+                incomes.append(value['income'])
+                expenses.append(value['expense'])
+                dates.append(date)
+        # import pdb; pdb.set_trace()
         incomes = list(incomes)
         expenses = list(expenses)
         if incomes != []:
@@ -88,7 +112,17 @@ class Money(models.Model):
             median_expense = statistics.mean(expenses)
         else:
             median_expense = 0
-        return median_income, median_expense
+        if full_set:
+            # print(dates)
+            # print(incomes)
+            # print(expenses)
+            return dates, incomes, expenses
+        else:
+            return median_income, median_expense
+
+
+
+
 
     def get_wealth(self, date, user):
         transactions = Money.objects.filter(to_date__lte=date, user=user).order_by('-to_date')

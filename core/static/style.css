@@ -272,3 +272,52 @@ body {
 }
 #footer div:nth-child(2) { text-align: center; }
 #footer div:last-child { text-align: right; }
+.footer {
+    clear: both;
+}
+
+
+/* Start page */
+
+#logo-headline {
+    height: 100px;
+    background-color: #8FB700;
+    position: relative;
+
+}
+#sign-up-sign-in {
+    margin-top: auto;
+    position: absolute;
+    bottom: 0;
+    width: 300px;
+    left: calc(50% - 150px);
+    border: solid 2px;
+}
+#explanation, #biases, #logo-headline{
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.bias {
+    border: solid 1px;
+    width: 47%;
+    height: 10em;
+    padding: 0.5%;
+    margin: 0.5%;
+}
+
+.bias.left {
+    float: left;
+}
+
+.bias.right {
+    float: right;
+}
+.bias img {
+    float: right;
+}
+.explanation::first-letter {
+    font-size: 2em;
+}

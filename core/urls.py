@@ -1,11 +1,11 @@
 from . import views
 
 from django.conf.urls import patterns, url
-
+from django.views.generic import TemplateView
 
 
 urlpatterns = patterns('',
-                       url(r'^$', views.index, name='index'),
+                       url(r'^$', TemplateView.as_view(template_name='index.html'), name='index'),
                        url(r'new_invest/', views.new_invest, name='new_invest'),
                        url(r'rolling_profitability/', views.rolling_profitability, name='rolling_profitability'),
                        url(r'portfolio_development/',

@@ -44,6 +44,7 @@ INSTALLED_APPS = (
     'transactions',
     'money',
     'importer',
+    'settings',
 )
 
 MIDDLEWARE_CLASSES = (

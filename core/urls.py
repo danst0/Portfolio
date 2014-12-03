@@ -2,6 +2,7 @@ from . import views
 
 from django.conf.urls import patterns, url
 from django.views.generic import TemplateView
+from settings import views as settings_views
 
 
 urlpatterns = patterns('',
@@ -21,7 +22,7 @@ urlpatterns = patterns('',
                        url(r'forecast_retirement/', views.forecast_retirement, name='forecast_retirement'),
                        url(r'login_demo/(?P<username>[a-z]+)/(?P<password>[a-z]+)', views.login_demo, name='login_demo'),
                        url(r'demo/', views.new_demo_user, name='new_demo_user'),
-
+                       url(r'settings/', settings_views.show_settings, name='settings'),
 
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),

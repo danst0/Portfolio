@@ -13,6 +13,22 @@ class UI:
         self.prices = Price()
         self.secs = Security()
         self.money = Money()
+    def recommendation(self, user):
+        from_date = datetime.date.today() - datetime.timedelta(days=2*360)
+        to_date = datetime.date.today()
+
+        result = self.transaction.list_pf(from_date, to_date, user)
+        result = sorted(result, key=lambda x: float(x['roi'][:-1]))
+        # get a reasonable number of results, betwenn 3 and five, depending on number of positions
+        number_of_results = max(min(int(len(result)/10), 5), 3)
+        # remove that are > 20%-points from total roi
+        total_roi = self.transaction.get_total_roi(from_date, to_date, user)
+        
+        worst_five = result[:number_of_results]
+        best_five = result[-number_of_results:]
+        # print(worst_five)
+        # print(best_five)
+        return best_five, worst_five
 
     def rolling_profitability(self, from_date, to_date, user, portfolio='All'):
         time_span = (to_date - from_date).days
@@ -30,7 +46,7 @@ class UI:
             print(loop_from_date, loop_to_date)
 
             # result = self.transaction.list_pf(portfolio, loop_from_date, loop_to_date, user)
-            roi = self.transaction.get_roi(loop_from_date, loop_to_date, user, portfolio)
+            roi = self.transaction.get_total_roi(loop_from_date, loop_to_date, user, portfolio)
             if roi != 'n/a':
                 roi = int(roi *100)
             else:
@@ -156,7 +172,7 @@ class UI:
         divest_values = reversed(divest_values)
         dividend_values = reversed(dividend_values)
 
-        roi = self.transaction.get_roi(from_date, to_date, user)
+        roi = self.transaction.get_total_roi(from_date, to_date, user)
         if roi != 'n/a':
             roi = int(roi*100)
         return dates, pf_value, cash_values,\

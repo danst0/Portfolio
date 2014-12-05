@@ -23,7 +23,7 @@ urlpatterns = patterns('',
                        url(r'login_demo/(?P<username>[a-z]+)/(?P<password>[a-z]+)', views.login_demo, name='login_demo'),
                        url(r'demo/', views.new_demo_user, name='new_demo_user'),
                        url(r'settings/', settings_views.show_settings, name='settings'),
-
+                       url(r'recommendations/', views.recommendation, name='recommendations'),
                        # ex: /polls/5/
                        # url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
                        # ex: /polls/5/results/

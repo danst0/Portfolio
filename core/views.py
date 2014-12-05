@@ -391,3 +391,18 @@ def login_demo(request, username, password):
             # Return an 'invalid login' error message.
             print('invalid login')
             pass
+
+@login_required
+def recommendation(request):
+    # if this is a POST request we need to process the form data
+    # create a form instance and populate it with data from the request:
+    ui = UI()
+    best_five, worst_five = ui.recommendation(request.user)
+
+    return render(request, 'recommendations.html', {'block_title': 'Recommendations',
+                                                       'active_nav': '#nav_recommendations',
+                                                       'best_five': best_five,
+                                                       'worst_five': worst_five,
+                                                       'header': ['Name', 'ROI', 'Historic performance according to expectations?', 'Future performance?'],
+                                                       'username': request.user.username,})
+# if a GET (or any other method) we'll create a blank form

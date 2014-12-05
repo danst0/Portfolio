@@ -340,7 +340,7 @@ class Transaction(models.Model):
                        'roi': total_roi})
         return values
 
-    def get_roi(self, from_date, to_date, user, portfolio='All'):
+    def get_total_roi(self, from_date, to_date, user, portfolio='All'):
         result = self.list_pf(from_date, to_date, user, portfolio)
         roi = result[-1]['roi'][:-1]
         if roi != 'n/':

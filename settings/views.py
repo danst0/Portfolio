@@ -18,7 +18,7 @@ def show_settings(request):
                                                                'form': form,
                                                                'tax_rate': form.cleaned_data['from_date'],
                                                                'expected_interest': form.cleaned_data['to_date'],
-
+                                                               'active_nav': '#nav_settings',
                                                                'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -26,4 +26,5 @@ def show_settings(request):
 
     return render(request, 'settings.html', {'block_title': 'Settings',
                                                        'form': form,
+                                                       'active_nav': '#nav_settings',
                                                        'username': request.user.username,})

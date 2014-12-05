@@ -235,8 +235,8 @@ class Money(models.Model):
         to_date = timezone.now().date()
         # import pdb;pdb.set_trace()
         # print(from_date, to_date, timespan)
-        # print(t.get_roi('All', from_date, to_date, user))
-        current_interest_rate = math.pow(t.get_roi(from_date, to_date, user) + 1,
+        # print(t.get_total_roi('All', from_date, to_date, user))
+        current_interest_rate = math.pow(t.get_total_roi(from_date, to_date, user) + 1,
                                           Decimal(365/timespan))-1
         # Regression to mean
         # confidence for current_interest_rate as a predictor for future success

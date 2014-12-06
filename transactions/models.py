@@ -1,6 +1,6 @@
 import uuid
 from decimal import *
-
+from django.core.cache import cache
 from django.db import models
 
 from securities.models import Security
@@ -10,6 +10,7 @@ from transactions.Importer import CortalConsors
 from django.utils import timezone
 import datetime
 from django.contrib.auth.models import User
+from functools import lru_cache
 from transactions.validators import *
 
 import jellyfish
@@ -48,9 +49,13 @@ class Transaction(models.Model):
     pf = Portfolio()
 
     def __str__(self):
-        return ';'.join((
+        try:
+            result = ';'.join((
         str(self.portfolio), self.transaction_type, str(self.stock_id), str(self.date), str(self.nominal), str(self.price),
         str(self.cost), str(self.total)))
+        except:
+            result = 'No data'
+        return result
 
     def import_sources(self, path):
         i = CortalConsors()
@@ -154,6 +159,7 @@ class Transaction(models.Model):
 
         return self.get_total(user, 'd', from_date, to_date, stock_id, portfolio)
 
+    @lru_cache(maxsize=1024)
     def get_total(self, user, transaction_type, from_date, to_date, stock_id=None, portfolio='All'):
         """
         :param portfolio: Name of portfolio
@@ -217,8 +223,11 @@ class Transaction(models.Model):
                 if stock_date < split.date:
                     nominal = nominal * split.ratio
         return nominal
+    def __hash__(self):
+        return hash(str(self))
 
     def get_total_for_portfolio(self, portfolio, date, user):
+        # print(hash(self))
         result = Transaction.objects.filter(portfolio__name=portfolio, date__lte=date, user=user)
         per_stock = {}
         for item in result:
@@ -243,6 +252,7 @@ class Transaction(models.Model):
                 del per_stock[key]
         return per_stock
 
+    @lru_cache()
     def list_pf(self, from_date, to_date, user, portfolio='All'):
         """ Portfolio Overview function table of all stocks and profits since from_date
         :param portfolio: xxx
@@ -250,6 +260,7 @@ class Transaction(models.Model):
         :param to_date: When to end
         :return:
         """
+        # print(hash(user))
         # print(from_date, to_date)
         # Temporary update all old prices from transaction data
         # for trans in Transaction.objects.all():
@@ -339,8 +350,9 @@ class Transaction(models.Model):
                        'profit': total_profit,
                        'roi': total_roi})
         return values
-
+    @lru_cache()
     def get_total_roi(self, from_date, to_date, user, portfolio='All'):
+
         result = self.list_pf(from_date, to_date, user, portfolio)
         roi = result[-1]['roi'][:-1]
         if roi != 'n/':

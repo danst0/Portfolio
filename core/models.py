@@ -6,6 +6,7 @@ from money.models import Money
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 
+from functools import lru_cache
 
 class UI:
     def __init__(self):

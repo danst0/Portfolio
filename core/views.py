@@ -29,9 +29,10 @@ from django.contrib.auth import authenticate, login, logout
 import random
 import string
 from django.shortcuts import redirect
-
+from django.views.decorators.cache import cache_page
 # Create your views here.
 
+ui = UI()
 
 def index(request):
     return render(request, 'index.html')
@@ -86,7 +87,6 @@ def rolling_profitability(request):
         form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
-            ui = UI()
             dates, roi_list = ui.rolling_profitability(form.cleaned_data['from_date'],
                                                        form.cleaned_data['to_date'],
                                                        request.user)
@@ -120,7 +120,6 @@ def portfolio_development(request):
         form = PortfolioFormTwoDates(request.POST)
         # check whether it's valid:
         if form.is_valid():
-            ui = UI()
             dates, pf_values, cash_values, income_values, invest_values, roi =\
                 ui.portfolio_development(form.cleaned_data['from_date'],
                                          form.cleaned_data['to_date'],
@@ -131,6 +130,7 @@ def portfolio_development(request):
             cash_values = list(map(lambda x: float(round(x/1000, 2)), cash_values))
 
             income_values['dates'] = list(map(lambda x: x.strftime("%b '%y"), income_values['dates']))
+
             income_values['income'] = list(map(lambda x: float(round(x/1000, 2)), income_values['income']))
             income_values['expense'] = list(map(lambda x: float(round(x/1000, 2)), income_values['expense']))
 

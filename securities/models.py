@@ -11,7 +11,7 @@ import jellyfish
 import logging
 import os
 import csv
-
+from functools import lru_cache
 
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
@@ -178,7 +178,14 @@ class Price(models.Model):
         return output
 
     def __str__(self):
-        return str(self.stock_id) + str(self.date) + str(self.price)
+        try:
+            result = str(self.stock_id) + str(self.date) + str(self.price)
+        except:
+            result = 'No data'
+        return result
+
+    def __hash__(self):
+        return(hash(str(self)))
 
     def get_prices(self, stock_id, before_date=None, order_by_date=False):
         #import pdb; pdb.set_trace()
@@ -206,6 +213,7 @@ class Price(models.Model):
         stock_id = self.secs.get_stock_id_from_isin_id(isin_id)
         return self.get_last_price_from_stock_id(stock_id, before_date, none_equals_zero)
 
+    @lru_cache(maxsize=1024)
     def get_last_price_from_stock_id(self, stock_id, before_date=None, none_equals_zero=False, none_equals_oldest_available=False):
         """Return last price available, if given, return last price available before given date"""
         prices = self.get_prices(stock_id, before_date, order_by_date=True)

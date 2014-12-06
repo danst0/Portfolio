@@ -117,7 +117,7 @@ class UI:
             pf_value.append(tmp_value)
 
         income_dates, incomes, expenses = self.money.calc_average(user, from_date, to_date, full_set=True)
-        logger.debug('time ' + str(datetime.datetime.now() - t1))
+        logger.debug('Time to execute portfolio development ' + str(datetime.datetime.now() - t1))
         # print(__name__)
 
         # print(income_dates)

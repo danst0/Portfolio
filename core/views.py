@@ -6,19 +6,15 @@ from core.models import UI
 from securities.models import Security
 from transactions.models import Transaction
 from money.models import Money
-
 #from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 #from matplotlib.figure import Figure
 #from matplotlib.dates import DateFormatter
 #from matplotlib.ticker import ScalarFormatter
-
-import datetime
+# import datetime
 from decimal import Decimal
 from django.utils import timezone
 from django.http import HttpResponse
-
 from securities.models import Price
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator

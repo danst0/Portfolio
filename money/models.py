@@ -85,15 +85,15 @@ class Money(models.Model):
                 else:
                     invest, divest, dividend = 0, 0, 0
                 last_date = date
-                print(10*'---')
-                print(date)
-                print('Divest', divest)
-                print('Invest', invest)
-                print('Dividend', dividend)
-                print('Income', value['income'])
-                print('Expense', value['expense'])
+                # print(10*'---')
+                # print(date)
+                # print('Divest', divest)
+                # print('Invest', invest)
+                # print('Dividend', dividend)
+                # print('Income', value['income'])
+                # print('Expense', value['expense'])
                 value['expense'] = value['expense'] + divest + invest + dividend
-                print('final Expense', value['expense'])
+                # print('final Expense', value['expense'])
 
                 if value['expense'] < 0:
                     value['income'] -= value['expense']

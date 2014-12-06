@@ -5,8 +5,9 @@ from securities.models import Security, Price
 from money.models import Money
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
-
 from functools import lru_cache
+import logging
+logger = logging.getLogger(__name__)
 
 class UI:
     def __init__(self):
@@ -24,7 +25,7 @@ class UI:
         number_of_results = max(min(int(len(result)/10), 5), 3)
         # remove that are > 20%-points from total roi
         total_roi = self.transaction.get_total_roi(from_date, to_date, user)
-        
+
         worst_five = result[:number_of_results]
         best_five = result[-number_of_results:]
         # print(worst_five)
@@ -44,10 +45,12 @@ class UI:
 
             loop_from_date = loop_to_date - relativedelta(months=12)
 
-            print(loop_from_date, loop_to_date)
+            # print(loop_from_date, loop_to_date)
 
             # result = self.transaction.list_pf(portfolio, loop_from_date, loop_to_date, user)
             roi = self.transaction.get_total_roi(loop_from_date, loop_to_date, user, portfolio)
+            # print(hash(self))
+
             if roi != 'n/a':
                 roi = int(roi *100)
             else:
@@ -62,7 +65,6 @@ class UI:
         roi_list = reversed(roi_list)
         return dates, roi_list
 
-
     def portfolio_development(self, from_date, to_date, user, portfolio='All'):
         dates = []
         pf_details = []
@@ -75,18 +77,24 @@ class UI:
         time_intervall = int((to_date - from_date).days/12/15)*15
         total_dividend = self.transaction.get_total_dividend(user, from_date, to_date, portfolio=portfolio)
         # Iteration over 12 time intervals
+        t1 = datetime.datetime.now()
         for i in range(12):
+
             loop_date = (to_date - datetime.timedelta(days=i * time_intervall))
             last_loop_date = (to_date - datetime.timedelta(days=(i+1) * time_intervall))
             # import pdb; pdb.set_trace()
+
             stocks_at_date = self.transaction.get_total_for_portfolio(portfolio, loop_date, user)
 
             portfolio_value_at_date = Decimal(0)
             stocks = []
+
             for stock_id in stocks_at_date.keys():
                 price = self.prices.get_last_price_from_stock_id(stock_id, loop_date,
                                                                  none_equals_zero=True,
                                                                  none_equals_oldest_available=True)
+
+                # print(self.prices.get_last_price_from_stock_id.cache_info())
                 if price == 0:
                     print(stock_id, 'price 0', loop_date)
                 portfolio_value_at_date += stocks_at_date[stock_id]['nominal'] * price
@@ -109,8 +117,8 @@ class UI:
             pf_value.append(tmp_value)
 
         income_dates, incomes, expenses = self.money.calc_average(user, from_date, to_date, full_set=True)
-
-
+        logger.debug('time ' + str(datetime.datetime.now() - t1))
+        # print(__name__)
 
         # print(income_dates)
         # Drivers vs. 1 intervall earlier

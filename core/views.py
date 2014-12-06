@@ -399,6 +399,6 @@ def recommendation(request):
                                                        'active_nav': '#nav_recommendations',
                                                        'best_five': best_five,
                                                        'worst_five': worst_five,
-                                                       'header': ['Name', 'ROI', 'Historic performance according to expectations?', 'Future performance?'],
+                                                       'header': ['Name', 'ROI'],
                                                        'username': request.user.username,})
 # if a GET (or any other method) we'll create a blank form

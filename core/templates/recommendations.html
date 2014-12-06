@@ -10,9 +10,45 @@
 
 
 {% block content %}
-        Based on historic information
+        Based on historic information from the last two years. Ask yourself the following two questions:
+        <ul>
+            <li>Is the historic performance according to risks and expectations?</li>
+            <li>Do you have reason to believe that future performance is up to the risks involved?</li>
+        </ul>
+        As soon as you answer the second question with "No" then you have to sell these assets.
+        <div id="title_to_sell" class="sub_title">
+            7. Sell-side candidates: Poor dogs, worst long term performance
+        </div>
+        <table border=1>
+        <thead>
+            <tr>
+            {% for attr_head in header %}
+               <th>{{ attr_head }}</th>
+            {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in worst_five %}
+                <tr>
+                    <td>
+                        {{ line.name }}
+                    </td>
+                    <td>
+                        {{ line.roi }}
+                    </td>
+                    <td>
+
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+<div style="clear:both; margin-bottom: 4em;"></div>
         <div id="title_to_buy" class="sub_title">
-            2. Buy candidates: Cash cows, long term successful performers
+            8. Buy candidates: Cash cows, long term successful performers
         </div>
         <div id="table">
             <table border=1>
@@ -43,37 +79,7 @@
             </tbody>
             </table>
         </div>
-        <div style="clear:both; margin-bottom: 4em;"></div>
-        <div id="title_to_sell" class="sub_title">
-            3. Sell-side candidates: Poor dogs, worst long term performance
-        </div>
-        <table border=1>
-        <thead>
-            <tr>
-            {% for attr_head in header %}
-               <th>{{ attr_head }}</th>
-            {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for line in worst_five %}
-                <tr>
-                    <td>
-                        {{ line.name }}
-                    </td>
-                    <td>
-                        {{ line.roi }}
-                    </td>
-                    <td>
 
-                    </td>
-                    <td>
-
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-        </table>
 
 
 {% endblock %}

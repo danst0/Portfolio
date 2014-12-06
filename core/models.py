@@ -22,7 +22,7 @@ class UI:
         result = self.transaction.list_pf(from_date, to_date, user)
         result = sorted(result, key=lambda x: float(x['roi'][:-1]))
         # get a reasonable number of results, betwenn 3 and five, depending on number of positions
-        number_of_results = max(min(int(len(result)/10), 5), 3)
+        number_of_results = max(min(int(len(result)/4), 7), 3)
         # remove that are > 20%-points from total roi
         total_roi = self.transaction.get_total_roi(from_date, to_date, user)
 

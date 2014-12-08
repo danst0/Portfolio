@@ -10,7 +10,7 @@ from money.models import Money
 #from matplotlib.figure import Figure
 #from matplotlib.dates import DateFormatter
 #from matplotlib.ticker import ScalarFormatter
-# import datetime
+import datetime
 from decimal import Decimal
 from django.utils import timezone
 from django.http import HttpResponse
@@ -25,10 +25,14 @@ from django.contrib.auth import authenticate, login, logout
 import random
 import string
 from django.shortcuts import redirect
+
+
+
 from django.views.decorators.cache import cache_page
 # Create your views here.
 
 ui = UI()
+
 
 def index(request):
     return render(request, 'index.html')
@@ -222,7 +226,6 @@ def get_color_and_highlight(number=5):
     return result
 
 
-
 @login_required
 def new_invest(request):
     t = Transaction()
@@ -265,13 +268,13 @@ def portfolio_overview(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = PortfolioFormTwoDates(request.POST)
+        form = PortfolioFormTwoDates(request.user, request.POST)
         # check whether it's valid:
         if form.is_valid():
             t = Transaction()
-            content = t.list_pf(form.cleaned_data['from_date'],
-                                form.cleaned_data['to_date'],
-                                request.user)
+            print(form.cleaned_data['from_date'], form.cleaned_data['to_date'])
+            print(type(form.cleaned_data['from_date']), type(form.cleaned_data['to_date']))
+            content = t.list_pf(form.cleaned_data['from_date'], form.cleaned_data['to_date'], request.user)
             pie_colors = get_color_and_highlight(len(content))
             result = []
             for num, item in enumerate(content):
@@ -298,7 +301,7 @@ def portfolio_overview(request):
                                                                'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = PortfolioFormTwoDates()
+        form = PortfolioFormTwoDates(request.user)
 
     return render(request, 'portfolio_overview.html', {'block_title': 'Portfolio Overview',
                                                        'form': form,

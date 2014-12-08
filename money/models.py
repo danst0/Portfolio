@@ -10,6 +10,9 @@ from django.utils import timezone
 from dateutil import relativedelta
 from django.contrib.auth.models import User
 from pprint import pprint
+from settings.models import Settings
+import logging
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 
@@ -223,7 +226,10 @@ class Money(models.Model):
 
     def aggregate_results(self, user):
         t = Transaction()
-        print('Start aggregating results')
+        s = Settings()
+        print(user)
+        print(s.get_setting(user, 'abc'))
+        logger.info('Start aggregating results')
         year_of_death = 2080
         current_pf_value = t.get_pf_value(timezone.now().date(), user)
         median_income, median_expense = self.calc_average(user)

@@ -12,6 +12,7 @@ import datetime
 from django.contrib.auth.models import User
 from functools import lru_cache
 from transactions.validators import *
+from settings.models import Settings
 
 import jellyfish
 
@@ -252,6 +253,8 @@ class Transaction(models.Model):
                 del per_stock[key]
         return per_stock
 
+
+
     @lru_cache()
     def list_pf(self, from_date, to_date, user, portfolio='All'):
         """ Portfolio Overview function table of all stocks and profits since from_date
@@ -269,6 +272,8 @@ class Transaction(models.Model):
         #         print(trans.stock_id, trans.date, trans.price)
         #         p = Price()
         #         p.add(trans.stock_id, trans.date, trans.price)
+
+
         stock_at_beginning = self.get_total_for_portfolio(portfolio, from_date, user)
         stocks_at_end = self.get_total_for_portfolio(portfolio, to_date, user)
         values = []

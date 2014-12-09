@@ -22,9 +22,10 @@ class Settings(models.Model):
     def get_setting(self, user, setting):
         try:
             my_settings = Settings.objects.get(user=user)
+            selected = getattr(my_settings, setting)
         except:
             my_settings = self.default_settings
-        selected = getattr(my_settings, setting)
+            selected = my_settings[setting]
         return selected
 
     def __str__(self):

@@ -5,30 +5,38 @@ from settings.models import Settings
 
 
 def adjust_dates(update_interval, to_date, from_date):
-    print(from_date, to_date, to_date.weekday())
-    print(update_interval)
+    # print(from_date, to_date, to_date.weekday())
+    # print(update_interval)
+    # import pdb;pdb.set_trace()
     if update_interval == 'quarterly':
-        year = to_date.year
-        quarters = rrule.rrule(rrule.MONTHLY,
-                          bymonth=(1,4,7,10),
-                          bysetpos=-1,
-                          dtstart=datetime.date(year, 1, 1),
-                          count=8)
+        month_delta = to_date.month % 3
+        # we do have a quarter month and we are already on the last day
+        if month_delta == 0 and to_date == to_date + relativedelta.relativedelta(day=31):
+            new_to_date = to_date
+        elif month_delta == 0:
+            new_to_date = to_date + relativedelta.relativedelta(months=-3)
+            new_to_date += relativedelta.relativedelta(day=31)
+        # in any month: go back three month, go forward number of mod month
+        else:
+            new_to_date = to_date + relativedelta.relativedelta(months=-month_delta)
+            new_to_date += relativedelta.relativedelta(day=31)
 
-        new_to_date = (quarters.before(datetime.datetime.fromordinal(to_date.toordinal())) + relativedelta.relativedelta(days=-1)).date()
     elif update_interval == 'monthly':
         new_to_date = to_date + relativedelta.relativedelta(days=+1, months=-1)
         new_to_date += relativedelta.relativedelta(day=31)
 
     elif update_interval == 'weekly':
         new_to_date = to_date + relativedelta.relativedelta(weekday=relativedelta.SU(-1))
-
     elif update_interval == 'instant':
         new_to_date = to_date
-    delta = new_to_date - to_date
-    from_date += delta
+    delta = (to_date - from_date).days
+    # print('delta', delta)
+    if delta != 0:
+        from_date = new_to_date + relativedelta.relativedelta(days=-delta)
+    else:
+        from_date = new_to_date + relativedelta.relativedelta(years=-1)
     to_date = new_to_date
-    print(from_date, to_date, to_date.weekday())
+    # print(from_date, to_date, to_date.weekday())
     return to_date, from_date
 
 
@@ -59,7 +67,7 @@ class PortfolioFormTwoDates(forms.Form):
     def clean(self):
         my_cleaned_data = self.cleaned_data
         update_interval = Settings().get_setting(self.user, 'view_update_interval')
-        update_interval = 'quarterly'
+        # update_interval = 'quarterly'
         to_date = my_cleaned_data['to_date']
         from_date = my_cleaned_data['to_date']
         to_date, from_date = adjust_dates(update_interval, to_date, from_date)

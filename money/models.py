@@ -228,7 +228,7 @@ class Money(models.Model):
         t = Transaction()
         s = Settings()
         print(user)
-        print(s.get_setting(user, 'abc'))
+        # print(s.get_setting(user, 'abc'))
         logger.info('Start aggregating results')
         year_of_death = 2080
         current_pf_value = t.get_pf_value(timezone.now().date(), user)

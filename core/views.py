@@ -84,7 +84,7 @@ def rolling_profitability(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = PortfolioFormTwoDates(request.POST)
+        form = PortfolioFormTwoDates(request.user, request.POST)
         # check whether it's valid:
         if form.is_valid():
             dates, roi_list = ui.rolling_profitability(form.cleaned_data['from_date'],
@@ -106,7 +106,7 @@ def rolling_profitability(request):
                                                                   'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = PortfolioFormTwoDates()
+        form = PortfolioFormTwoDates(request.user)
 
     return render(request, 'rolling_profitability.html', {'block_title': 'Rolling Profitability',
                                                           'form': form,
@@ -117,7 +117,7 @@ def portfolio_development(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = PortfolioFormTwoDates(request.POST)
+        form = PortfolioFormTwoDates(request.user, request.POST)
         # check whether it's valid:
         if form.is_valid():
             dates, pf_values, cash_values, income_values, invest_values, roi =\
@@ -151,7 +151,7 @@ def portfolio_development(request):
                                                                   'username': request.user.username,})
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = PortfolioFormTwoDates()
+        form = PortfolioFormTwoDates(request.user)
     return render(request, 'portfolio_development.html', {'block_title': 'Portfolio Development',
                                                 'form': form,
                                                 'username': request.user.username,})

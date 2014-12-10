@@ -8,37 +8,68 @@
 
 <script type="text/javascript">
 $( document ).ready(function() {
-    CanvasJS.addColorSet("customColorSet1",
-     [//colorSet Array
-     {% for line in nav_content %}
-        "{{ line.3 }}",
-     {% endfor %}
-    ]);
-	var chart = new CanvasJS.Chart("chartContainer",
-	{
-		colorSet:  "customColorSet1",
-		title:{
-
-		},
-		data: [
-		{
-			type: "doughnut",
-			startAngle: 0,
-			toolTipContent: "{label}: {y} - <strong>#percent%</strong>",
-			indexLabel: "{label} #percent%",
-			dataPoints: [
-			    {% for line in nav_content %}
-                    {  y: {{ line.1 }}, label: "{{ line.0 }}" },
-
-                {% endfor %}
-			]
-		}
-		]
-	});
-	chart.render();
 
 
+    var data = [
+        {% for line in nav_content %}
+            {
 
+                value: {{ line.1 }},
+                label: "{{ line.0 }} ({{ line.2 }})",
+                color: "{{ line.3 }}",
+                highlight: "{{ line.4 }}",
+            },
+        {% endfor %}
+    ];
+        var ctx = document.getElementById("myChart").getContext("2d");
+        // Notice now we're extending the particular Line chart type, rather than the base class.
+        Chart.types.Doughnut.extend({
+        // Passing in a name registers this chart in the Chart namespace in the same way
+            name: "DonutAlt",
+            initialize: function(data){
+                //console.log('My Line chart extension');
+                Chart.types.Doughnut.prototype.initialize.apply(this, arguments);
+            },
+            draw: function() {
+                Chart.types.Doughnut.prototype.draw.apply(this, arguments);
+                //now your custom line
+                var ctx = this.chart.ctx;
+                // Labels
+                /*ctx.beginPath();
+                ctx.moveTo(0, 100);
+                ctx.lineTo(100, 200);
+
+                ctx.strokeStyle = '#F60000';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+*/
+
+                // pseudo lines
+                /*ctx.beginPath();
+                for (i = 0; i < 5; i++) {
+                    ctx.moveTo(0, 60+i*70);
+                    ctx.lineTo(100, 60+i*70);
+                    ctx.lineTo(170, 200);
+                }
+                ctx.strokeStyle = '#F6F6F6';
+                ctx.lineWidth = 5;
+                ctx.setLineDash([15,5]);
+                ctx.stroke();
+                ctx.setLineDash(0);
+                // Circle
+                ctx.beginPath();
+                ctx.arc(170, 200, 20, 0, 2 * Math.PI, false);
+                ctx.fillStyle = '#F6F6F6';
+                ctx.fill();
+                ctx.strokeStyle = '#F6F6F6';
+                ctx.stroke();*/
+            }
+        });
+        $.extend(chart_js_options, {animation: false, percentageInnerCutout: 60, animationSteps: 30,})
+        var myPie = new Chart(ctx).DonutAlt(data, chart_js_options)
+
+        var legend = myPie.generateLegend();
+        $("#overview-legend").html(legend);
 });
 
 
@@ -48,12 +79,13 @@ $( document ).ready(function() {
 {% block content %}
     {% if nav_total %}
 
-        <div id="chartContainer" style="height: 400px; width: 700px;"></div>
+        <canvas id="myChart" width="700" height="400"></canvas>
+        <div id="overview-legend"></div>
+
         <div id="total">{{ nav_total|nicenumber }}<br>€</div>
 
         <div id="title_overview" class="sub_title">
             1. Total wealth and share of investment types
-
         </div>
     {% else %}
         No data available.

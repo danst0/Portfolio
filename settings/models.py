@@ -8,19 +8,24 @@ from decimal import Decimal
 class Settings(models.Model):
     # id = models.CharField(max_length=100, blank=True, unique=True, default=uuid.uuid4)
     user = models.ForeignKey(User, null=True, default=None)
-    expected_interest = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('8.8'))
-    tax_rate = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('26.4'))
-    inflation = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('2.5'))
+    default_settings = {'expected_interest': Decimal('8.8'), 'tax_rate': Decimal('26.4'), 'inflation': Decimal('2.5'), 'view_update_interval': 'weekly'}
+    expected_interest = models.DecimalField(max_digits=4, decimal_places=2, default=default_settings['expected_interest'])
+    tax_rate = models.DecimalField(max_digits=4, decimal_places=2, default=default_settings['tax_rate'])
+    inflation = models.DecimalField(max_digits=4, decimal_places=2, default=default_settings['inflation'])
     options = [('instant', 'instant'),
                ('weekly', 'weekly'),
                ('monthly', 'monthly'),
                ('quarterly', 'quarterly')]
-    view_update_interval = models.CharField(max_length=10, default='weekly',
+    view_update_interval = models.CharField(max_length=10, default=default_settings['view_update_interval'],
                                             choices=options)
 
     def get_setting(self, user, setting):
-        my_settings = Settings.objects.get(user=user)
-        selected = getattr(my_settings, setting)
+        try:
+            my_settings = Settings.objects.get(user=user)
+            selected = getattr(my_settings, setting)
+        except:
+            my_settings = self.default_settings
+            selected = my_settings[setting]
         return selected
 
     def __str__(self):

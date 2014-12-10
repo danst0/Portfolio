@@ -69,7 +69,7 @@ class PortfolioFormTwoDates(forms.Form):
         update_interval = Settings().get_setting(self.user, 'view_update_interval')
         # update_interval = 'quarterly'
         to_date = my_cleaned_data['to_date']
-        from_date = my_cleaned_data['to_date']
+        from_date = my_cleaned_data['from_date']
         to_date, from_date = adjust_dates(update_interval, to_date, from_date)
         # print(type(to_date))
         # print(type(from_date))

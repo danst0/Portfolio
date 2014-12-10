@@ -14,7 +14,7 @@ import os
 
 class Importer:
     def __init__(self):
-        self.base_path = os.path.expanduser('~') + '/Desktop/PDFs'
+        self.base_path = ''
 #        self.secs = Security()
 #        self.transaction = Transaction()
         print(self.base_path)
@@ -88,15 +88,19 @@ class CortalConsors(Importer):
     def read_pdfs(self, file):
         file_counter = 0
         price_updates = []
-
+        # print('read_pfs', file)
+        self.base_path = os.path.dirname(os.path.abspath(file))
+        file = os.path.basename(file)
+        # print(self.base_path)
+        # print(file)
         if file.startswith('PERSONAL') and file.endswith('.pdf'):
-            # print('Import ' + file)
+            # import pdb;pdb.set_trace()
             try:
                 subprocess.check_output(
                 ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,
                  self.base_path + '/data.txt'])
             except:
-                print('Error while importing.')
+                print('Error while importing. Personal Investment Report')
                 data = None
             else:
                 with open(self.base_path + '/data.txt', 'rb') as myfile:
@@ -106,7 +110,7 @@ class CortalConsors(Importer):
                 # print(data)
                 price_updates.append(data)
                 file_counter += 1
-            os.remove(self.base_path + '/' + file)
+            # os.remove(self.base_path + '/' + file)
 
         transactions_update = []
         if (file.startswith('HV-BEGLEIT') or
@@ -119,7 +123,10 @@ class CortalConsors(Importer):
                 file.startswith('VERTRAGSRE')):
             # Remove invalid PDFs
             # print('Ignore ' + file)
-            os.remove(self.base_path + '/' + file)
+            try:
+                os.remove(self.base_path + '/' + file)
+            except:
+                print('Could not remove file', file)
         elif file.endswith('.pdf'):
             try:
                 subprocess.check_output(

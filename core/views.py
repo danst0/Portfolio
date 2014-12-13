@@ -25,14 +25,14 @@ from django.contrib.auth import authenticate, login, logout
 import random
 import string
 from django.shortcuts import redirect
-from core.forms import adjust_dates
+from core.helper_functions import Tools
 from settings.models import Settings
 
 from django.views.decorators.cache import cache_page
 # Create your views here.
 
 ui = UI()
-
+tools = Tools()
 
 def index(request):
     return render(request, 'index.html')
@@ -235,7 +235,7 @@ def new_invest(request):
     # print(request.user)
     m = Money()
     update_interval = Settings().get_setting(request.user, 'view_update_interval')
-    today = adjust_dates(update_interval, timezone.now().date())
+    today = tools.adjust_dates(update_interval, timezone.now().date())
 
     portfolio_parts = t.get_total_per_type('All', today, request.user)
     wealth = m.get_wealth(today, request.user)
@@ -316,7 +316,7 @@ def forecast_retirement(request):
     # import pdb; pdb.set_trace()
     m = Money()
     result_development = m.aggregate_results(request.user)
-    print(result_development)
+    # print(result_development)
     for key in [2020, 2025, 2030]:
         result_development[key] = list(map(lambda x: float(round(x/1000, 2)), result_development[key]))
     now = timezone.now().date().year + 1
@@ -397,7 +397,6 @@ def login_demo(request, username, password):
 def recommendation(request):
     # if this is a POST request we need to process the form data
     # create a form instance and populate it with data from the request:
-    ui = UI()
     best_five, worst_five = ui.recommendation(request.user)
 
     return render(request, 'recommendations.html', {'block_title': 'Recommendations',

@@ -184,8 +184,8 @@ class UI:
         roi = self.transaction.get_total_roi(from_date, to_date, user)
         if roi != 'n/a':
             roi = int(roi*100)
-        return dates, pf_value, cash_values,\
-               {'dates': income_dates, 'income': incomes, 'expense': expenses},\
-               {'invest': invest_values, 'divest': divest_values, 'dividend': dividend_values},\
-               roi
+        return (dates, pf_value, cash_values,
+               {'dates': income_dates, 'income': incomes, 'expense': expenses},
+               {'invest': invest_values, 'divest': divest_values, 'dividend': dividend_values},
+               roi)
 

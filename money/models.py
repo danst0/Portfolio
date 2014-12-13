@@ -9,8 +9,8 @@ import datetime
 from django.utils import timezone
 from dateutil import relativedelta
 from django.contrib.auth.models import User
-from pprint import pprint
 from settings.models import Settings
+from core.helper_functions import Tools
 import logging
 logger = logging.getLogger(__name__)
 
@@ -227,11 +227,14 @@ class Money(models.Model):
     def aggregate_results(self, user):
         t = Transaction()
         s = Settings()
+        tools = Tools()
         print(user)
         # print(s.get_setting(user, 'abc'))
         logger.info('Start aggregating results')
-        year_of_death = 2080
-        current_pf_value = t.get_pf_value(timezone.now().date(), user)
+        year_of_death = s.get_setting(user, 'year_of_death')
+        update_interval = s.get_setting(user, 'view_update_interval')
+        today = tools.adjust_dates(update_interval, timezone.now().date())
+        current_pf_value = t.get_pf_value(today, user)
         median_income, median_expense = self.calc_average(user)
         print(median_income, median_expense)
         total_wealth = current_pf_value + self.get_current_wealth(user)

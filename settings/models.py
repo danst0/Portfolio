@@ -8,10 +8,15 @@ from decimal import Decimal
 class Settings(models.Model):
     # id = models.CharField(max_length=100, blank=True, unique=True, default=uuid.uuid4)
     user = models.ForeignKey(User, null=True, default=None)
-    default_settings = {'expected_interest': Decimal('8.8'), 'tax_rate': Decimal('26.4'), 'inflation': Decimal('2.5'), 'view_update_interval': 'weekly'}
+    default_settings = {'expected_interest': Decimal('8.8'),
+                        'tax_rate': Decimal('26.4'),
+                        'inflation': Decimal('2.5'),
+                        'view_update_interval': 'weekly',
+                        'year_of_death': 2080}
     expected_interest = models.DecimalField(max_digits=4, decimal_places=2, default=default_settings['expected_interest'])
     tax_rate = models.DecimalField(max_digits=4, decimal_places=2, default=default_settings['tax_rate'])
     inflation = models.DecimalField(max_digits=4, decimal_places=2, default=default_settings['inflation'])
+    year_of_death = models.IntegerField(default=default_settings['year_of_death'])
     options = [('instant', 'instant'),
                ('weekly', 'weekly'),
                ('monthly', 'monthly'),

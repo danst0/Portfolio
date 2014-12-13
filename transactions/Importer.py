@@ -93,8 +93,9 @@ class CortalConsors(Importer):
         file = os.path.basename(file)
         # print(self.base_path)
         # print(file)
+
         if file.startswith('PERSONAL') and file.endswith('.pdf'):
-            # import pdb;pdb.set_trace()
+
             try:
                 subprocess.check_output(
                 ['/usr/local/bin/pdftotext', '-nopgbrk', '-eol', 'unix', '-table', self.base_path + '/' + file,

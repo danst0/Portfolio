@@ -40,9 +40,11 @@ def list(request):
                               context_instance=RequestContext(request))
 
 def do_update(request):
-    documents = Document.objects.all()
-    # print(documents)
+
+
     Document.objects.filter(imported=True).delete()
+    documents = Document.objects.all()
+    print(documents)
     for document in documents:
         document.update()
         document.imported = True

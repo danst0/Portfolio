@@ -60,6 +60,7 @@ class Transaction(models.Model):
 
     def import_sources(self, path):
         i = CortalConsors()
+        # import pdb;pdb.set_trace()
         price_updates, transactions_update_pdf = i.read_pdfs(path)
         transaction_update_csv = i.read_old_depot_csv(path)
         transactions_update = transactions_update_pdf + transaction_update_csv

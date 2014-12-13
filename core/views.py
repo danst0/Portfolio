@@ -25,8 +25,8 @@ from django.contrib.auth import authenticate, login, logout
 import random
 import string
 from django.shortcuts import redirect
-
-
+from core.forms import adjust_dates
+from settings.models import Settings
 
 from django.views.decorators.cache import cache_page
 # Create your views here.
@@ -234,7 +234,9 @@ def new_invest(request):
     #     item.save()
     # print(request.user)
     m = Money()
-    today = timezone.now().date()
+    update_interval = Settings().get_setting(request.user, 'view_update_interval')
+    today = adjust_dates(update_interval, timezone.now().date())
+
     portfolio_parts = t.get_total_per_type('All', today, request.user)
     wealth = m.get_wealth(today, request.user)
     content = list(portfolio_parts.items())

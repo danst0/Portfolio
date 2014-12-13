@@ -4,7 +4,7 @@ from dateutil import rrule, relativedelta
 from settings.models import Settings
 
 
-def adjust_dates(update_interval, to_date, from_date):
+def adjust_dates(update_interval, to_date, from_date=None):
     # print(from_date, to_date, to_date.weekday())
     # print(update_interval)
     # import pdb;pdb.set_trace()
@@ -29,15 +29,17 @@ def adjust_dates(update_interval, to_date, from_date):
         new_to_date = to_date + relativedelta.relativedelta(weekday=relativedelta.SU(-1))
     elif update_interval == 'instant':
         new_to_date = to_date
-    delta = (to_date - from_date).days
-    # print('delta', delta)
-    if delta != 0:
-        from_date = new_to_date + relativedelta.relativedelta(days=-delta)
+    if from_date:
+        delta = (to_date - from_date).days
+        # print('delta', delta)
+        if delta != 0:
+            from_date = new_to_date + relativedelta.relativedelta(days=-delta)
+        else:
+            from_date = new_to_date + relativedelta.relativedelta(years=-1)
+        # print(from_date, to_date, to_date.weekday())
+        return new_to_date, from_date
     else:
-        from_date = new_to_date + relativedelta.relativedelta(years=-1)
-    to_date = new_to_date
-    # print(from_date, to_date, to_date.weekday())
-    return to_date, from_date
+        return new_to_date
 
 
 

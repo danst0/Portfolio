@@ -2,12 +2,13 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.views.generic import RedirectView
 
 admin.autodiscover()
 
 urlpatterns = patterns('',
                        # Examples:
-                       # url(r'^$', 'mercurius.views.home', name='home'),
+                       url(r'^$', RedirectView.as_view(pattern_name='new_invest')),
                        # url(r'^blog/', include('blog.urls')),
                        url(r'^core/', include('core.urls')),
                        url(r'^import/', include('importer.urls')),
